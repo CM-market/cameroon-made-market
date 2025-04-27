@@ -3,6 +3,9 @@ import React from "react";
 import { Badge } from "@/components/ui/badge";
 import { CATEGORIES, TAGS } from "@/constants/productData";
 import type { ProductFormData } from "@/hooks/useProductForm";
+import { ProductImageGallery } from "./ProductImageGallery";
+import { ProductDetailsInfo } from "./ProductDetailsInfo";
+import { ProductShippingInfo } from "./ProductShippingInfo";
 
 interface ProductPreviewProps {
   formData: ProductFormData;
@@ -12,30 +15,10 @@ export const ProductPreview = ({ formData }: ProductPreviewProps) => {
   return (
     <div className="mb-6 grid gap-6 md:grid-cols-2">
       <div className="bg-white rounded-lg overflow-hidden">
-        {formData.imagePreviewUrls.length > 0 ? (
-          <img
-            src={formData.imagePreviewUrls[0]}
-            alt={formData.name}
-            className="w-full h-64 object-cover"
-          />
-        ) : (
-          <div className="w-full h-64 bg-muted flex items-center justify-center">
-            <p className="text-muted-foreground">No image available</p>
-          </div>
-        )}
-        
-        {formData.imagePreviewUrls.length > 1 && (
-          <div className="flex mt-2 space-x-2 overflow-x-auto p-1">
-            {formData.imagePreviewUrls.slice(1).map((url, index) => (
-              <img
-                key={index}
-                src={url}
-                alt={`Product ${index + 2}`}
-                className="w-16 h-16 object-cover rounded"
-              />
-            ))}
-          </div>
-        )}
+        <ProductImageGallery 
+          images={formData.imagePreviewUrls} 
+          name={formData.name} 
+        />
       </div>
       
       <div>
@@ -79,22 +62,16 @@ export const ProductPreview = ({ formData }: ProductPreviewProps) => {
           </p>
         </div>
         
-        {(formData.materials || formData.dimensions || formData.weight) && (
-          <div className="mb-4">
-            <h3 className="font-semibold mb-1">Details</h3>
-            <ul className="text-sm space-y-1">
-              {formData.materials && (
-                <li><span className="font-medium">Materials:</span> {formData.materials}</li>
-              )}
-              {formData.dimensions && (
-                <li><span className="font-medium">Dimensions:</span> {formData.dimensions}</li>
-              )}
-              {formData.weight && (
-                <li><span className="font-medium">Weight:</span> {formData.weight} kg</li>
-              )}
-            </ul>
-          </div>
-        )}
+        <ProductDetailsInfo
+          materials={formData.materials}
+          dimensions={formData.dimensions}
+          weight={formData.weight}
+        />
+
+        <ProductShippingInfo
+          shippingInfo={formData.shippingInfo}
+          returnPolicy={formData.returnPolicy}
+        />
       </div>
     </div>
   );
