@@ -1,7 +1,7 @@
 
 import React from "react";
 import { Link } from "react-router-dom";
-import { User } from "lucide-react";
+import { User, LayoutDashboard, Package, ShoppingCart } from "lucide-react";
 import { Button } from "./ui/button";
 
 const VendorNavbar: React.FC = () => {
@@ -19,18 +19,29 @@ const VendorNavbar: React.FC = () => {
           </Link>
         </div>
         <div className="flex items-center space-x-4">
-          <Button variant="ghost" className="text-white hover:text-cm-yellow">
-            Dashboard
+          <Button variant="ghost" className="text-white hover:text-cm-yellow" asChild>
+            <Link to="/vendor/dashboard">
+              <LayoutDashboard size={18} className="mr-2" />
+              Dashboard
+            </Link>
           </Button>
-          <Button variant="ghost" className="text-white hover:text-cm-yellow">
-            My Products
+          <Button variant="ghost" className="text-white hover:text-cm-yellow" asChild>
+            <Link to="/vendor/products">
+              <Package size={18} className="mr-2" />
+              My Products
+            </Link>
           </Button>
-          <Button variant="ghost" className="text-white hover:text-cm-yellow">
-            Orders
+          <Button variant="ghost" className="text-white hover:text-cm-yellow" asChild>
+            <Link to="/vendor/orders">
+              <ShoppingCart size={18} className="mr-2" />
+              Orders
+            </Link>
           </Button>
-          <Button className="bg-white text-cm-green hover:bg-cm-sand">
-            <User size={18} className="mr-2" />
-            Account
+          <Button className="bg-white text-cm-green hover:bg-cm-sand" asChild>
+            <Link to="/vendor/account">
+              <User size={18} className="mr-2" />
+              Account
+            </Link>
           </Button>
         </div>
       </div>
