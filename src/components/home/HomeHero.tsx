@@ -16,10 +16,10 @@ const HomeHero = () => {
             Support local artisans and businesses while experiencing the rich cultural heritage of Cameroon through our carefully curated marketplace.
           </p>
           <div className="flex gap-4 justify-center">
-            <Button asChild size="lg" className="bg-white text-cm-green hover:bg-cm-sand">
+            <Button asChild size="lg" className="bg-white text-cm-green hover:bg-cm-sand px-8 py-6 h-auto">
               <Link to="/products">Browse Products</Link>
             </Button>
-            <Button asChild size="lg" className="bg-cm-sand text-black font-bold hover:bg-yellow-400 px-8 py-6 h-auto">
+            <Button asChild size="lg" className="bg-cm-yellow text-black font-bold hover:bg-yellow-400 px-8 py-6 h-auto">
               <Link to="/vendor/register">Start Selling</Link>
             </Button>
           </div>
