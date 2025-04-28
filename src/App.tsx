@@ -15,6 +15,7 @@ import VendorOrders from "./pages/vendor/Orders";
 import VendorAccount from "./pages/vendor/Account";
 import Login from "./pages/Login";
 import ProductList from "./pages/ProductList";
+import ProductDetails from "./pages/ProductDetails";
 import Cart from "./pages/Cart";
 import Checkout from "./pages/Checkout";
 import Payment from "./pages/Payment";
@@ -35,6 +36,7 @@ const App = () => (
           <Route path="/" element={<Home />} />
           <Route path="/about" element={<About />} />
           <Route path="/products" element={<ProductList />} />
+          <Route path="/product/:productId" element={<ProductDetails />} />
           <Route path="/product-preview" element={<ProductPreview />} />
           <Route path="/search" element={<Search />} />
           <Route path="/cart" element={<Cart />} />

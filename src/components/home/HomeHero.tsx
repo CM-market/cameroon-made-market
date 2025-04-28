@@ -19,9 +19,6 @@ const HomeHero = () => {
             <Button asChild size="lg" className="bg-white text-cm-green hover:bg-cm-sand">
               <Link to="/products">Browse Products</Link>
             </Button>
-            <Button asChild size="lg" variant="outline" className="text-white border-white hover:bg-white/20">
-              <Link to="/categories">View Categories</Link>
-            </Button>
           </div>
         </div>
       </div>

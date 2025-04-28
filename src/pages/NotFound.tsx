@@ -3,6 +3,7 @@ import React from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import MainNavbar from "@/components/MainNavbar";
+import Footer from "@/components/Footer";
 
 const NotFound = () => {
   return (
@@ -20,6 +21,8 @@ const NotFound = () => {
           <Link to="/">Return to Home</Link>
         </Button>
       </div>
+      
+      <Footer />
     </div>
   );
 };

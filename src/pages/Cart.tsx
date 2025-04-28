@@ -1,14 +1,17 @@
 
-import React from "react";
+import React, { useState } from "react";
 import MainNavbar from "@/components/MainNavbar";
+import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
+import { Input } from "@/components/ui/input";
 import { Trash2, Plus, Minus } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { toast } from "@/hooks/use-toast";
 
 // Sample cart data - in a real app this would come from a cart state/context
-const sampleCartItems = [
+const initialCartItems = [
   {
     id: "1",
     name: "Hand-woven Bamboo Basket",
@@ -33,24 +36,65 @@ const sampleCartItems = [
 ];
 
 const Cart: React.FC = () => {
+  const [cartItems, setCartItems] = useState(initialCartItems);
   const navigate = useNavigate();
   
-  const subtotal = sampleCartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
-  const shipping = 2500;
+  const subtotal = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
+  const shipping = cartItems.length > 0 ? 2500 : 0;
   const total = subtotal + shipping;
+
+  const updateQuantity = (id: string, newQuantity: number) => {
+    if (newQuantity < 1) return;
+    
+    setCartItems(items => 
+      items.map(item => 
+        item.id === id ? { ...item, quantity: newQuantity } : item
+      )
+    );
+    
+    toast({
+      title: "Cart Updated",
+      description: "Item quantity has been updated."
+    });
+  };
+
+  const removeItem = (id: string) => {
+    setCartItems(items => items.filter(item => item.id !== id));
+    
+    toast({
+      title: "Item Removed",
+      description: "The item has been removed from your cart."
+    });
+  };
+
+  const clearCart = () => {
+    setCartItems([]);
+    
+    toast({
+      title: "Cart Cleared",
+      description: "All items have been removed from your cart."
+    });
+  };
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
       <MainNavbar />
       
-      <div className="container mx-auto px-4 py-8">
-        <h1 className="text-3xl font-bold mb-6">Your Shopping Cart</h1>
+      <div className="container mx-auto px-4 py-8 flex-grow">
+        <div className="flex justify-between items-center mb-6">
+          <h1 className="text-3xl font-bold">Your Shopping Cart</h1>
+          {cartItems.length > 0 && (
+            <Button variant="outline" className="text-red-500" onClick={clearCart}>
+              Clear Cart
+            </Button>
+          )}
+        </div>
         
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           <div className="lg:col-span-2">
-            {sampleCartItems.length > 0 ? (
+            {cartItems.length > 0 ? (
               <div className="space-y-4">
-                {sampleCartItems.map((item) => (
+                {cartItems.map((item) => (
                   <Card key={item.id}>
                     <CardContent className="p-4">
                       <div className="flex flex-col sm:flex-row gap-4">
@@ -58,28 +102,58 @@ const Cart: React.FC = () => {
                           <img 
                             src={item.image} 
                             alt={item.name} 
-                            className="w-full h-full object-cover"
+                            className="w-full h-full object-cover cursor-pointer"
+                            onClick={() => navigate(`/product/${item.id}`)}
                           />
                         </div>
                         
                         <div className="flex-1">
                           <div className="flex justify-between">
-                            <h3 className="font-semibold">{item.name}</h3>
+                            <h3 
+                              className="font-semibold cursor-pointer hover:text-cm-green"
+                              onClick={() => navigate(`/product/${item.id}`)}
+                            >
+                              {item.name}
+                            </h3>
                             <p className="font-bold text-cm-green">{item.price} FCFA</p>
                           </div>
                           
                           <div className="mt-4 flex justify-between items-center">
                             <div className="flex items-center border rounded-md">
-                              <Button variant="ghost" size="icon" className="h-8 w-8 p-0">
+                              <Button 
+                                variant="ghost" 
+                                size="icon" 
+                                className="h-8 w-8 p-0"
+                                onClick={() => updateQuantity(item.id, item.quantity - 1)}
+                              >
                                 <Minus className="h-3 w-3" />
                               </Button>
-                              <span className="w-8 text-center">{item.quantity}</span>
-                              <Button variant="ghost" size="icon" className="h-8 w-8 p-0">
+                              <Input 
+                                className="w-12 h-8 text-center border-0 p-0" 
+                                value={item.quantity}
+                                onChange={(e) => {
+                                  const value = parseInt(e.target.value);
+                                  if (!isNaN(value) && value > 0) {
+                                    updateQuantity(item.id, value);
+                                  }
+                                }}
+                              />
+                              <Button 
+                                variant="ghost" 
+                                size="icon" 
+                                className="h-8 w-8 p-0"
+                                onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                              >
                                 <Plus className="h-3 w-3" />
                               </Button>
                             </div>
                             
-                            <Button variant="ghost" size="sm" className="text-red-500">
+                            <Button 
+                              variant="ghost" 
+                              size="sm" 
+                              className="text-red-500"
+                              onClick={() => removeItem(item.id)}
+                            >
                               <Trash2 className="h-4 w-4 mr-1" />
                               Remove
                             </Button>
@@ -133,6 +207,7 @@ const Cart: React.FC = () => {
                 <Button 
                   className="w-full bg-cm-green hover:bg-cm-forest"
                   onClick={() => navigate("/checkout")}
+                  disabled={cartItems.length === 0}
                 >
                   Proceed to Checkout
                 </Button>
@@ -142,8 +217,9 @@ const Cart: React.FC = () => {
             <Card className="mt-4">
               <CardContent className="p-4">
                 <div className="flex items-center">
-                  <input id="promo" type="text" placeholder="Enter promo code" 
-                    className="flex-1 border rounded-l-md px-3 py-2 focus:outline-none" 
+                  <Input 
+                    placeholder="Enter promo code" 
+                    className="rounded-r-none" 
                   />
                   <Button className="rounded-l-none">Apply</Button>
                 </div>
@@ -152,6 +228,8 @@ const Cart: React.FC = () => {
           </div>
         </div>
       </div>
+      
+      <Footer />
     </div>
   );
 };

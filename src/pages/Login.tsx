@@ -7,6 +7,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useNavigate } from "react-router-dom";
+import Footer from "@/components/Footer";
+import { toast } from "@/hooks/use-toast";
 
 const Login: React.FC = () => {
   const [activeTab, setActiveTab] = useState<string>("customer");
@@ -17,10 +19,20 @@ const Login: React.FC = () => {
     // In a real app, this would authenticate the user
     // For demo purposes, just navigate based on selected role
     if (activeTab === "producer") {
-      navigate("/vendor/dashboard");
+      toast({
+        title: "Producer login successful",
+        description: "Redirecting to vendor registration"
+      });
+      navigate("/vendor/register");
     } else if (activeTab === "admin") {
+      toast({
+        title: "Admin login successful"
+      });
       navigate("/admin/dashboard");
     } else {
+      toast({
+        title: "Customer login successful"
+      });
       navigate("/");
     }
   };
@@ -107,6 +119,8 @@ const Login: React.FC = () => {
           </Tabs>
         </Card>
       </div>
+      
+      <Footer />
     </div>
   );
 };

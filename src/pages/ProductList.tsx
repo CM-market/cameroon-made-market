@@ -1,6 +1,7 @@
 
 import React, { useState } from "react";
 import MainNavbar from "@/components/MainNavbar";
+import Footer from "@/components/Footer";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { 
@@ -11,10 +12,11 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Slider } from "@/components/ui/slider";
-import { Grid, List } from "lucide-react";
+import { Grid, List, ShoppingCart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useNavigate } from "react-router-dom";
+import { toast } from "@/hooks/use-toast";
 
 // Sample product data - in a real app this would come from an API
 const sampleProducts = Array(12).fill(null).map((_, index) => ({
@@ -28,13 +30,24 @@ const sampleProducts = Array(12).fill(null).map((_, index) => ({
 const ProductList: React.FC = () => {
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [priceRange, setPriceRange] = useState<number[]>([5000, 25000]);
+  const [cartCount, setCartCount] = useState<number>(0);
   const navigate = useNavigate();
+
+  const handleAddToCart = (productId: string, productName: string) => {
+    // In a real app, this would add the product to the cart
+    // For demo purposes, we'll just increment the cart counter
+    setCartCount((prevCount) => prevCount + 1);
+    toast({
+      title: "Added to Cart",
+      description: `${productName} has been added to your cart.`
+    });
+  };
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
       <MainNavbar />
       
-      <div className="container mx-auto px-4 py-8">
+      <div className="container mx-auto px-4 py-8 flex-grow">
         <div className="flex flex-col md:flex-row gap-6">
           {/* Filters sidebar */}
           <div className="w-full md:w-64 shrink-0">
@@ -144,12 +157,14 @@ const ProductList: React.FC = () => {
               {sampleProducts.map((product) => (
                 <Card 
                   key={product.id} 
-                  className={`overflow-hidden transition-all cursor-pointer hover:shadow-md ${
+                  className={`overflow-hidden transition-all ${
                     viewMode === 'list' ? 'flex' : ''
                   }`}
-                  onClick={() => navigate(`/product/${product.id}`)}
                 >
-                  <div className={viewMode === 'list' ? 'w-1/3' : ''}>
+                  <div 
+                    className={viewMode === 'list' ? 'w-1/3 cursor-pointer' : 'cursor-pointer'}
+                    onClick={() => navigate(`/product/${product.id}`)}
+                  >
                     <div className={`bg-gray-100 ${viewMode === 'grid' ? 'aspect-square' : 'h-full'}`}>
                       <img
                         src={product.image}
@@ -164,13 +179,29 @@ const ProductList: React.FC = () => {
                       <Badge variant="outline" className="mb-2 bg-cm-sand bg-opacity-30">
                         {product.category}
                       </Badge>
-                      <h3 className="font-semibold mb-1">{product.name}</h3>
+                      <h3 
+                        className="font-semibold mb-1 cursor-pointer hover:text-cm-green" 
+                        onClick={() => navigate(`/product/${product.id}`)}
+                      >
+                        {product.name}
+                      </h3>
                       <p className="text-cm-green font-bold">{product.price} FCFA</p>
                     </CardContent>
                     
                     <CardFooter className="flex justify-between p-4 pt-0">
-                      <Button variant="outline" size="sm">View Details</Button>
-                      <Button size="sm" className="bg-cm-green hover:bg-cm-forest">
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => navigate(`/product/${product.id}`)}
+                      >
+                        View Details
+                      </Button>
+                      <Button 
+                        size="sm" 
+                        className="bg-cm-green hover:bg-cm-forest"
+                        onClick={() => handleAddToCart(product.id, product.name)}
+                      >
+                        <ShoppingCart size={16} className="mr-1" />
                         Add to Cart
                       </Button>
                     </CardFooter>
@@ -192,6 +223,8 @@ const ProductList: React.FC = () => {
           </div>
         </div>
       </div>
+      
+      <Footer />
     </div>
   );
 };
