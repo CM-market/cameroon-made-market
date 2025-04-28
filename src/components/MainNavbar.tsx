@@ -12,6 +12,16 @@ import { Button } from "@/components/ui/button";
 import { Search, ShoppingCart, User, Download } from "lucide-react";
 import { cn } from "@/lib/utils";
 
+// Define the BeforeInstallPromptEvent interface
+interface BeforeInstallPromptEvent extends Event {
+  readonly platforms: string[];
+  readonly userChoice: Promise<{
+    outcome: 'accepted' | 'dismissed',
+    platform: string
+  }>;
+  prompt(): Promise<void>;
+}
+
 const MainNavbar: React.FC = () => {
   const location = useLocation();
   const isActive = (path: string) => location.pathname === path;
@@ -69,10 +79,16 @@ const MainNavbar: React.FC = () => {
     // This will only work if the app is installable
     if ('BeforeInstallPromptEvent' in window) {
       window.addEventListener('beforeinstallprompt', (e) => {
+        // Prevent the default browser install prompt
         e.preventDefault();
-        const promptEvent = e;
+        
+        // Cast the event to our custom type
+        const promptEvent = e as BeforeInstallPromptEvent;
+        
+        // Show the install prompt
         promptEvent.prompt();
         
+        // Wait for the user to respond to the prompt
         promptEvent.userChoice.then((choiceResult) => {
           if (choiceResult.outcome === 'accepted') {
             console.log('User accepted the install prompt');
