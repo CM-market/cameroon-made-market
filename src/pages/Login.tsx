@@ -1,18 +1,27 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import MainNavbar from "@/components/MainNavbar";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import Footer from "@/components/Footer";
 import { toast } from "@/hooks/use-toast";
 
 const Login: React.FC = () => {
   const [activeTab, setActiveTab] = useState<string>("customer");
   const navigate = useNavigate();
+  const location = useLocation();
+  
+  // Check if we came from a vendor registration link and set the tab accordingly
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    if (params.get('type') === 'producer') {
+      setActiveTab("producer");
+    }
+  }, [location]);
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();

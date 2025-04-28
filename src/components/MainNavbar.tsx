@@ -9,20 +9,38 @@ import {
   navigationMenuTriggerStyle
 } from "@/components/ui/navigation-menu";
 import { Button } from "@/components/ui/button";
-import { Search, ShoppingCart, User } from "lucide-react";
+import { Search, ShoppingCart, User, Download } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const MainNavbar: React.FC = () => {
   const location = useLocation();
   const isActive = (path: string) => location.pathname === path;
   
-  // In a real app, this would be managed by a global state
   // For demo purposes, we'll use localStorage to simulate persistence
   const [cartCount, setCartCount] = useState(0);
   
   useEffect(() => {
-    // Check localStorage for cart items on initial load
+    // Check localStorage for cart items on initial load and when it changes
     const storedCart = localStorage.getItem('cartItems');
+    
+    const handleStorageChange = () => {
+      const updatedCart = localStorage.getItem('cartItems');
+      if (updatedCart) {
+        try {
+          const cartItems = JSON.parse(updatedCart);
+          const itemCount = Array.isArray(cartItems) 
+            ? cartItems.reduce((sum, item) => sum + item.quantity, 0) 
+            : 0;
+          setCartCount(itemCount);
+        } catch (e) {
+          console.error('Error parsing cart data', e);
+        }
+      } else {
+        setCartCount(0);
+      }
+    };
+
+    // Initial load
     if (storedCart) {
       try {
         const cartItems = JSON.parse(storedCart);
@@ -34,7 +52,37 @@ const MainNavbar: React.FC = () => {
         console.error('Error parsing cart data', e);
       }
     }
+    
+    // Listen for storage events
+    window.addEventListener('storage', handleStorageChange);
+    
+    // Create a custom event for updating cart count
+    const checkCartInterval = setInterval(handleStorageChange, 1000);
+    
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      clearInterval(checkCartInterval);
+    };
   }, []);
+
+  const handleInstallPWA = () => {
+    // This will only work if the app is installable
+    if ('BeforeInstallPromptEvent' in window) {
+      window.addEventListener('beforeinstallprompt', (e) => {
+        e.preventDefault();
+        const promptEvent = e;
+        promptEvent.prompt();
+        
+        promptEvent.userChoice.then((choiceResult) => {
+          if (choiceResult.outcome === 'accepted') {
+            console.log('User accepted the install prompt');
+          } else {
+            console.log('User dismissed the install prompt');
+          }
+        });
+      });
+    }
+  };
 
   return (
     <header className="border-b bg-background sticky top-0 z-50">
@@ -108,6 +156,9 @@ const MainNavbar: React.FC = () => {
               )}
             </Button>
           </Link>
+          <Button variant="ghost" size="icon" onClick={handleInstallPWA} className="md:flex hidden">
+            <Download className="h-5 w-5" />
+          </Button>
           <Link to="/login">
             <Button variant="outline" size="sm" className="ml-2">
               <User className="h-4 w-4 mr-2" />

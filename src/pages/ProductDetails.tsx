@@ -1,18 +1,30 @@
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import MainNavbar from "@/components/MainNavbar";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { ArrowLeft, Check, ShoppingCart, Star } from "lucide-react";
+import { ArrowLeft, Check, ShoppingCart, Star, Plus, Minus } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { toast } from "@/hooks/use-toast";
+
+// Type definition for cart items
+interface CartItem {
+  id: string;
+  name: string;
+  price: number;
+  quantity: number;
+  category: string;
+  image: string;
+}
 
 const ProductDetails: React.FC = () => {
   const { productId } = useParams();
   const navigate = useNavigate();
+  const [quantity, setQuantity] = useState(1);
+  const [cartItems, setCartItems] = useState<CartItem[]>([]);
   
   // In a real app, this would fetch product data from API based on productId
   // For demo purposes, we'll use mock data
@@ -35,13 +47,71 @@ const ProductDetails: React.FC = () => {
     returnPolicy: "Returns accepted within 14 days of delivery",
   };
   
+  // Load cart from localStorage on initial render
+  useEffect(() => {
+    const storedCart = localStorage.getItem('cartItems');
+    if (storedCart) {
+      try {
+        const parsedCart = JSON.parse(storedCart);
+        if (Array.isArray(parsedCart)) {
+          setCartItems(parsedCart);
+          
+          // Check if this product is already in cart and set quantity
+          const existingItem = parsedCart.find(item => item.id === productId);
+          if (existingItem) {
+            setQuantity(existingItem.quantity);
+          }
+        }
+      } catch (e) {
+        console.error('Error parsing cart data', e);
+      }
+    }
+  }, [productId]);
+  
+  // Update localStorage whenever cart changes
+  useEffect(() => {
+    localStorage.setItem('cartItems', JSON.stringify(cartItems));
+  }, [cartItems]);
+  
+  const handleQuantityChange = (delta: number) => {
+    setQuantity(prev => Math.max(1, prev + delta));
+  };
+  
   const handleAddToCart = () => {
-    // In a real app, this would add the product to the cart
-    // For demo purposes, we'll just show a toast message
+    const existingItemIndex = cartItems.findIndex(item => item.id === product.id);
+    
+    if (existingItemIndex !== -1) {
+      // If item exists, update its quantity
+      const updatedItems = [...cartItems];
+      updatedItems[existingItemIndex] = {
+        ...updatedItems[existingItemIndex],
+        quantity: quantity
+      };
+      setCartItems(updatedItems);
+    } else {
+      // If item doesn't exist, add new item
+      setCartItems([
+        ...cartItems,
+        {
+          id: product.id,
+          name: product.name,
+          price: product.price,
+          quantity: quantity,
+          category: product.category,
+          image: product.images[0]
+        }
+      ]);
+    }
+    
     toast({
       title: "Added to Cart",
       description: `${product.name} has been added to your cart.`
     });
+  };
+  
+  const handleBuyNow = () => {
+    handleAddToCart();
+    navigate('/cart');
   };
 
   return (
@@ -118,12 +188,44 @@ const ProductDetails: React.FC = () => {
               </div>
             </div>
             
+            {/* Quantity selector */}
+            <div className="mb-6">
+              <label className="block mb-2 font-medium">Quantity</label>
+              <div className="flex items-center">
+                <Button 
+                  variant="outline" 
+                  size="icon" 
+                  onClick={() => handleQuantityChange(-1)}
+                  disabled={quantity <= 1}
+                >
+                  <Minus size={16} />
+                </Button>
+                <span className="mx-4 w-8 text-center">{quantity}</span>
+                <Button 
+                  variant="outline" 
+                  size="icon"
+                  onClick={() => handleQuantityChange(1)}
+                  disabled={quantity >= product.inStock}
+                >
+                  <Plus size={16} />
+                </Button>
+              </div>
+            </div>
+            
             <div className="flex gap-4 mb-8">
-              <Button size="lg" onClick={handleAddToCart} className="bg-cm-green hover:bg-cm-forest">
+              <Button 
+                size="lg" 
+                onClick={handleAddToCart} 
+                className="bg-cm-green hover:bg-cm-forest"
+              >
                 <ShoppingCart className="mr-2" size={18} />
                 Add to Cart
               </Button>
-              <Button size="lg" variant="outline">
+              <Button 
+                size="lg" 
+                variant="outline" 
+                onClick={handleBuyNow}
+              >
                 Buy Now
               </Button>
             </div>
