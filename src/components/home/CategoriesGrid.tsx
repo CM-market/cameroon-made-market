@@ -3,7 +3,7 @@ import React from "react";
 import { Link } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ChevronDown, Headphones, Sofa, Jewel, Home, ShoppingBag } from "lucide-react";
+import { ChevronDown, Headphones, Sofa, Home, ShoppingBag } from "lucide-react";
 
 const categories = [
   { id: 1, name: "Handcrafts", icon: "🎨" },
@@ -13,7 +13,7 @@ const categories = [
   { id: 5, name: "Art & Collectibles", icon: "🎭" },
   { id: 6, name: "Electronics", icon: <Headphones className="h-10 w-10" /> },
   { id: 7, name: "Home Furniture", icon: <Sofa className="h-10 w-10" /> },
-  { id: 8, name: "Jewelry", icon: <Jewel className="h-10 w-10" /> },
+  { id: 8, name: "Jewelry", icon: "💍" }, // Changed to emoji since Jewel icon doesn't exist
 ];
 
 const CategoriesGrid = () => {
