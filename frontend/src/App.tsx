@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -13,7 +12,9 @@ import VendorDashboard from "./pages/vendor/Dashboard";
 import VendorProducts from "./pages/vendor/Products";
 import VendorOrders from "./pages/vendor/Orders";
 import VendorAccount from "./pages/vendor/Account";
+import VendorRegister from "./pages/vendor/Register";
 import Login from "./pages/Login";
+import AdminLogin from "./pages/admin/Login";
 import ProductList from "./pages/ProductList";
 import ProductDetails from "./pages/ProductDetails";
 import Cart from "./pages/Cart";
@@ -43,17 +44,18 @@ const App = () => (
           <Route path="/checkout" element={<Checkout />} />
           <Route path="/payment" element={<Payment />} />
           <Route path="/orders" element={<Orders />} />
-          <Route path="/login" element={<Login />} />
           
-          {/* Vendor routes */}
-          <Route path="/vendor" element={<Index />} />
-          <Route path="/vendor/register" element={<Index />} />
+          {/* Producer routes */}
+          <Route path="/login" element={<Login />} />
+          <Route path="/vendor/products/new" element={<Index />} />
+          <Route path="/vendor/register" element={<VendorRegister />} />
           <Route path="/vendor/dashboard" element={<VendorDashboard />} />
           <Route path="/vendor/products" element={<VendorProducts />} />
           <Route path="/vendor/orders" element={<VendorOrders />} />
           <Route path="/vendor/account" element={<VendorAccount />} />
           
           {/* Admin routes */}
+          <Route path="/admin/login" element={<AdminLogin />} />
           <Route path="/admin/dashboard" element={<AdminDashboard />} />
           
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}

@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Link } from "react-router-dom";
 
@@ -41,7 +40,7 @@ const Footer: React.FC = () => {
           
           <div>
             <h3 className="font-semibold text-lg mb-4">Connect</h3>
-            <div className="flex space-x-4 mb-4">
+            <div className="flex space-x-4">
               <a href="#" className="text-gray-600 hover:text-cm-green">
                 <span className="sr-only">Facebook</span>
                 <svg className="h-6 w-6" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -61,15 +60,6 @@ const Footer: React.FC = () => {
                 </svg>
               </a>
             </div>
-            <form className="mt-4">
-              <p className="mb-2">Subscribe to our newsletter</p>
-              <div className="flex">
-                <input type="email" placeholder="Your email" className="px-4 py-2 border rounded-l-md focus:outline-none focus:ring-1 focus:ring-cm-green w-full" />
-                <button type="submit" className="bg-cm-green hover:bg-cm-forest text-white px-4 py-2 rounded-r-md">
-                  Subscribe
-                </button>
-              </div>
-            </form>
           </div>
         </div>
         

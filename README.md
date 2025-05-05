@@ -1,73 +1,98 @@
-# Welcome to your Lovable project
+# Cameroon Made Market Backend
 
-## Project info
+This is the backend service for the Cameroon Made Market platform, built with Rust and Actix Web.
 
-**URL**: https://lovable.dev/projects/2c6fcf6b-b02d-4e1a-a0bc-6ea7534e536e
+## Prerequisites
 
-## How can I edit this code?
+- Rust (latest stable version)
+- PostgreSQL 12 or later
+- SQLx CLI (for database migrations)
 
-There are several ways of editing your application.
+## Setup
 
-**Use Lovable**
-
-Simply visit the [Lovable Project](https://lovable.dev/projects/2c6fcf6b-b02d-4e1a-a0bc-6ea7534e536e) and start prompting.
-
-Changes made via Lovable will be committed automatically to this repo.
-
-**Use your preferred IDE**
-
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
-
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
-
-Follow these steps:
-
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
-
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
+1. Clone the repository:
+```bash
+git clone https://github.com/yourusername/cameroon-made-market.git
+cd cameroon-made-market
 ```
 
-**Edit a file directly in GitHub**
+2. Create a `.env` file in the root directory with the following variables:
+```env
+DATABASE_URL=postgres://postgres:postgres@localhost:5432/cameroon_made_market
+JWT_SECRET=your-secret-key-here
+JWT_EXPIRES_IN=24
+SERVER_PORT=8080
+SERVER_HOST=127.0.0.1
+CORS_ORIGINS=http://localhost:3000
+```
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+3. Create the database:
+```bash
+createdb cameroon_made_market
+```
 
-**Use GitHub Codespaces**
+4. Run database migrations:
+```bash
+sqlx migrate run
+```
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+5. Build and run the application:
+```bash
+cargo run
+```
 
-## What technologies are used for this project?
+## API Endpoints
 
-This project is built with:
+### User Management
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+- `POST /api/users` - Register a new user
+- `POST /api/users/login` - User login
+- `GET /api/users/me` - Get current user profile (requires authentication)
 
-## How can I deploy this project?
+## Development
 
-Simply open [Lovable](https://lovable.dev/projects/2c6fcf6b-b02d-4e1a-a0bc-6ea7534e536e) and click on Share -> Publish.
+### Running Tests
 
-## Can I connect a custom domain to my Lovable project?
+```bash
+cargo test
+```
 
-Yes, you can!
+### Database Migrations
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+To create a new migration:
+```bash
+sqlx migrate add <migration_name>
+```
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
+To run migrations:
+```bash
+sqlx migrate run
+```
+
+To revert the last migration:
+```bash
+sqlx migrate revert
+```
+
+## Project Structure
+
+```
+src/
+├── config.rs         # Configuration management
+├── db.rs            # Database connection setup
+├── handlers/        # Request handlers
+├── lib.rs           # Library entry point
+├── main.rs          # Application entry point
+├── middleware/      # Custom middleware
+├── models/          # Data models
+├── routes/          # Route definitions
+├── services/        # Business logic
+├── state.rs         # Application state
+└── utils/           # Utility functions
+
+migrations/          # Database migrations
+```
+
+## License
+
+This project is licensed under the MIT License - see the LICENSE file for details. 

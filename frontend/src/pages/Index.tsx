@@ -21,11 +21,10 @@ const Index: React.FC = () => {
             </p>
           </div>
           <div>
-            <Button variant="outline" className="mr-2">
-              Cancel
-            </Button>
-            <Button className="bg-cm-green hover:bg-cm-forest">
+            <Button type="submit" className="w-full bg-cm-green hover:bg-cm-forest">
+            <a href="/vendor/dashboard" className="hover:bg-cm-forest">
               View My Products
+            </a>
             </Button>
           </div>
         </div>
