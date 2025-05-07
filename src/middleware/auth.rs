@@ -1,79 +1,83 @@
 use axum::{
-    extract::{FromRequestParts, TypedHeader},
-    headers::{authorization::Bearer, Authorization},
-    http::{request::Parts, StatusCode},
-    response::{IntoResponse, Response},
-    RequestPartsExt,
+    extract::State,
+    http::{Request, StatusCode},
+    middleware::Next,
+    response::Response,
+    Json,
 };
-use jsonwebtoken::{decode, DecodingKey, Validation};
+use jsonwebtoken::{decode, encode, DecodingKey, EncodingKey, Header, Validation};
 use serde::{Deserialize, Serialize};
-use uuid::Uuid;
-
+use std::time::{SystemTime, UNIX_EPOCH};
 use crate::{
-    state::AppState,
+    config::Config,
     models::user::UserRole,
-    AppError,
+    AppState,
+    ApiResponse,
 };
 
+/// JWT claims structure
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Claims {
-    pub sub: Uuid,
-    pub role: UserRole,
+    pub sub: String,
     pub exp: usize,
+    pub role: UserRole,
 }
 
+/// Authenticated user structure
 #[derive(Debug, Clone)]
 pub struct AuthUser {
-    pub user_id: Uuid,
+    pub id: String,
     pub role: UserRole,
 }
 
-#[axum::async_trait]
-impl<S> FromRequestParts<S> for AuthUser
-where
-    S: Send + Sync,
-{
-    type Rejection = Response;
+/// Middleware to validate JWT token
+pub async fn auth<B>(
+    State(state): State<AppState>,
+    mut req: Request<B>,
+    next: Next<B>,
+) -> Result<Response, StatusCode> {
+    let token = req
+        .headers()
+        .get("Authorization")
+        .and_then(|auth_header| auth_header.to_str().ok())
+        .and_then(|str| str.strip_prefix("Bearer "))
+        .ok_or(StatusCode::UNAUTHORIZED)?;
 
-    async fn from_request_parts(parts: &mut Parts, state: &S) -> Result<Self, Self::Rejection> {
-        let TypedHeader(Authorization(bearer)) = parts
-            .extract::<TypedHeader<Authorization<Bearer>>>()
-            .await
-            .map_err(|_| {
-                (
-                    StatusCode::UNAUTHORIZED,
-                    Json(crate::ApiResponse::<()>::error("Missing or invalid token")),
-                )
-                    .into_response()
-            })?;
-
-        let state = parts
-            .extensions
-            .get::<AppState>()
-            .ok_or_else(|| {
-                (
-                    StatusCode::INTERNAL_SERVER_ERROR,
-                    Json(crate::ApiResponse::<()>::error("Internal server error")),
-                )
-                    .into_response()
-            })?;
-
-        let claims = decode::<Claims>(
-            bearer.token(),
-            &DecodingKey::from_secret(state.config.jwt_secret.as_bytes()),
-            &Validation::default(),
-        )
-        .map_err(|_| {
-            (
-                StatusCode::UNAUTHORIZED,
-                Json(crate::ApiResponse::<()>::error("Invalid token")),
-            )
-                .into_response()
-        })?;
-
-        Ok(AuthUser {
-            user_id: claims.claims.sub,
-            role: claims.claims.role,
-        })
+    match decode::<Claims>(
+        token,
+        &DecodingKey::from_secret(state.config.jwt_secret.as_bytes()),
+        &Validation::default(),
+    ) {
+        Ok(claims) => {
+            req.extensions_mut().insert(AuthUser {
+                id: claims.claims.sub,
+                role: claims.claims.role,
+            });
+            Ok(next.run(req).await)
+        }
+        Err(_) => {
+            Ok(Json(ApiResponse::<()>::error("Invalid token")).into_response())
+        }
     }
+}
+
+/// Generate JWT token for a user
+pub fn generate_token(user_id: &str, role: UserRole, config: &Config) -> Result<String, StatusCode> {
+    let now = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .unwrap()
+        .as_secs() as usize;
+
+    let claims = Claims {
+        sub: user_id.to_string(),
+        exp: now + (24 * 60 * 60), // 24 hours
+        role,
+    };
+
+    encode(
+        &Header::default(),
+        &claims,
+        &EncodingKey::from_secret(config.jwt_secret.as_bytes()),
+    )
+    .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)
 } 

@@ -43,7 +43,7 @@ impl UserService {
         .await?;
 
         Ok(user.into())
-    }
+    } 
 
     pub async fn login(&self, email: String, password: String) -> Result<(UserResponse, String), AppError> {
         let user = user::Entity::find()

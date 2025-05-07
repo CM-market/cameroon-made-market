@@ -1,4 +1,5 @@
 use std::sync::Arc;
+use sea_orm::sqlx;
 use sqlx::PgPool;
 use crate::config::Config;
 

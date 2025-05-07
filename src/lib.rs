@@ -7,12 +7,13 @@ pub mod routes;
 pub mod services;
 pub mod state;
 pub mod utils;
-
+pub mod responses;
 use axum::{
     http::StatusCode,
     response::{IntoResponse, Response},
     Json,
 };
+use sea_orm::sqlx;
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
 

@@ -1,3 +1,4 @@
+use sea_orm::sqlx;
 use sqlx::postgres::PgPoolOptions;
 use sqlx::PgPool;
 
