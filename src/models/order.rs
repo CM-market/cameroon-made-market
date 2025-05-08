@@ -1,8 +1,10 @@
+use chrono::{DateTime, Utc};
+use rust_decimal::Decimal;
 use sea_orm::entity::prelude::*;
 use serde::{Deserialize, Serialize};
-use chrono::{DateTime, Utc};
 use uuid::Uuid;
-use rust_decimal::Decimal;
+
+use super::order_item::{self, OrderItem};
 
 /// Order model representing customer purchases in the marketplace
 /// This model tracks the entire order lifecycle from creation to completion
@@ -26,11 +28,8 @@ pub struct Model {
     /// Current status of the order
     #[sea_orm(column_type = "Text")]
     pub status: String,
-    /// User ID of the customer who placed the order
-    #[sea_orm(column_type = "Uuid", nullable)]
-    pub user_id: Option<Uuid>,
     /// Total amount of the order including all items and fees
-    pub total: Option<Decimal>,
+    pub total: Decimal,
     /// Timestamp when the order was created
     pub created_at: DateTime<Utc>,
 }
@@ -78,7 +77,7 @@ pub enum Relation {
     /// If the user is deleted, the order remains but user_id becomes null
     #[sea_orm(
         belongs_to = "super::user::Entity",
-        from = "Column::UserId",
+        from = "Column::SessionId",
         to = "super::user::Column::Id",
         on_update = "NoAction",
         on_delete = "SetNull"
@@ -112,6 +111,28 @@ impl Related<super::payment::Entity> for Entity {
         Relation::Payment.def()
     }
 }
+#[derive(Serialize, Deserialize)]
+pub struct CreateOrder {
+    /// Unique identifier for the order
+    pub id: Uuid,
+    /// Session identifier for guest checkout orders
+    pub session_id: String,
+    /// Name of the customer placing the order
+    pub customer_name: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    /// Email address of the customer
+    pub customer_email: Option<String>,
+    /// Phone number of the customer
+    pub customer_phone: String,
+    /// Delivery address for the order
+    pub delivery_address: String,
+    /// Current status of the ord
+    pub status: String,
+    /// Total amount of the order including all items and fees
+    pub total: Decimal,
+    /// Timestamp when the order was created
+    pub created_at: DateTime<Utc>,
+}
 
 /// Implements default behavior for active model operations
-impl ActiveModelBehavior for ActiveModel {} 
+impl ActiveModelBehavior for ActiveModel {}

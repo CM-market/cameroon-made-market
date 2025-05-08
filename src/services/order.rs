@@ -3,10 +3,9 @@ use sea_orm::{
 };
 use uuid::Uuid;
 
-use crate::{
-    entities::order::{self, CreateOrder, UpdateOrder, OrderResponse, OrderItemResponse},
-    AppError,
-};
+use crate::models::order::{self, CreateOrder};
+
+use super::errors::ServiceError;
 
 pub struct OrderService {
     db: DatabaseConnection,
@@ -17,11 +16,10 @@ impl OrderService {
         Self { db }
     }
 
-    pub async fn create_order(&self, order_data: CreateOrder) -> Result<OrderResponse, AppError> {
+    pub async fn create_order(&self, order_data: CreateOrder) -> Result<order::Model, ServiceError> {
         let order = order::ActiveModel {
             id: Set(Uuid::new_v4()),
             session_id: Set(order_data.session_id),
-            user_id: Set(order_data.user_id),
             customer_name: Set(order_data.customer_name),
             customer_email: Set(order_data.customer_email),
             customer_phone: Set(order_data.customer_phone),
@@ -35,7 +33,7 @@ impl OrderService {
 
         // Create order items
         for item in order_data.items {
-            order::order_item::ActiveModel {
+            order::item::ActiveModel {
                 id: Set(Uuid::new_v4()),
                 order_id: Set(order.id),
                 product_id: Set(item.product_id),
@@ -49,7 +47,7 @@ impl OrderService {
         Ok(order.into())
     }
 
-    pub async fn get_order_by_id(&self, order_id: Uuid) -> Result<OrderResponse, AppError> {
+    pub async fn get_order_by_id(&self, order_id: Uuid) -> Result<OrderResponse, ServiceError> {
         let order = order::Entity::find_by_id(order_id)
             .one(&self.db)
             .await?

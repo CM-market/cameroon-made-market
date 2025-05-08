@@ -140,13 +140,12 @@ impl CartService {
 mod tests {
     use super::*;
     use mockall::predicate::*;
-    use sea_orm::MockDatabase;
-    
+    use sea_orm::{MockDatabase, MockExecResult};
 
     #[tokio::test]
     async fn test_get_or_create_cart() {
         let db = MockDatabase::new(sea_orm::DatabaseBackend::Postgres)
-            .append_query_results(vec![vec![]]) // Empty result for initial search
+            // .append_query_results(vec![vec![]]) // Empty result for initial search
             .append_query_results(vec![vec![cart::Model {
                 id: Uuid::new_v4(),
                 session_id: Uuid::parse_str("test_session").unwrap(),
@@ -168,7 +167,7 @@ mod tests {
         let cart_id = Uuid::new_v4();
         let product_id = Uuid::new_v4();
         let db = MockDatabase::new(sea_orm::DatabaseBackend::Postgres)
-            .append_query_results(vec![vec![]]) // Empty result for existing item check
+            .append_query_results::<Model, _, _>(vec![vec![]]) // Empty result for existing item check
             .append_query_results(vec![vec![cart_item::Model {
                 id: Uuid::new_v4(),
                 cart_id,
@@ -236,7 +235,7 @@ mod tests {
                 product_id,
                 quantity: 1,
             }]])
-            .append_exec_results(vec![1]) // Simulate successful deletion
+            .append_exec_results(vec![]) // Simulate successful deletion
             .into_connection();
 
         let service = CartService::new(db);
@@ -264,17 +263,21 @@ mod tests {
 
         let result = service.get_cart(cart_id).await;
         assert!(result.is_ok());
-
+            
         let cart_response = result.unwrap();
-        assert_eq!(cart_response.unwrap().id, cart_id);
-        assert_eq!(cart_response.unwrap().session_id.to_string(), "test_session");
+        let cart_response = cart_response.unwrap();
+        assert_eq!(cart_response.id, cart_id);
+        assert_eq!(
+            cart_response.session_id.to_string(),
+            "test_session"
+        );
     }
 
     #[tokio::test]
     async fn test_clear_cart() {
         let cart_id = Uuid::new_v4();
         let db = MockDatabase::new(sea_orm::DatabaseBackend::Postgres)
-            .append_exec_results(vec![1]) // Simulate successful deletion
+            .append_exec_results(vec![]) // Simulate successful deletion
             .into_connection();
 
         let service = CartService::new(db);

@@ -59,7 +59,20 @@ impl Related<super::product::Entity> for Entity {
     fn to() -> RelationDef {
         Relation::Product.def()
     }
+
 }
 
+pub struct OrderItem {
+    /// Unique identifier for the order item
+    pub id: Uuid,
+    /// Reference to the parent order
+    pub order_id: Uuid,
+    /// Reference to the product being ordered
+    pub product_id: Uuid,
+    /// Quantity of the product ordered
+    pub quantity: i32,
+    /// Price of the product at the time of order
+    pub price: Decimal,
+}
 /// Implements default behavior for active model operations
 impl ActiveModelBehavior for ActiveModel {}
