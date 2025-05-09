@@ -132,6 +132,13 @@ pub struct CreateOrder {
     pub total: Decimal,
     /// Timestamp when the order was created
     pub created_at: DateTime<Utc>,
+    pub items: Vec<Items>,
+}
+#[derive(Serialize, Deserialize)]
+pub struct Items{
+   pub product_id: Uuid,
+   pub quantity: i32,
+   pub price: Decimal,
 }
 
 /// Implements default behavior for active model operations

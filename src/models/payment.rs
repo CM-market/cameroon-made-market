@@ -16,8 +16,6 @@ pub struct Model {
     pub order_id: Uuid,
     /// Amount of the payment
     pub amount: Decimal,
-    /// Currency of the payment (e.g., "USD", "EUR", "XAF")
-    pub currency: String,
     /// Current status of the payment (e.g., "pending", "completed", "failed", "refunded")
     pub status: String,
     /// Method used for payment (e.g., "credit_card", "mobile_money", "bank_transfer")

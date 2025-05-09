@@ -3,7 +3,10 @@ use sea_orm::{
 };
 use uuid::Uuid;
 
-use crate::models::order::{self, CreateOrder};
+use crate::models::{
+    order::{self, CreateOrder, Model, Status},
+    order_item,
+};
 
 use super::errors::ServiceError;
 
@@ -16,7 +19,10 @@ impl OrderService {
         Self { db }
     }
 
-    pub async fn create_order(&self, order_data: CreateOrder) -> Result<order::Model, ServiceError> {
+    pub async fn create_order(
+        &self,
+        order_data: CreateOrder,
+    ) -> Result<order::Model, ServiceError> {
         let order = order::ActiveModel {
             id: Set(Uuid::new_v4()),
             session_id: Set(order_data.session_id),
@@ -33,7 +39,7 @@ impl OrderService {
 
         // Create order items
         for item in order_data.items {
-            order::item::ActiveModel {
+            order_item::ActiveModel {
                 id: Set(Uuid::new_v4()),
                 order_id: Set(order.id),
                 product_id: Set(item.product_id),
@@ -47,44 +53,50 @@ impl OrderService {
         Ok(order.into())
     }
 
-    pub async fn get_order_by_id(&self, order_id: Uuid) -> Result<OrderResponse, ServiceError> {
+    pub async fn get_order_by_id(
+        &self,
+        order_id: Uuid,
+    ) -> Result<Option<order::Model>, ServiceError> {
         let order = order::Entity::find_by_id(order_id)
             .one(&self.db)
-            .await?
-            .ok_or_else(|| AppError::NotFoundError("Order not found".into()))?;
+            .await
+            .map_err(|e| ServiceError::NotFound(e.to_string()))?;
 
-        Ok(order.into())
+        Ok(order)
     }
 
     pub async fn update_order_status(
         &self,
         order_id: Uuid,
-        status: String,
-    ) -> Result<OrderResponse, AppError> {
+        status: Status,
+    ) -> Result<Model, ServiceError> {
         let order = order::Entity::find_by_id(order_id)
             .one(&self.db)
-            .await?
-            .ok_or_else(|| AppError::NotFoundError("Order not found".into()))?;
+            .await
+            .map_err(|e| ServiceError::NotFound(e.to_string()))?;
+        if let Some(order) = order {
+            let mut active_model: order::ActiveModel = order.into();
+            active_model.status = Set(status.into());
+            let updated_order = active_model.update(&self.db).await?;
 
-        let mut active_model: order::ActiveModel = order.into();
-        active_model.status = Set(status);
-        let updated_order = active_model.update(&self.db).await?;
-
-        Ok(updated_order.into())
+            Ok(updated_order.into())
+        } else {
+            return Err(ServiceError::NotFound("Order not found".to_string()));
+        }
     }
-
+    /// List orders with optional filters by session ID or status
     pub async fn list_orders(
         &self,
-        user_id: Option<Uuid>,
-        status: Option<String>,
-    ) -> Result<Vec<OrderResponse>, AppError> {
+        session_id: Option<Uuid>,
+        status: Option<Status>,
+    ) -> Result<Vec<Model>, ServiceError> {
         let mut query = order::Entity::find();
 
-        if let Some(user_id) = user_id {
-            query = query.filter(order::Column::UserId.eq(user_id));
+        if let Some(session_id) = session_id {
+            query = query.filter(order::Column::SessionId.eq(session_id));
         }
         if let Some(status) = status {
-            query = query.filter(order::Column::Status.eq(status));
+            query = query.filter(order::Column::Status.eq::<String>(status.into()));
         }
 
         let orders = query
@@ -92,29 +104,30 @@ impl OrderService {
             .all(&self.db)
             .await?;
 
-        Ok(orders.into_iter().map(OrderResponse::from).collect())
+        Ok(orders)
     }
 
-    pub async fn get_order_items(&self, order_id: Uuid) -> Result<Vec<OrderItemResponse>, AppError> {
-        let items = order::order_item::Entity::find()
-            .filter(order::order_item::Column::OrderId.eq(order_id))
+    pub async fn get_order_items(
+        &self,
+        order_id: Uuid,
+    ) -> Result<Vec<order_item::Model>, ServiceError> {
+        let items = order_item::Entity::find()
+            .filter(order_item::Column::OrderId.eq(order_id))
             .all(&self.db)
             .await?;
 
-        Ok(items.into_iter().map(OrderItemResponse::from).collect())
+        Ok(items)
     }
 
-    pub async fn delete_order(&self, order_id: Uuid) -> Result<(), AppError> {
+    pub async fn delete_order(&self, order_id: Uuid) -> Result<(), ServiceError> {
         // Delete order items first
-        order::order_item::Entity::delete_many()
-            .filter(order::order_item::Column::OrderId.eq(order_id))
+        order_item::Entity::delete_many()
+            .filter(order_item::Column::OrderId.eq(order_id))
             .exec(&self.db)
             .await?;
 
         // Then delete the order
-        order::Entity::delete_by_id(order_id)
-            .exec(&self.db)
-            .await?;
+        order::Entity::delete_by_id(order_id).exec(&self.db).await?;
 
         Ok(())
     }
@@ -124,9 +137,9 @@ impl OrderService {
 mod tests {
     use super::*;
     use mockall::predicate::*;
+    use rust_decimal::Decimal;
     use sea_orm::MockDatabase;
     use test_log;
-    use rust_decimal::Decimal;
 
     #[tokio::test]
     async fn test_create_order() {
@@ -134,17 +147,16 @@ mod tests {
         let db = MockDatabase::new(sea_orm::DatabaseBackend::Postgres)
             .append_query_results(vec![vec![order::Model {
                 id: Uuid::new_v4(),
-                session_id: Some("test_session".to_string()),
-                user_id: Some(user_id),
+                session_id: "test_session".to_string(),
                 customer_name: "Test Customer".to_string(),
                 customer_email: Some("test@example.com".to_string()),
-                customer_phone: Some("1234567890".to_string()),
-                delivery_address: Some("Test Address".to_string()),
+                customer_phone: "1234567890".to_string(),
+                delivery_address: "Test Address".to_string(),
                 status: "pending".to_string(),
-                total: Some(Decimal::new(10000, 2)), // 100.00
+                total: Decimal::new(10000, 2), // 100.00
                 created_at: chrono::Utc::now(),
             }]])
-            .append_query_results(vec![vec![order::order_item::Model {
+            .append_query_results(vec![vec![order_item::Model {
                 id: Uuid::new_v4(),
                 order_id: Uuid::new_v4(),
                 product_id: Uuid::new_v4(),
@@ -156,15 +168,16 @@ mod tests {
         let service = OrderService::new(db);
 
         let order_data = CreateOrder {
-            session_id: Some("test_session".to_string()),
-            user_id: Some(user_id),
+            id: Uuid::new_v4(),
+            created_at: chrono::Utc::now(),
+            session_id: "test_session".to_string(),
             customer_name: "Test Customer".to_string(),
             customer_email: Some("test@example.com".to_string()),
-            customer_phone: Some("1234567890".to_string()),
-            delivery_address: Some("Test Address".to_string()),
+            customer_phone: "1234567890".to_string(),
+            delivery_address: "Test Address".to_string(),
             status: "pending".to_string(),
-            total: Some(Decimal::new(10000, 2)),
-            items: vec![order::CreateOrderItem {
+            total: Decimal::new(10000, 2),
+            items: vec![order::Items {
                 product_id: Uuid::new_v4(),
                 quantity: 2,
                 price: Decimal::new(5000, 2),
@@ -177,24 +190,22 @@ mod tests {
         let order_response = result.unwrap();
         assert_eq!(order_response.customer_name, "Test Customer");
         assert_eq!(order_response.status, "pending");
-        assert_eq!(order_response.total, Some(Decimal::new(10000, 2)));
+        assert_eq!(order_response.total, Decimal::new(10000, 2));
     }
 
     #[tokio::test]
     async fn test_get_order_by_id() {
         let order_id = Uuid::new_v4();
-        let user_id = Uuid::new_v4();
         let db = MockDatabase::new(sea_orm::DatabaseBackend::Postgres)
             .append_query_results(vec![vec![order::Model {
                 id: order_id,
-                session_id: Some("test_session".to_string()),
-                user_id: Some(user_id),
+                session_id: "test_session".to_string(),
                 customer_name: "Test Customer".to_string(),
                 customer_email: Some("test@example.com".to_string()),
-                customer_phone: Some("1234567890".to_string()),
-                delivery_address: Some("Test Address".to_string()),
+                customer_phone: "1234567890".to_string(),
+                delivery_address: "Test Address".to_string(),
                 status: "pending".to_string(),
-                total: Some(Decimal::new(10000, 2)),
+                total: Decimal::new(10000, 2),
                 created_at: chrono::Utc::now(),
             }]])
             .into_connection();
@@ -205,6 +216,7 @@ mod tests {
         assert!(result.is_ok());
 
         let order_response = result.unwrap();
+        let order_response = order_response.unwrap();
         assert_eq!(order_response.id, order_id);
         assert_eq!(order_response.status, "pending");
     }
@@ -216,33 +228,33 @@ mod tests {
         let db = MockDatabase::new(sea_orm::DatabaseBackend::Postgres)
             .append_query_results(vec![vec![order::Model {
                 id: order_id,
-                session_id: Some("test_session".to_string()),
-                user_id: Some(user_id),
+                session_id: "test_session".to_string(),
                 customer_name: "Test Customer".to_string(),
                 customer_email: Some("test@example.com".to_string()),
-                customer_phone: Some("1234567890".to_string()),
-                delivery_address: Some("Test Address".to_string()),
+                customer_phone: "1234567890".to_string(),
+                delivery_address: "Test Address".to_string(),
                 status: "pending".to_string(),
-                total: Some(Decimal::new(10000, 2)),
+                total: Decimal::new(10000, 2),
                 created_at: chrono::Utc::now(),
             }]])
             .append_query_results(vec![vec![order::Model {
                 id: order_id,
-                session_id: Some("test_session".to_string()),
-                user_id: Some(user_id),
+                session_id: "test_session".to_string(),
                 customer_name: "Test Customer".to_string(),
                 customer_email: Some("test@example.com".to_string()),
-                customer_phone: Some("1234567890".to_string()),
-                delivery_address: Some("Test Address".to_string()),
+                customer_phone: "1234567890".to_string(),
+                delivery_address: "Test Address".to_string(),
                 status: "completed".to_string(),
-                total: Some(Decimal::new(10000, 2)),
+                total: Decimal::new(10000, 2),
                 created_at: chrono::Utc::now(),
             }]])
             .into_connection();
 
         let service = OrderService::new(db);
 
-        let result = service.update_order_status(order_id, "completed".to_string()).await;
+        let result = service
+            .update_order_status(order_id, Status::Delivered)
+            .await;
         assert!(result.is_ok());
 
         let order_response = result.unwrap();
@@ -256,26 +268,24 @@ mod tests {
             .append_query_results(vec![vec![
                 order::Model {
                     id: Uuid::new_v4(),
-                    session_id: Some("session1".to_string()),
-                    user_id: Some(user_id),
+                    session_id: "session1".to_string(),
                     customer_name: "Customer 1".to_string(),
                     customer_email: Some("customer1@example.com".to_string()),
-                    customer_phone: Some("1234567890".to_string()),
-                    delivery_address: Some("Address 1".to_string()),
+                    customer_phone: "1234567890".to_string(),
+                    delivery_address: "Address 1".to_string(),
                     status: "pending".to_string(),
-                    total: Some(Decimal::new(10000, 2)),
+                    total: Decimal::new(10000, 2),
                     created_at: chrono::Utc::now(),
                 },
                 order::Model {
                     id: Uuid::new_v4(),
-                    session_id: Some("session2".to_string()),
-                    user_id: Some(user_id),
+                    session_id: "session2".to_string(),
                     customer_name: "Customer 2".to_string(),
                     customer_email: Some("customer2@example.com".to_string()),
-                    customer_phone: Some("0987654321".to_string()),
-                    delivery_address: Some("Address 2".to_string()),
+                    customer_phone: "0987654321".to_string(),
+                    delivery_address: "Address 2".to_string(),
                     status: "completed".to_string(),
-                    total: Some(Decimal::new(20000, 2)),
+                    total: Decimal::new(20000, 2),
                     created_at: chrono::Utc::now(),
                 },
             ]])
@@ -297,14 +307,14 @@ mod tests {
         let order_id = Uuid::new_v4();
         let db = MockDatabase::new(sea_orm::DatabaseBackend::Postgres)
             .append_query_results(vec![vec![
-                order::order_item::Model {
+                order_item::Model {
                     id: Uuid::new_v4(),
                     order_id,
                     product_id: Uuid::new_v4(),
                     quantity: 2,
                     price: Decimal::new(5000, 2),
                 },
-                order::order_item::Model {
+                order_item::Model {
                     id: Uuid::new_v4(),
                     order_id,
                     product_id: Uuid::new_v4(),
@@ -329,8 +339,8 @@ mod tests {
     async fn test_delete_order() {
         let order_id = Uuid::new_v4();
         let db = MockDatabase::new(sea_orm::DatabaseBackend::Postgres)
-            .append_exec_results(vec![1])  // Simulate successful deletion of order items
-            .append_exec_results(vec![1])  // Simulate successful deletion of order
+            .append_exec_results(vec![]) // Simulate successful deletion of order items
+            .append_exec_results(vec![]) // Simulate successful deletion of order
             .into_connection();
 
         let service = OrderService::new(db);
@@ -338,4 +348,4 @@ mod tests {
         let result = service.delete_order(order_id).await;
         assert!(result.is_ok());
     }
-} 
+}

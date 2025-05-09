@@ -14,6 +14,12 @@ pub enum ServiceError {
     Forbidden(String),
     #[error("Internal Server Error: {0}")]
     InternalServerError(String),
+    #[error("Error: {0}")]
+    GenericError(String),
+    #[error("User not found: {0}")]
+    UserNotFound(String),
+    #[error("Invalid password")]
+    InvalidPassword,
 }
 
 impl From<sea_orm::DbErr> for ServiceError {

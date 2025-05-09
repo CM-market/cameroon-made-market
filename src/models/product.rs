@@ -23,8 +23,6 @@ pub struct Model {
     pub price: Decimal,
     /// Category the product belongs to (e.g., "Electronics", "Clothing")
     pub category: Option<String>,
-    /// Flag indicating if the product is certified by the platform
-    pub certified: bool,
     /// List of URLs to product images
     pub image_urls: Vec<String>,
     /// Timestamp when the product was created

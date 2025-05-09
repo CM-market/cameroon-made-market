@@ -9,8 +9,8 @@ use uuid::Uuid;
 pub enum UserRole {
     #[sea_orm(string_value = "Admin")]
     Admin,
-    #[sea_orm(string_value = "User")]
-    User,
+    #[sea_orm(string_value = "Vendor")]
+    Vendor,
 
 }
 
@@ -23,8 +23,7 @@ pub struct Model {
     pub email: Option<String>,
     pub password_hash: String,
     pub role: UserRole,
-    pub first_name: String,
-    pub last_name: String,
+    pub full_name: String,
     pub phone: u8,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
