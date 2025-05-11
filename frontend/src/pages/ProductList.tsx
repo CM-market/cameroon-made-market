@@ -16,6 +16,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useNavigate } from "react-router-dom";
 import { toast } from "@/hooks/use-toast";
+import { productApi, Product } from "@/lib/api";
 
 // Type definition for cart items
 interface CartItem {
@@ -27,20 +28,15 @@ interface CartItem {
   image: string;
 }
 
-// Sample product data - in a real app this would come from an API
-const sampleProducts = Array(12).fill(null).map((_, index) => ({
-  id: `product-${index + 1}`,
-  name: `Cameroon ${index % 3 === 0 ? 'Handmade Basket' : index % 3 === 1 ? 'Coffee Beans' : 'Traditional Fabric'}`,
-  price: Math.floor(Math.random() * 20000) + 5000,
-  category: index % 3 === 0 ? 'Crafts' : index % 3 === 1 ? 'Food' : 'Textiles',
-  image: '/placeholder.svg',
-}));
-
 const ProductList: React.FC = () => {
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [priceRange, setPriceRange] = useState<number[]>([5000, 25000]);
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [showCart, setShowCart] = useState(false);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const navigate = useNavigate();
 
   // Load cart from localStorage on initial render
@@ -63,34 +59,51 @@ const ProductList: React.FC = () => {
     localStorage.setItem('cartItems', JSON.stringify(cartItems));
   }, [cartItems]);
 
-  const handleAddToCart = (productId: string, productName: string, productPrice: number, productCategory: string, productImage: string) => {
-    const existingItem = cartItems.find(item => item.id === productId);
+  // Fetch products
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        setLoading(true);
+        const data = await productApi.list(selectedCategory || undefined);
+        setProducts(data);
+        setError(null);
+      } catch (err) {
+        setError('Failed to fetch products');
+        console.error('Error fetching products:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProducts();
+  }, [selectedCategory]);
+
+  const handleAddToCart = (product: Product) => {
+    const existingItem = cartItems.find(item => item.id === product.id);
     
     if (existingItem) {
-      // If item exists, increase quantity
       setCartItems(prevItems =>
         prevItems.map(item =>
-          item.id === productId ? { ...item, quantity: item.quantity + 1 } : item
+          item.id === product.id ? { ...item, quantity: item.quantity + 1 } : item
         )
       );
     } else {
-      // If item doesn't exist, add new item
       setCartItems(prevItems => [
         ...prevItems,
         {
-          id: productId,
-          name: productName,
-          price: productPrice,
+          id: product.id,
+          name: product.title,
+          price: Number(product.price),
           quantity: 1,
-          category: productCategory,
-          image: productImage
+          category: product.category || 'Uncategorized',
+          image: product.image_urls[0] || '/placeholder.svg'
         }
       ]);
     }
     
     toast({
       title: "Added to Cart",
-      description: `${productName} has been added to your cart.`
+      description: `${product.title} has been added to your cart.`
     });
   };
 
@@ -114,6 +127,46 @@ const ProductList: React.FC = () => {
   const totalCartItems = cartItems.reduce((sum, item) => sum + item.quantity, 0);
   const totalCartPrice = cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
 
+  const filteredProducts = products.filter(product => {
+    const price = Number(product.price);
+    return price >= priceRange[0] && price <= priceRange[1];
+  });
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background flex flex-col">
+        <MainNavbar />
+        <div className="container mx-auto px-4 py-8 flex-grow flex items-center justify-center">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-cm-green mx-auto"></div>
+            <p className="mt-4 text-lg">Loading products...</p>
+          </div>
+        </div>
+        <Footer />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-background flex flex-col">
+        <MainNavbar />
+        <div className="container mx-auto px-4 py-8 flex-grow flex items-center justify-center">
+          <div className="text-center">
+            <p className="text-red-500 text-lg">{error}</p>
+            <Button 
+              className="mt-4 bg-cm-green hover:bg-cm-forest"
+              onClick={() => window.location.reload()}
+            >
+              Try Again
+            </Button>
+          </div>
+        </div>
+        <Footer />
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-background flex flex-col">
       <MainNavbar />
@@ -132,7 +185,13 @@ const ProductList: React.FC = () => {
                     <div className="space-y-2">
                       {['All', 'Crafts', 'Food', 'Textiles', 'Art', 'Jewelry'].map((category) => (
                         <div key={category} className="flex items-center">
-                          <input type="checkbox" id={category} className="mr-2" />
+                          <input 
+                            type="checkbox" 
+                            id={category} 
+                            className="mr-2"
+                            checked={selectedCategory === category}
+                            onChange={() => setSelectedCategory(category === 'All' ? null : category)}
+                          />
                           <label htmlFor={category} className="text-sm">{category}</label>
                         </div>
                       ))}
@@ -175,10 +234,6 @@ const ProductList: React.FC = () => {
                       </SelectContent>
                     </Select>
                   </div>
-                  
-                  <Button className="w-full bg-cm-green hover:bg-cm-forest">
-                    Apply Filters
-                  </Button>
                 </div>
               </CardContent>
             </Card>
@@ -198,100 +253,73 @@ const ProductList: React.FC = () => {
                     </div>
                     
                     <div className="mt-4 space-y-2">
-                      <Button 
-                        className="w-full bg-cm-green hover:bg-cm-forest"
-                        onClick={() => navigate('/cart')}
-                      >
-                        View Cart
-                      </Button>
-                      <Button 
-                        variant="outline" 
-                        className="w-full"
-                        onClick={() => setShowCart(!showCart)}
-                      >
-                        {showCart ? 'Hide Cart Items' : 'Show Cart Items'}
-                      </Button>
+                      {cartItems.map((item) => (
+                        <div key={item.id} className="flex items-center justify-between">
+                          <div className="flex items-center space-x-2">
+                            <img 
+                              src={item.image} 
+                              alt={item.name} 
+                              className="w-10 h-10 object-cover rounded"
+                            />
+                            <div>
+                              <p className="text-sm font-medium">{item.name}</p>
+                              <p className="text-xs text-gray-500">{item.price.toLocaleString()} FCFA</p>
+                            </div>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => handleUpdateQuantity(item.id, item.quantity - 1)}
+                            >
+                              <Minus className="h-4 w-4" />
+                            </Button>
+                            <span className="w-8 text-center">{item.quantity}</span>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => handleUpdateQuantity(item.id, item.quantity + 1)}
+                            >
+                              <Plus className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => handleRemoveFromCart(item.id)}
+                            >
+                              <X className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </div>
+                      ))}
                     </div>
+                    
+                    <Button 
+                      className="w-full mt-4 bg-cm-green hover:bg-cm-forest"
+                      onClick={() => navigate('/checkout')}
+                    >
+                      Proceed to Checkout
+                    </Button>
                   </>
-                )}
-                
-                {showCart && totalCartItems > 0 && (
-                  <div className="mt-4 space-y-3 max-h-60 overflow-y-auto pr-2">
-                    {cartItems.map(item => (
-                      <div key={item.id} className="flex justify-between items-center border-b pb-2">
-                        <div className="flex items-center gap-2">
-                          <Button 
-                            variant="ghost" 
-                            size="icon" 
-                            className="h-6 w-6 p-0"
-                            onClick={() => handleUpdateQuantity(item.id, item.quantity - 1)}
-                          >
-                            <Minus size={12} />
-                          </Button>
-                          <span className="w-6 text-center">{item.quantity}</span>
-                          <Button 
-                            variant="ghost" 
-                            size="icon" 
-                            className="h-6 w-6 p-0"
-                            onClick={() => handleUpdateQuantity(item.id, item.quantity + 1)}
-                          >
-                            <Plus size={12} />
-                          </Button>
-                        </div>
-                        <div className="flex-1 mx-2 truncate">
-                          <div className="text-sm truncate">{item.name}</div>
-                          <div className="text-xs text-muted-foreground">{(item.price * item.quantity).toLocaleString()} FCFA</div>
-                        </div>
-                        <Button 
-                          variant="ghost" 
-                          size="icon" 
-                          className="h-6 w-6 p-0 text-red-500"
-                          onClick={() => handleRemoveFromCart(item.id)}
-                        >
-                          <X size={14} />
-                        </Button>
-                      </div>
-                    ))}
-                  </div>
-                )}
-                
-                {totalCartItems === 0 && (
-                  <div className="text-center py-4 text-muted-foreground">
-                    Your cart is empty
-                  </div>
                 )}
               </CardContent>
             </Card>
           </div>
           
-          {/* Products grid */}
-          <div className="flex-1">
-            {/* Toolbar */}
+          {/* Products grid/list */}
+          <div className="flex-grow">
             <div className="flex justify-between items-center mb-6">
               <h1 className="text-2xl font-bold">Products</h1>
-              
-              <div className="flex items-center gap-2">
-                <Select defaultValue="newest">
-                  <SelectTrigger className="w-[160px]">
-                    <SelectValue placeholder="Sort by" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="newest">Newest</SelectItem>
-                    <SelectItem value="price-low">Price: Low to High</SelectItem>
-                    <SelectItem value="price-high">Price: High to Low</SelectItem>
-                    <SelectItem value="rating">Highest Rating</SelectItem>
-                  </SelectContent>
-                </Select>
-                
-                <Button 
-                  variant={viewMode === 'grid' ? 'default' : 'outline'}
+              <div className="flex items-center space-x-2">
+                <Button
+                  variant={viewMode === 'grid' ? 'default' : 'ghost'}
                   size="icon"
                   onClick={() => setViewMode('grid')}
                 >
                   <Grid className="h-4 w-4" />
                 </Button>
-                <Button 
-                  variant={viewMode === 'list' ? 'default' : 'outline'} 
+                <Button
+                  variant={viewMode === 'list' ? 'default' : 'ghost'}
                   size="icon"
                   onClick={() => setViewMode('list')}
                 >
@@ -300,77 +328,38 @@ const ProductList: React.FC = () => {
               </div>
             </div>
             
-            {/* Products */}
-            <div className={viewMode === 'grid' 
-              ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6" 
-              : "space-y-4"
-            }>
-              {sampleProducts.map((product) => (
-                <Card 
-                  key={product.id} 
-                  className={`overflow-hidden transition-all ${
-                    viewMode === 'list' ? 'flex' : ''
-                  }`}
-                >
-                  <div 
-                    className={viewMode === 'list' ? 'w-1/3 cursor-pointer' : 'cursor-pointer'}
-                    onClick={() => navigate(`/product/${product.id}`)}
-                  >
-                    <div className={`bg-gray-100 ${viewMode === 'grid' ? 'aspect-square' : 'h-full'}`}>
+            {filteredProducts.length === 0 ? (
+              <div className="text-center py-12">
+                <p className="text-lg text-gray-500">No products found matching your criteria.</p>
+              </div>
+            ) : (
+              <div className={viewMode === 'grid' ? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6' : 'space-y-6'}>
+                {filteredProducts.map((product) => (
+                  <Card key={product.id} className={viewMode === 'list' ? 'flex' : ''}>
+                    <div className={viewMode === 'list' ? 'w-48' : 'w-full'}>
                       <img
-                        src={product.image}
-                        alt={product.name}
-                        className="w-full h-full object-cover"
+                        src={product.image_urls[0] || '/placeholder.svg'}
+                        alt={product.title}
+                        className="w-full h-48 object-cover"
                       />
                     </div>
-                  </div>
-                  
-                  <div className={viewMode === 'list' ? 'w-2/3' : ''}>
-                    <CardContent className="p-4">
-                      <Badge variant="outline" className="mb-2 bg-cm-sand bg-opacity-30">
-                        {product.category}
-                      </Badge>
-                      <h3 
-                        className="font-semibold mb-1 cursor-pointer hover:text-cm-green" 
-                        onClick={() => navigate(`/product/${product.id}`)}
-                      >
-                        {product.name}
-                      </h3>
-                      <p className="text-cm-green font-bold">{product.price} FCFA</p>
+                    <CardContent className={viewMode === 'list' ? 'flex-grow p-6' : 'p-6'}>
+                      <h3 className="text-lg font-semibold mb-2">{product.title}</h3>
+                      <p className="text-gray-500 mb-4 line-clamp-2">{product.description}</p>
+                      <div className="flex justify-between items-center">
+                        <span className="text-lg font-bold">{Number(product.price).toLocaleString()} FCFA</span>
+                        <Button
+                          className="bg-cm-green hover:bg-cm-forest"
+                          onClick={() => handleAddToCart(product)}
+                        >
+                          Add to Cart
+                        </Button>
+                      </div>
                     </CardContent>
-                    
-                    <CardFooter className="flex justify-between p-4 pt-0">
-                      <Button 
-                        variant="outline" 
-                        size="sm"
-                        onClick={() => navigate(`/product/${product.id}`)}
-                      >
-                        View Details
-                      </Button>
-                      <Button 
-                        size="sm" 
-                        className="bg-cm-green hover:bg-cm-forest"
-                        onClick={() => handleAddToCart(product.id, product.name, product.price, product.category, product.image)}
-                      >
-                        <ShoppingCart size={16} className="mr-1" />
-                        Add to Cart
-                      </Button>
-                    </CardFooter>
-                  </div>
-                </Card>
-              ))}
-            </div>
-            
-            {/* Pagination */}
-            <div className="mt-8 flex justify-center">
-              <div className="flex gap-1">
-                <Button variant="outline" size="sm">Previous</Button>
-                <Button variant="outline" size="sm" className="bg-cm-green text-white">1</Button>
-                <Button variant="outline" size="sm">2</Button>
-                <Button variant="outline" size="sm">3</Button>
-                <Button variant="outline" size="sm">Next</Button>
+                  </Card>
+                ))}
               </div>
-            </div>
+            )}
           </div>
         </div>
       </div>

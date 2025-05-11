@@ -1,6 +1,7 @@
 use sea_orm::{
     ActiveModelTrait, ColumnTrait, DatabaseConnection, EntityTrait, QueryFilter, QueryOrder, Set,
 };
+use std::sync::Arc;
 use uuid::Uuid;
 
 use crate::models::product::{self, Model};
@@ -8,7 +9,7 @@ use crate::models::product::{self, Model};
 use super::errors::ServiceError;
 
 pub struct ProductService {
-    db: DatabaseConnection,
+    db: Arc<DatabaseConnection>,
 }
 pub struct CreateProduct {
     pub seller_id: Uuid,
@@ -26,7 +27,7 @@ pub struct UpdateProduct {
     pub image_urls: Option<Vec<String>>,
 }
 impl ProductService {
-    pub fn new(db: DatabaseConnection) -> Self {
+    pub fn new(db: Arc<DatabaseConnection>) -> Self {
         Self { db }
     }
 
@@ -42,7 +43,7 @@ impl ProductService {
             created_at: Set(chrono::Utc::now()),
             updated_at: Set(chrono::Utc::now()),
         }
-        .insert(&self.db)
+        .insert(&*self.db)
         .await?;
 
         Ok(product.into())
@@ -50,7 +51,7 @@ impl ProductService {
 
     pub async fn get_product_by_id(&self, product_id: Uuid) -> Result<Option<Model>, ServiceError> {
         let product = product::Entity::find_by_id(product_id)
-            .one(&self.db)
+            .one(&*self.db)
             .await
             .map_err(|e| ServiceError::NotFound(e.to_string()))?;
 
@@ -60,11 +61,10 @@ impl ProductService {
     pub async fn update_product(
         &self,
         product_id: Uuid,
-
         product_data: UpdateProduct,
     ) -> Result<Model, ServiceError> {
         let product = product::Entity::find_by_id(product_id)
-            .one(&self.db)
+            .one(&*self.db)
             .await
             .map_err(|e| ServiceError::NotFound(e.to_string()))?;
         if let Some(product) = product {
@@ -87,7 +87,7 @@ impl ProductService {
             }
             active_model.updated_at = Set(chrono::Utc::now());
 
-            let updated_product = active_model.update(&self.db).await?;
+            let updated_product = active_model.update(&*self.db).await?;
             Ok(updated_product.into())
         } else {
             Err(ServiceError::NotFound("Product not found".into()))
@@ -96,7 +96,7 @@ impl ProductService {
 
     pub async fn delete_product(&self, product_id: Uuid) -> Result<(), ServiceError> {
         product::Entity::delete_by_id(product_id)
-            .exec(&self.db)
+            .exec(&*self.db)
             .await?;
         Ok(())
     }
@@ -117,7 +117,7 @@ impl ProductService {
 
         let products = query
             .order_by_desc(product::Column::CreatedAt)
-            .all(&self.db)
+            .all(&*self.db)
             .await?;
 
         Ok(products)
@@ -149,7 +149,7 @@ mod tests {
             }]])
             .into_connection();
 
-        let service = ProductService::new(db);
+        let service = ProductService::new(Arc::new(db));
 
         let product_data = CreateProduct {
             seller_id,
@@ -187,7 +187,7 @@ mod tests {
             }]])
             .into_connection();
 
-        let service = ProductService::new(db);
+        let service = ProductService::new(Arc::new(db));
 
         let result = service.get_product_by_id(product_id).await;
         assert!(result.is_ok());
@@ -229,7 +229,7 @@ mod tests {
             ])
             .into_connection();
 
-        let service = ProductService::new(db);
+        let service = ProductService::new(Arc::new(db));
 
         let update_data = UpdateProduct {
             title: Some("Updated Product".to_string()),
@@ -277,7 +277,7 @@ mod tests {
             ]])
             .into_connection();
 
-        let service = ProductService::new(db);
+        let service = ProductService::new(Arc::new(db));
 
         let result = service.list_products(None, Some(seller_id)).await;
         assert!(result.is_ok());
