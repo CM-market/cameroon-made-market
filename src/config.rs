@@ -1,7 +1,6 @@
-use serde::Deserialize;
 use std::env;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Default)]
 pub struct Config {
     pub database_url: String,
     pub jwt_secret: String,

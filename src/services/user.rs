@@ -1,36 +1,53 @@
-use chrono::{Duration, Utc};
-use jsonwebtoken::{encode, EncodingKey, Header};
+use std::sync::Arc;
+
+use chrono::Utc;
 use sea_orm::{ActiveModelTrait, ColumnTrait, DatabaseConnection, EntityTrait, QueryFilter, Set};
+use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
 use crate::{
-    middleware::auth::Claims,
+    config::Config,
+    middleware::auth::generate_token,
     models::user::{self, Model, UserRole},
     utils::password::{hash_password, verify_password},
 };
 
 use super::errors::ServiceError;
 pub struct UserService {
-    db: DatabaseConnection,
+    db: Arc<DatabaseConnection>,
     jwt_secret: String,
     jwt_expires_in: i64,
 }
 
+#[derive(Deserialize)]
 pub struct CreateUser {
     pub full_name: String,
     pub email: Option<String>,
-    pub phone: u8,
+    pub phone: u32,
     pub password: String,
+}
+
+#[derive(Deserialize)]
+pub struct LoginRequest {
+    pub phone: u32,
+    pub password: String,
+}
+
+#[derive(Deserialize, Serialize)]
+pub struct LoginResponse {
+    pub role: UserRole,
+    pub user_id: Uuid,
+    pub token: String,
 }
 pub struct UpdateUser {
     pub full_name: Option<String>,
     pub email: Option<String>,
-    pub phone: u8,
+    pub phone: u32,
     pub password: Option<String>,
 }
 
 impl UserService {
-    pub fn new(db: DatabaseConnection, jwt_secret: String, jwt_expires_in: i64) -> Self {
+    pub fn new(db: Arc<DatabaseConnection>, jwt_secret: String, jwt_expires_in: i64) -> Self {
         Self {
             db,
             jwt_secret,
@@ -51,23 +68,30 @@ impl UserService {
             created_at: Set(Utc::now()),
             updated_at: Set(Utc::now()),
         }
-        .insert(&self.db)
+        .insert(&*self.db)
         .await?;
 
         Ok(user.into())
     }
 
-    pub async fn login(&self, phone: u8, password: String) -> Result<bool, ServiceError> {
+    pub async fn login(
+        &self,
+        phone: u32,
+        password: String,
+        config: &Config,
+    ) -> Result<(Model, String), ServiceError> {
         let user = user::Entity::find()
             .filter(user::Column::Phone.eq(phone))
-            .one(&self.db)
+            .one(&*self.db)
             .await
             .map_err(|e| ServiceError::InternalServerError(e.to_string()))?;
         if let Some(user) = user {
             if !verify_password(&password, &user.password_hash)? {
                 return Err(ServiceError::InvalidPassword)?;
             }
-            Ok(true)
+            let token = generate_token(&user.id.to_string(), user.role.clone(), &config)
+                .map_err(|e| ServiceError::InternalServerError(e.to_string()))?;
+            Ok((user, token))
         } else {
             Err(ServiceError::UserNotFound("User not found".to_string()))
         }
@@ -75,7 +99,7 @@ impl UserService {
 
     pub async fn get_user_by_id(&self, user_id: Uuid) -> Result<Option<Model>, ServiceError> {
         let user = user::Entity::find_by_id(user_id)
-            .one(&self.db)
+            .one(self.db.as_ref())
             .await
             .map_err(|e| ServiceError::NotFound(e.to_string()))?;
 
@@ -88,7 +112,7 @@ impl UserService {
         user_data: UpdateUser,
     ) -> Result<Model, ServiceError> {
         let user = user::Entity::find_by_id(user_id)
-            .one(&self.db)
+            .one(&*self.db)
             .await
             .map_err(|e| ServiceError::NotFound(e.to_string()))?;
         if let Some(user) = user {
@@ -105,19 +129,19 @@ impl UserService {
                 active_model.password_hash = Set(hash_password(&password)?);
             }
 
-            let updated_user = active_model.update(&self.db).await?;
+            let updated_user = active_model.update(self.db.as_ref()).await?;
             Ok(updated_user.into())
         } else {
             Err(ServiceError::UserNotFound("User not found".to_string()))
         }
     }
     pub async fn delete_user(&self, user_id: Uuid) -> Result<(), ServiceError> {
-        user::Entity::delete_by_id(user_id).exec(&self.db).await?;
+        user::Entity::delete_by_id(user_id).exec(&*self.db).await?;
         Ok(())
     }
 
     pub async fn list_users(&self) -> Result<Vec<Model>, ServiceError> {
-        let users = user::Entity::find().all(&self.db).await?;
+        let users = user::Entity::find().all(&*self.db).await?;
         Ok(users)
     }
 }
@@ -136,7 +160,7 @@ mod tests {
                 id: Uuid::new_v4(),
                 full_name: "Test User".to_string(),
                 email: Some("test@example.com".to_string()),
-                phone: 1234567890,
+                phone: 654988322,
                 password_hash: "hashed_password".to_string(),
                 role: UserRole::Vendor.into(),
                 created_at: Utc::now(),
@@ -144,7 +168,7 @@ mod tests {
             }]])
             .into_connection();
 
-        let service = UserService::new(db, "test_secret".to_string(), 24);
+        let service = UserService::new(db.into(), "test_secret".to_string(), 24);
 
         let user_data = CreateUser {
             full_name: "Test User".to_string(),
@@ -178,15 +202,17 @@ mod tests {
             }]])
             .into_connection();
 
-        let service = UserService::new(db, "test_secret".to_string(), 24);
+        let service = UserService::new(db.into(), "test_secret".to_string(), 24);
 
-        let result = service
-            .login(123, "password123".to_string())
-            .await;
+        let config = Config {
+            // Initialize the Config object with appropriate values
+            jwt_secret: "test_secret".to_string(),
+            jwt_expires_in: 24,
+            ..Default::default()
+        };
+        let result = service.login(123, "password123".to_string(), &config).await;
         assert!(result.is_ok());
 
-        let result= result.unwrap();
-        
     }
 
     #[tokio::test]
@@ -204,11 +230,14 @@ mod tests {
             }]])
             .into_connection();
 
-        let service = UserService::new(db, "test_secret".to_string(), 24);
+        let service = UserService::new(db.into(), "test_secret".to_string(), 24);
 
-        let result = service
-            .login(123, "wrong_password".to_string())
-            .await;
+        let config = Config {
+            jwt_secret: "test_secret".to_string(),
+            jwt_expires_in: 24,
+            ..Default::default()
+        };
+        let result = service.login(123, "wrong_password".to_string(), &config).await;
         assert!(result.is_err());
     }
 
@@ -228,7 +257,7 @@ mod tests {
             }]])
             .into_connection();
 
-        let service = UserService::new(db, "test_secret".to_string(), 24);
+        let service = UserService::new(db.into(), "test_secret".to_string(), 24);
 
         let result = service.get_user_by_id(user_id).await;
         assert!(result.is_ok());
@@ -267,22 +296,21 @@ mod tests {
             ])
             .into_connection();
 
-        let service = UserService::new(db, "test_secret".to_string(), 24);
+        let service = UserService::new(db.into(), "test_secret".to_string(), 24);
 
         let update_data = UpdateUser {
-                    full_name: Some("Updated User".to_string()),
-                    email: None,
-                    phone: 98,
-                    password: None,
-                };
+            full_name: Some("Updated User".to_string()),
+            email: None,
+            phone: 98,
+            password: None,
+        };
 
         let result = service.update_user(user_id, update_data).await;
         assert!(result.is_ok());
 
         let user_response = result.unwrap();
-        let user_response = user_response.unwrap();
-        assert_eq!(user_response.name, "Updated User");
-        assert_eq!(user_response.phone, Some("0987654321".to_string()));
+        assert_eq!(user_response.full_name, "Updated User");
+        assert_eq!(user_response.phone, 98);
     }
 
     #[tokio::test]
@@ -297,7 +325,6 @@ mod tests {
                     password_hash: "hashed_password".to_string(),
                     role: UserRole::Vendor.into(),
                     created_at: Utc::now(),
-                    full_name: "User 1".to_string(),
                     updated_at: Utc::now(),
                 },
                 user::Model {
@@ -313,14 +340,14 @@ mod tests {
             ]])
             .into_connection();
 
-        let service = UserService::new(db, "test_secret".to_string(), 24);
+        let service = UserService::new(db.into(), "test_secret".to_string(), 24);
 
         let result = service.list_users().await;
         assert!(result.is_ok());
 
         let users = result.unwrap();
         assert_eq!(users.len(), 2);
-        assert_eq!(users[0].name, "User 1");
-        assert_eq!(users[1].name, "User 2");
+        assert_eq!(users[0].full_name, "User 1");
+        assert_eq!(users[1].full_name, "User 2");
     }
 }

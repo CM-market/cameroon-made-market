@@ -1,33 +1,13 @@
-use axum::{
-    routing::{get, post},
-    Router,
-};
+use axum::Router;
+use cameroon_made_market::{config, routes, state};
+use tokio::net::TcpListener;
 use tower_http::cors::{Any, CorsLayer};
 use tower_http::trace::TraceLayer;
-use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
-use dotenv::dotenv;
-use std::env;
-
-mod config;
-mod db;
-mod handlers;
-mod middleware;
-mod models;
-mod routes;
-mod services;
-mod state;
-mod utils;
 
 #[tokio::main]
 async fn main() {
     // Initialize tracing
-    tracing_subscriber::registry()
-        .with(tracing_subscriber::EnvFilter::new(
-            std::env::var("RUST_LOG").unwrap_or_else(|_| "info".into()),
-        ))
-        .with(tracing_subscriber::fmt::layer())
-        .init();
-
+    config_tracing();
     // Load environment variables
     dotenv::dotenv().ok();
 
@@ -44,16 +24,49 @@ async fn main() {
 
     // Build our application with a route
     let app = Router::new()
-        .merge(routes::config())
+        .merge(routes::user::config())
+        // .merge(routes::product::config())
+        // .merge(routes::order::config())
+        // .merge(routes::cart::config())
+        // .merge(routes::auth::config())
+        // .merge(routes::category::config())
+        // .merge(routes::address::config())
+        // .merge(routes::payment::config())
+        // .merge(routes::notification::config())
+        // .merge(routes::review::config())
+        // .merge(routes::wishlist::config())
+        // .merge(routes::shipping::config())
+        // .merge(routes::search::config())
+        // .merge(routes::admin::config())
         .layer(cors)
         .layer(TraceLayer::new_for_http())
         .with_state(app_state);
 
     // Run it
-    let addr = format!("{}:{}", app_state.config.server_host, app_state.config.server_port);
+    let addr = format!(
+        "{}:{}",
+        app_state.config.server_host, app_state.config.server_port
+    );
     tracing::info!("listening on {}", addr);
-    axum::Server::bind(&addr.parse().unwrap())
-        .serve(app.into_make_service())
-        .await
-        .unwrap();
+    axum::serve(TcpListener::bind(addr).await.unwrap(), app);
+}
+
+fn config_tracing() {
+    if std::env::var("RUST_LIB_BACKTRACE").is_err() {
+        std::env::set_var("RUST_LIB_BACKTRACE", "1")
+    }
+
+    use tracing::Level;
+    use tracing_subscriber::{filter, layer::SubscriberExt, util::SubscriberInitExt};
+
+    let tracing_layer = tracing_subscriber::fmt::layer();
+    let filter = filter::Targets::new()
+        .with_target("hyper::proto", Level::INFO)
+        .with_target("tower_http::trace", Level::DEBUG)
+        .with_default(Level::DEBUG);
+
+    tracing_subscriber::registry()
+        .with(tracing_layer)
+        .with(filter)
+        .init();
 }

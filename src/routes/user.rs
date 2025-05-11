@@ -3,9 +3,9 @@ use axum::{
     Router,
 };
 
-use crate::handlers::user::{register, login, get_me};
+use crate::{handlers::user::{get_me, login, register}, state::AppState};
 
-pub fn config() -> Router {
+pub fn config() -> Router<AppState> {
     Router::new()
         .route("/api/users", post(register))
         .route("/api/users/login", post(login))

@@ -4,8 +4,6 @@ use sea_orm::entity::prelude::*;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
-use super::order_item::{self, OrderItem};
-
 /// Order model representing customer purchases in the marketplace
 /// This model tracks the entire order lifecycle from creation to completion
 #[derive(Clone, Debug, PartialEq, DeriveEntityModel, Serialize, Deserialize)]

@@ -1,19 +1,15 @@
+use crate::{config::Config, models::user::UserRole, state::AppState, utils::shared::ApiResponse};
 use axum::{
+    body::Body,
     extract::State,
     http::{Request, StatusCode},
     middleware::Next,
-    response::Response,
+    response::{IntoResponse, Response},
     Json,
 };
 use jsonwebtoken::{decode, encode, DecodingKey, EncodingKey, Header, Validation};
 use serde::{Deserialize, Serialize};
 use std::time::{SystemTime, UNIX_EPOCH};
-use crate::{
-    config::Config,
-    models::user::UserRole,
-    AppState,
-    ApiResponse,
-};
 
 /// JWT claims structure
 #[derive(Debug, Serialize, Deserialize)]
@@ -31,10 +27,10 @@ pub struct AuthUser {
 }
 
 /// Middleware to validate JWT token
-pub async fn auth<B>(
+pub async fn auth(
     State(state): State<AppState>,
-    mut req: Request<B>,
-    next: Next<B>,
+    mut req: Request<Body>,
+    next: Next,
 ) -> Result<Response, StatusCode> {
     let token = req
         .headers()
@@ -55,14 +51,16 @@ pub async fn auth<B>(
             });
             Ok(next.run(req).await)
         }
-        Err(_) => {
-            Ok(Json(ApiResponse::<()>::error("Invalid token")).into_response())
-        }
+        Err(_) => Ok(Json(ApiResponse::<()>::error("Invalid token")).into_response()),
     }
 }
 
 /// Generate JWT token for a user
-pub fn generate_token(user_id: &str, role: UserRole, config: &Config) -> Result<String, StatusCode> {
+pub fn generate_token(
+    user_id: &str,
+    role: UserRole,
+    config: &Config,
+) -> Result<String, StatusCode> {
     let now = SystemTime::now()
         .duration_since(UNIX_EPOCH)
         .unwrap()
@@ -80,4 +78,4 @@ pub fn generate_token(user_id: &str, role: UserRole, config: &Config) -> Result<
         &EncodingKey::from_secret(config.jwt_secret.as_bytes()),
     )
     .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)
-} 
+}

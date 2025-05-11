@@ -1,5 +1,4 @@
 pub mod config;
-pub mod db;
 pub mod handlers;
 pub mod middleware;
 pub mod models;
@@ -7,15 +6,16 @@ pub mod routes;
 pub mod services;
 pub mod state;
 pub mod utils;
-pub mod responses;
+pub mod migration;
+
 use axum::{
     http::StatusCode,
     response::{IntoResponse, Response},
     Json,
 };
 use sea_orm::sqlx;
-use serde::{Deserialize, Serialize};
 use thiserror::Error;
+use utils::shared::ApiResponse;
 
 #[derive(Error, Debug)]
 pub enum AppError {
@@ -53,27 +53,3 @@ impl IntoResponse for AppError {
     }
 }
 
-#[derive(Debug, Serialize, Deserialize)]
-pub struct ApiResponse<T> {
-    pub success: bool,
-    pub message: String,
-    pub data: Option<T>,
-}
-
-impl<T> ApiResponse<T> {
-    pub fn success(data: T, message: &str) -> Self {
-        Self {
-            success: true,
-            message: message.to_string(),
-            data: Some(data),
-        }
-    }
-
-    pub fn error(message: &str) -> Self {
-        Self {
-            success: false,
-            message: message.to_string(),
-            data: None,
-        }
-    }
-} 
