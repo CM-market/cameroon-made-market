@@ -1,5 +1,9 @@
-use crate::config::Config;
+use crate::{
+    config::{self, Config},
+    migration::{self, Migrator},
+};
 use sea_orm::{Database, DatabaseConnection};
+use sea_orm_migration::{MigrationTrait, MigratorTrait};
 use std::sync::Arc;
 
 #[derive(Clone)]
@@ -27,13 +31,15 @@ impl AppState {
     }
 }
 
-pub async fn setup() {
+pub async fn setup() -> AppState {
     let url = std::env::var("DATABASE_URL").expect("DATABASE_URL env not set");
     let db: DatabaseConnection = Database::connect(&url)
         .await
         .expect("Failed to connect to database");
 
-    crate::database::Migrator::up(&db, None)
+    Migrator::up(&db, None)
         .await
         .expect("Failed to apply migrations");
+    let config = config::Config::from_env();
+    AppState::new(db, config)
 }

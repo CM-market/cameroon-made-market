@@ -62,7 +62,7 @@ impl UserService {
             id: Set(Uuid::new_v4()),
             full_name: Set(user_data.full_name.clone()),
             email: Set(user_data.email),
-            phone: Set(user_data.phone),
+            phone: Set(user_data.phone.to_string()),
             password_hash: Set(password_hash),
             role: Set(UserRole::Vendor.into()),
             created_at: Set(Utc::now()),
@@ -124,7 +124,7 @@ impl UserService {
             if let Some(email) = user_data.email {
                 active_model.email = Set(Some(email));
             }
-            active_model.phone = Set(user_data.phone);
+            active_model.phone = Set(user_data.phone.to_string());
             if let Some(password) = user_data.password {
                 active_model.password_hash = Set(hash_password(&password)?);
             }
@@ -149,9 +149,8 @@ impl UserService {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use mockall::predicate::*;
     use sea_orm::MockDatabase;
-    use test_log;
+
 
     #[tokio::test]
     async fn test_create_user() {
@@ -160,7 +159,7 @@ mod tests {
                 id: Uuid::new_v4(),
                 full_name: "Test User".to_string(),
                 email: Some("test@example.com".to_string()),
-                phone: 654988322,
+                phone: 654988322.to_string(),
                 password_hash: "hashed_password".to_string(),
                 role: UserRole::Vendor.into(),
                 created_at: Utc::now(),
@@ -183,7 +182,7 @@ mod tests {
         let user_response = result.unwrap();
         assert_eq!(user_response.full_name, "Test User");
         assert_eq!(user_response.email, Some("test@example.com".to_string()));
-        assert_eq!(user_response.phone, 1234567890);
+        assert_eq!(user_response.phone, "1234567890");
     }
 
     #[tokio::test]
@@ -194,7 +193,7 @@ mod tests {
                 id: user_id,
                 full_name: "Test User".to_string(),
                 email: Some("test@example.com".to_string()),
-                phone: 1234567890,
+                phone: "1234567890".to_string(),
                 password_hash: hash_password("password123").unwrap(),
                 role: UserRole::Vendor.into(),
                 created_at: Utc::now(),
@@ -222,7 +221,7 @@ mod tests {
                 id: Uuid::new_v4(),
                 full_name: "Test User".to_string(),
                 email: Some("test@example.com".to_string()),
-                phone: 1234567890,
+                phone: "1234567890".to_string(),
                 password_hash: hash_password("password123").unwrap(),
                 role: UserRole::Vendor.into(),
                 created_at: Utc::now(),
@@ -249,7 +248,7 @@ mod tests {
                 id: user_id,
                 full_name: "Test User".to_string(),
                 email: Some("test@example.com".to_string()),
-                phone: 123,
+                phone: 123.to_string(),
                 password_hash: "hashed_password".to_string(),
                 role: UserRole::Vendor.into(),
                 created_at: Utc::now(),
@@ -277,7 +276,7 @@ mod tests {
                     id: user_id,
                     full_name: "Test User".to_string(),
                     email: Some("test@example.com".to_string()),
-                    phone: 123,
+                    phone: 123.to_string(),
                     password_hash: "hashed_password".to_string(),
                     role: UserRole::Vendor.into(),
                     created_at: Utc::now(),
@@ -287,7 +286,7 @@ mod tests {
                     id: user_id,
                     full_name: "Updated User".to_string(),
                     email: Some("test@example.com".to_string()),
-                    phone: 98,
+                    phone: 98.to_string(),
                     password_hash: "hashed_password".to_string(),
                     role: UserRole::Vendor.into(),
                     created_at: Utc::now(),
@@ -310,7 +309,7 @@ mod tests {
 
         let user_response = result.unwrap();
         assert_eq!(user_response.full_name, "Updated User");
-        assert_eq!(user_response.phone, 98);
+        assert_eq!(user_response.phone, "98");
     }
 
     #[tokio::test]
@@ -321,7 +320,7 @@ mod tests {
                     id: Uuid::new_v4(),
                     full_name: "User 1".to_string(),
                     email: Some("user1@example.com".to_string()),
-                    phone: 123,
+                    phone: 123.to_string(),
                     password_hash: "hashed_password".to_string(),
                     role: UserRole::Vendor.into(),
                     created_at: Utc::now(),
@@ -331,7 +330,7 @@ mod tests {
                     id: Uuid::new_v4(),
                     full_name: "User 2".to_string(),
                     email: Some("user2@example.com".to_string()),
-                    phone: 98,
+                    phone: 98.to_string(),
                     password_hash: "hashed_password".to_string(),
                     role: UserRole::Vendor.into(),
                     created_at: Utc::now(),

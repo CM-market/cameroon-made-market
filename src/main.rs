@@ -1,5 +1,6 @@
 use axum::Router;
-use cameroon_made_market::{config, routes, state};
+use cameroon_made_market::state::setup;
+use cameroon_made_market::routes;
 use tokio::net::TcpListener;
 use tower_http::cors::{Any, CorsLayer};
 use tower_http::trace::TraceLayer;
@@ -12,9 +13,8 @@ async fn main() {
     dotenv::dotenv().ok();
 
     // Get configuration
-    let config = config::Config::from_env();
-    let db_pool = db::create_pool(&config.database_url).await;
-    let app_state = state::AppState::new(db_pool, config);
+    let app_state = setup().await;
+
 
     // Configure CORS
     let cors = CorsLayer::new()
@@ -40,7 +40,7 @@ async fn main() {
         // .merge(routes::admin::config())
         .layer(cors)
         .layer(TraceLayer::new_for_http())
-        .with_state(app_state);
+        .with_state(app_state.clone());
 
     // Run it
     let addr = format!(
@@ -48,7 +48,7 @@ async fn main() {
         app_state.config.server_host, app_state.config.server_port
     );
     tracing::info!("listening on {}", addr);
-    axum::serve(TcpListener::bind(addr).await.unwrap(), app);
+    axum::serve(TcpListener::bind(addr).await.unwrap(), app).await.unwrap();
 }
 
 fn config_tracing() {
