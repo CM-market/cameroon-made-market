@@ -1,8 +1,8 @@
+use chrono::{DateTime, Utc};
+use rust_decimal::Decimal;
 use sea_orm::entity::prelude::*;
 use serde::{Deserialize, Serialize};
-use chrono::{DateTime, Utc};
 use uuid::Uuid;
-use rust_decimal::Decimal;
 
 /// Product model representing items that can be sold in the marketplace
 /// This model includes all necessary fields for product information and tracking
@@ -74,4 +74,4 @@ impl Related<super::order_item::Entity> for Entity {
 }
 
 /// Implements default behavior for active model operations
-impl ActiveModelBehavior for ActiveModel {} 
+impl ActiveModelBehavior for ActiveModel {}

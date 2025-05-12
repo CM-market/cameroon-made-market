@@ -1,4 +1,9 @@
-use axum::{async_trait, extract::FromRequestParts, http::request::Parts, response::{IntoResponse, Response}};
+use axum::{
+    async_trait,
+    extract::FromRequestParts,
+    http::request::Parts,
+    response::{IntoResponse, Response},
+};
 
 use super::auth::AuthUser;
 
