@@ -263,14 +263,11 @@ mod tests {
 
         let result = service.get_cart(cart_id).await;
         assert!(result.is_ok());
-            
+
         let cart_response = result.unwrap();
         let cart_response = cart_response.unwrap();
         assert_eq!(cart_response.id, cart_id);
-        assert_eq!(
-            cart_response.session_id.to_string(),
-            "test_session"
-        );
+        assert_eq!(cart_response.session_id.to_string(), "test_session");
     }
 
     #[tokio::test]

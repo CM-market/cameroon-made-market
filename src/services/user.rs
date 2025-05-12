@@ -151,7 +151,6 @@ mod tests {
     use super::*;
     use sea_orm::MockDatabase;
 
-
     #[tokio::test]
     async fn test_create_user() {
         let db = MockDatabase::new(sea_orm::DatabaseBackend::Postgres)
@@ -211,7 +210,6 @@ mod tests {
         };
         let result = service.login(123, "password123".to_string(), &config).await;
         assert!(result.is_ok());
-
     }
 
     #[tokio::test]
@@ -236,7 +234,9 @@ mod tests {
             jwt_expires_in: 24,
             ..Default::default()
         };
-        let result = service.login(123, "wrong_password".to_string(), &config).await;
+        let result = service
+            .login(123, "wrong_password".to_string(), &config)
+            .await;
         assert!(result.is_err());
     }
 

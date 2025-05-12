@@ -133,10 +133,10 @@ pub struct CreateOrder {
     pub items: Vec<Items>,
 }
 #[derive(Serialize, Deserialize)]
-pub struct Items{
-   pub product_id: Uuid,
-   pub quantity: i32,
-   pub price: Decimal,
+pub struct Items {
+    pub product_id: Uuid,
+    pub quantity: i32,
+    pub price: Decimal,
 }
 
 /// Implements default behavior for active model operations

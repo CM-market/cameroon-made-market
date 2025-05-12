@@ -64,4 +64,4 @@ pub struct CartItem {
     pub quantity: i32,
 }
 /// Implements default behavior for active model operations
-impl ActiveModelBehavior for ActiveModel {} 
+impl ActiveModelBehavior for ActiveModel {}

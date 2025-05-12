@@ -11,7 +11,6 @@ pub enum UserRole {
     Admin,
     #[sea_orm(string_value = "Vendor")]
     Vendor,
-
 }
 
 #[derive(Clone, Debug, PartialEq, DeriveEntityModel, Serialize, Deserialize)]
@@ -33,9 +32,9 @@ pub struct Model {
 pub enum Relation {
     #[sea_orm(has_many = "super::order::Entity")]
     Order,
-    #[sea_orm(has_many = "super::cart::Entity")] 
+    #[sea_orm(has_many = "super::cart::Entity")]
     Cart,
-} 
+}
 
 impl Related<super::order::Entity> for Entity {
     fn to() -> RelationDef {
@@ -50,4 +49,3 @@ impl Related<super::cart::Entity> for Entity {
 }
 
 impl ActiveModelBehavior for ActiveModel {}
-
