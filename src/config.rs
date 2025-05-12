@@ -31,4 +31,4 @@ impl Config {
                 .collect(),
         }
     }
-} 
+}

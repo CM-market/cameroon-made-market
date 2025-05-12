@@ -5,7 +5,8 @@ use crate::{
     middleware::auth::AuthUser,
     models::user::Model,
     services::user::{CreateUser, LoginRequest, LoginResponse, UserService},
-    state::AppState, utils::shared::ApiResponse,
+    state::AppState,
+    utils::shared::ApiResponse,
 };
 
 /// Register a new user

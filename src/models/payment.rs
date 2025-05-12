@@ -1,8 +1,8 @@
+use chrono::{DateTime, Utc};
+use rust_decimal::Decimal;
 use sea_orm::entity::prelude::*;
 use serde::{Deserialize, Serialize};
-use chrono::{DateTime, Utc};
 use uuid::Uuid;
-use rust_decimal::Decimal;
 
 /// Payment model representing financial transactions in the marketplace
 /// This model tracks payment information and status for orders
@@ -40,7 +40,7 @@ pub enum Relation {
         to = "super::order::Column::Id",
         on_update = "NoAction",
         on_delete = "Cascade"
-    )] 
+    )]
     Order,
 }
 
@@ -52,4 +52,4 @@ impl Related<super::order::Entity> for Entity {
 }
 
 /// Implements default behavior for active model operations
-impl ActiveModelBehavior for ActiveModel {} 
+impl ActiveModelBehavior for ActiveModel {}

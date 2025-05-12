@@ -1,7 +1,7 @@
+use rust_decimal::Decimal;
 use sea_orm::entity::prelude::*;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
-use rust_decimal::Decimal;
 
 /// OrderItem model representing individual items within an order
 /// This model tracks the quantity and price of each product in the order
@@ -46,7 +46,7 @@ pub enum Relation {
     Product,
 }
 
-/// Implements the relationship with Order entity 
+/// Implements the relationship with Order entity
 impl Related<super::order::Entity> for Entity {
     fn to() -> RelationDef {
         Relation::Order.def()
@@ -58,7 +58,6 @@ impl Related<super::product::Entity> for Entity {
     fn to() -> RelationDef {
         Relation::Product.def()
     }
-
 }
 
 pub struct OrderItem {
