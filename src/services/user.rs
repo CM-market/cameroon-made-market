@@ -26,6 +26,7 @@ pub struct CreateUser {
     pub email: Option<String>,
     pub phone: u32,
     pub password: String,
+    pub role: UserRole,
 }
 
 #[derive(Deserialize)]
@@ -65,7 +66,7 @@ impl UserService {
             email: Set(user_data.email),
             phone: Set(user_data.phone),
             password_hash: Set(password_hash),
-            role: Set(UserRole::Vendor.into()),
+            role: Set(user_data.role.into()),
             created_at: Set(Utc::now()),
             updated_at: Set(Utc::now()),
         };
@@ -176,6 +177,7 @@ mod tests {
             email: Some("test@example.com".to_string()),
             phone: 1234567890,
             password: "password123".to_string(),
+            role: UserRole::Vendor,
         };
 
         let result = service.create_user(user_data).await;
@@ -185,6 +187,7 @@ mod tests {
         assert_eq!(user_response.full_name, "Test User");
         assert_eq!(user_response.email, Some("test@example.com".to_string()));
         assert_eq!(user_response.phone, 1234567890);
+        assert_eq!(user_response.role, UserRole::Vendor);
     }
 
     #[tokio::test]
@@ -197,7 +200,7 @@ mod tests {
                 email: Some("test@example.com".to_string()),
                 phone: 1234567890,
                 password_hash: hash_password("password123").unwrap(),
-                role: UserRole::Vendor.into(),
+                role: UserRole::Admin.into(),
                 created_at: Utc::now(),
                 updated_at: Utc::now(),
             }]])
@@ -206,7 +209,6 @@ mod tests {
         let service = UserService::new(db.into(), "test_secret".to_string(), 24);
 
         let config = Config {
-            // Initialize the Config object with appropriate values
             jwt_secret: "test_secret".to_string(),
             jwt_expires_in: 24,
             ..Default::default()
@@ -224,7 +226,7 @@ mod tests {
                 email: Some("test@example.com".to_string()),
                 phone: 1234567890,
                 password_hash: hash_password("password123").unwrap(),
-                role: UserRole::Vendor.into(),
+                role: UserRole::User.into(),
                 created_at: Utc::now(),
                 updated_at: Utc::now(),
             }]])
@@ -268,6 +270,7 @@ mod tests {
         let user_response = user_response.unwrap();
         assert_eq!(user_response.id, user_id);
         assert_eq!(user_response.email, Some("test@example.com".to_string()));
+        assert_eq!(user_response.role, UserRole::Vendor);
     }
 
     #[tokio::test]
@@ -281,7 +284,7 @@ mod tests {
                     email: Some("test@example.com".to_string()),
                     phone: 123,
                     password_hash: "hashed_password".to_string(),
-                    role: UserRole::Vendor.into(),
+                    role: UserRole::Admin.into(),
                     created_at: Utc::now(),
                     updated_at: Utc::now(),
                 }],
@@ -291,7 +294,7 @@ mod tests {
                     email: Some("test@example.com".to_string()),
                     phone: 98,
                     password_hash: "hashed_password".to_string(),
-                    role: UserRole::Vendor.into(),
+                    role: UserRole::Admin.into(),
                     created_at: Utc::now(),
                     updated_at: Utc::now(),
                 }],
@@ -313,6 +316,7 @@ mod tests {
         let user_response = result.unwrap();
         assert_eq!(user_response.full_name, "Updated User");
         assert_eq!(user_response.phone, 98);
+        assert_eq!(user_response.role, UserRole::Admin);
     }
 
     #[tokio::test]
@@ -325,7 +329,7 @@ mod tests {
                     email: Some("user1@example.com".to_string()),
                     phone: 123,
                     password_hash: "hashed_password".to_string(),
-                    role: UserRole::Vendor.into(),
+                    role: UserRole::User.into(),
                     created_at: Utc::now(),
                     updated_at: Utc::now(),
                 },
@@ -351,5 +355,7 @@ mod tests {
         assert_eq!(users.len(), 2);
         assert_eq!(users[0].full_name, "User 1");
         assert_eq!(users[1].full_name, "User 2");
+        assert_eq!(users[0].role, UserRole::User);
+        assert_eq!(users[1].role, UserRole::Vendor);
     }
 }
