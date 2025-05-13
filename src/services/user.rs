@@ -4,6 +4,7 @@ use chrono::Utc;
 use sea_orm::{ActiveModelTrait, ColumnTrait, DatabaseConnection, EntityTrait, QueryFilter, Set};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
+use tracing::error;
 
 use crate::{
     config::Config,
@@ -19,7 +20,7 @@ pub struct UserService {
     jwt_expires_in: i64,
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Debug)]
 pub struct CreateUser {
     pub full_name: String,
     pub email: Option<String>,
@@ -43,7 +44,7 @@ pub struct UpdateUser {
     pub full_name: Option<String>,
     pub email: Option<String>,
     pub phone: u32,
-    pub password: Option<String>,
+    pub password: String,
 }
 
 impl UserService {
@@ -58,20 +59,24 @@ impl UserService {
     pub async fn create_user(&self, user_data: CreateUser) -> Result<Model, ServiceError> {
         let password_hash = hash_password(&user_data.password)?;
 
-        let user = user::ActiveModel {
+        let active_model = user::ActiveModel {
             id: Set(Uuid::new_v4()),
             full_name: Set(user_data.full_name.clone()),
             email: Set(user_data.email),
-            phone: Set(user_data.phone.to_string()),
+            phone: Set(user_data.phone),
             password_hash: Set(password_hash),
             role: Set(UserRole::Vendor.into()),
             created_at: Set(Utc::now()),
             updated_at: Set(Utc::now()),
+        };
+        let result = active_model.insert(&*self.db).await;
+        match result {
+            Ok(user) => Ok(user.into()),
+            Err(e) => {
+                error!(error = %e, "Failed to insert user");
+                Err(ServiceError::DatabaseError(e.to_string()))
+            }
         }
-        .insert(&*self.db)
-        .await?;
-
-        Ok(user.into())
     }
 
     pub async fn login(
@@ -124,10 +129,8 @@ impl UserService {
             if let Some(email) = user_data.email {
                 active_model.email = Set(Some(email));
             }
-            active_model.phone = Set(user_data.phone.to_string());
-            if let Some(password) = user_data.password {
-                active_model.password_hash = Set(hash_password(&password)?);
-            }
+            active_model.phone = Set(user_data.phone);
+                active_model.password_hash = Set(hash_password(&user_data.password)?);
 
             let updated_user = active_model.update(self.db.as_ref()).await?;
             Ok(updated_user.into())
@@ -158,7 +161,7 @@ mod tests {
                 id: Uuid::new_v4(),
                 full_name: "Test User".to_string(),
                 email: Some("test@example.com".to_string()),
-                phone: 654988322.to_string(),
+                phone: 654988322,
                 password_hash: "hashed_password".to_string(),
                 role: UserRole::Vendor.into(),
                 created_at: Utc::now(),
@@ -181,7 +184,7 @@ mod tests {
         let user_response = result.unwrap();
         assert_eq!(user_response.full_name, "Test User");
         assert_eq!(user_response.email, Some("test@example.com".to_string()));
-        assert_eq!(user_response.phone, "1234567890");
+        assert_eq!(user_response.phone, 1234567890);
     }
 
     #[tokio::test]
@@ -192,7 +195,7 @@ mod tests {
                 id: user_id,
                 full_name: "Test User".to_string(),
                 email: Some("test@example.com".to_string()),
-                phone: "1234567890".to_string(),
+                phone: 1234567890,
                 password_hash: hash_password("password123").unwrap(),
                 role: UserRole::Vendor.into(),
                 created_at: Utc::now(),
@@ -219,7 +222,7 @@ mod tests {
                 id: Uuid::new_v4(),
                 full_name: "Test User".to_string(),
                 email: Some("test@example.com".to_string()),
-                phone: "1234567890".to_string(),
+                phone: 1234567890,
                 password_hash: hash_password("password123").unwrap(),
                 role: UserRole::Vendor.into(),
                 created_at: Utc::now(),
@@ -248,7 +251,7 @@ mod tests {
                 id: user_id,
                 full_name: "Test User".to_string(),
                 email: Some("test@example.com".to_string()),
-                phone: 123.to_string(),
+                phone: 123,
                 password_hash: "hashed_password".to_string(),
                 role: UserRole::Vendor.into(),
                 created_at: Utc::now(),
@@ -276,7 +279,7 @@ mod tests {
                     id: user_id,
                     full_name: "Test User".to_string(),
                     email: Some("test@example.com".to_string()),
-                    phone: 123.to_string(),
+                    phone: 123,
                     password_hash: "hashed_password".to_string(),
                     role: UserRole::Vendor.into(),
                     created_at: Utc::now(),
@@ -286,7 +289,7 @@ mod tests {
                     id: user_id,
                     full_name: "Updated User".to_string(),
                     email: Some("test@example.com".to_string()),
-                    phone: 98.to_string(),
+                    phone: 98,
                     password_hash: "hashed_password".to_string(),
                     role: UserRole::Vendor.into(),
                     created_at: Utc::now(),
@@ -301,7 +304,7 @@ mod tests {
             full_name: Some("Updated User".to_string()),
             email: None,
             phone: 98,
-            password: None,
+            password: "02".to_string(),
         };
 
         let result = service.update_user(user_id, update_data).await;
@@ -309,7 +312,7 @@ mod tests {
 
         let user_response = result.unwrap();
         assert_eq!(user_response.full_name, "Updated User");
-        assert_eq!(user_response.phone, "98");
+        assert_eq!(user_response.phone, 98);
     }
 
     #[tokio::test]
@@ -320,7 +323,7 @@ mod tests {
                     id: Uuid::new_v4(),
                     full_name: "User 1".to_string(),
                     email: Some("user1@example.com".to_string()),
-                    phone: 123.to_string(),
+                    phone: 123,
                     password_hash: "hashed_password".to_string(),
                     role: UserRole::Vendor.into(),
                     created_at: Utc::now(),
@@ -330,7 +333,7 @@ mod tests {
                     id: Uuid::new_v4(),
                     full_name: "User 2".to_string(),
                     email: Some("user2@example.com".to_string()),
-                    phone: 98.to_string(),
+                    phone: 98,
                     password_hash: "hashed_password".to_string(),
                     role: UserRole::Vendor.into(),
                     created_at: Utc::now(),

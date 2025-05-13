@@ -12,6 +12,8 @@ use axum::{
     routing::{delete, get, post, put},
     Extension, Json, Router,
 };
+use sea_orm::metric::Info;
+use tracing::info;
 use uuid::Uuid;
 
 pub fn config() -> Router<AppState> {
@@ -84,7 +86,7 @@ async fn create_product(
         category: Some(product_data.category),
         image_urls: product_data.image_urls,
     };
-
+    info!("Creating product: {:?}", create_product);
     match state.product_service.create_product(create_product).await {
         Ok(product) => (
             StatusCode::CREATED,
@@ -214,7 +216,7 @@ pub struct ListProductsQuery {
     seller_id: Option<Uuid>,
 }
 
-#[derive(serde::Deserialize)]
+#[derive(serde::Deserialize, Debug)]
 pub struct CreateProductRequest {
     title: String,
     description: String,

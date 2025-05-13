@@ -11,6 +11,7 @@ use super::errors::ServiceError;
 pub struct ProductService {
     db: Arc<DatabaseConnection>,
 }
+#[derive(Debug, Clone)]
 pub struct CreateProduct {
     pub seller_id: Uuid,
     pub title: String,

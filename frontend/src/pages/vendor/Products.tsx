@@ -38,8 +38,8 @@ const VendorProducts: React.FC = () => {
   const fetchProducts = async () => {
     try {
       setLoading(true);
-      const data = await productApi.list(undefined, localStorage.getItem('userId') || undefined);
-      setProducts(data);
+      const response = await productApi.list(undefined, localStorage.getItem('userId') || undefined);
+      setProducts(response.data);
       setError(null);
     } catch (err) {
       setError('Failed to fetch products');

@@ -10,6 +10,8 @@ impl MigratorTrait for Migrator {
 }
 
 pub mod tables {
+    use sea_orm::sea_query::extension::postgres::Type;
+
     use super::*;
 
     #[derive(DeriveMigrationName)]
@@ -18,6 +20,16 @@ pub mod tables {
     #[async_trait::async_trait]
     impl MigrationTrait for Migration {
         async fn up(&self, manager: &SchemaManager) -> Result<(), DbErr> {
+            // Create user_role enum type
+            manager
+                .create_type(
+                    Type::create()
+                        .as_enum(Alias::new("user_role"))
+                        .values(vec!["Admin", "Vendor"])
+                        .to_owned(),
+                )
+                .await?;
+
             // Create users table
             manager
                 .create_table(
@@ -25,7 +37,7 @@ pub mod tables {
                         .table(Users::Table)
                         .if_not_exists()
                         .col(ColumnDef::new(Users::Id).uuid().not_null().primary_key())
-                        .col(ColumnDef::new(Users::Email).string().unique_key())
+                        .col(ColumnDef::new(Users::Email).string())
                         .col(ColumnDef::new(Users::PasswordHash).string().not_null())
                         .col(
                             ColumnDef::new(Users::Role)
@@ -33,7 +45,7 @@ pub mod tables {
                                 .not_null(),
                         )
                         .col(ColumnDef::new(Users::FullName).string().not_null())
-                        .col(ColumnDef::new(Users::Phone).unsigned().not_null())
+                        .col(ColumnDef::new(Users::Phone).unsigned().not_null().unique_key())
                         .col(
                             ColumnDef::new(Users::CreatedAt)
                                 .timestamp_with_time_zone()
@@ -163,7 +175,7 @@ pub mod tables {
                         .table(Orders::Table)
                         .if_not_exists()
                         .col(ColumnDef::new(Orders::Id).uuid().not_null().primary_key())
-                        .col(ColumnDef::new(Orders::SessionId).string().not_null())
+                        .col(ColumnDef::new(Orders::SessionId).uuid().not_null())
                         .col(ColumnDef::new(Orders::CustomerName).string().not_null())
                         .col(ColumnDef::new(Orders::CustomerEmail).string())
                         .col(ColumnDef::new(Orders::CustomerPhone).string().not_null())

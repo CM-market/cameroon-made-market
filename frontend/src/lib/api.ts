@@ -36,7 +36,7 @@ export const productApi = {
     if (category) params.append('category', category);
     if (seller_id) params.append('seller_id', seller_id);
     
-    const response = await axios.get<Product[]>(`${API_URL}/products?${params.toString()}`);
+    const response = await axios.get<{ success: boolean; message: string; data: Product[] }>(`${API_URL}/products?${params.toString()}`);
     return response.data;
   },
 
@@ -58,4 +58,17 @@ export const productApi = {
   delete: async (id: string) => {
     await axios.delete(`${API_URL}/products/${id}`);
   },
+};
+
+export const userApi = {
+  register: async (data: {
+    full_name: string;
+    email?: string;
+    phone: number;
+    password: string;
+  }) => {
+    const response = await axios.post(`${API_URL}/api/users`, data);
+    return response.data;
+  },
+  // ...other user API methods
 }; 
