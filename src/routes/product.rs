@@ -1,7 +1,6 @@
 use crate::{
-    middleware::auth::{AuthUser, Claims},
-    models::product::Model,
-    services::product::{CreateProduct, ProductService, UpdateProduct},
+    middleware::auth::AuthUser,
+    services::product::{CreateProduct, UpdateProduct},
     state::AppState,
     utils::shared::ApiResponse,
 };
@@ -12,7 +11,6 @@ use axum::{
     routing::{delete, get, post, put},
     Extension, Json, Router,
 };
-use sea_orm::metric::Info;
 use tracing::info;
 use uuid::Uuid;
 
