@@ -226,7 +226,7 @@ mod tests {
                 email: Some("test@example.com".to_string()),
                 phone: 1234567890,
                 password_hash: hash_password("password123").unwrap(),
-                role: UserRole::User.into(),
+                role: UserRole::Buyer.into(),
                 created_at: Utc::now(),
                 updated_at: Utc::now(),
             }]])
@@ -329,7 +329,7 @@ mod tests {
                     email: Some("user1@example.com".to_string()),
                     phone: 123,
                     password_hash: "hashed_password".to_string(),
-                    role: UserRole::User.into(),
+                    role: UserRole::Buyer.into(),
                     created_at: Utc::now(),
                     updated_at: Utc::now(),
                 },
@@ -355,7 +355,7 @@ mod tests {
         assert_eq!(users.len(), 2);
         assert_eq!(users[0].full_name, "User 1");
         assert_eq!(users[1].full_name, "User 2");
-        assert_eq!(users[0].role, UserRole::User);
+        assert_eq!(users[0].role, UserRole::Buyer);
         assert_eq!(users[1].role, UserRole::Vendor);
     }
 }
