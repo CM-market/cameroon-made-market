@@ -25,7 +25,7 @@ pub mod tables {
                 .create_type(
                     Type::create()
                         .as_enum(Alias::new("user_role"))
-                        .values(vec!["Admin", "Vendor"])
+                        .values(vec!["Admin", "Vendor", "User"])
                         .to_owned(),
                 )
                 .await?;
@@ -41,7 +41,7 @@ pub mod tables {
                         .col(ColumnDef::new(Users::PasswordHash).string().not_null())
                         .col(
                             ColumnDef::new(Users::Role)
-                                .enumeration(Alias::new("user_role"), vec!["Admin", "Vendor"])
+                                .enumeration(Alias::new("user_role"), vec!["Admin", "Vendor", "User"])
                                 .not_null(),
                         )
                         .col(ColumnDef::new(Users::FullName).string().not_null())
