@@ -20,15 +20,17 @@ pub struct Model {
     /// Detailed description of the product
     pub description: Option<String>,
     /// Price of the product in the specified currency
-    pub price: Decimal,
+    pub price: f64,
     /// Category the product belongs to (e.g., "Electronics", "Clothing")
     pub category: Option<String>,
+    pub quantity: u32,
     /// List of URLs to product images
     pub image_urls: Vec<String>,
     /// Timestamp when the product was created
     pub created_at: DateTime<Utc>,
     /// Timestamp when the product was last updated
     pub updated_at: DateTime<Utc>,
+
 }
 
 /// Defines the relationships between Product and other entities

@@ -17,14 +17,14 @@ pub struct CreateProduct {
     pub seller_id: Uuid,
     pub title: String,
     pub description: Option<String>,
-    pub price: rust_decimal::Decimal,
+    pub price: f64,
     pub category: Option<String>,
     pub image_urls: Vec<String>,
 }
 pub struct UpdateProduct {
     pub title: Option<String>,
     pub description: Option<String>,
-    pub price: Option<rust_decimal::Decimal>,
+    pub price: Option<f64>,
     pub category: Option<String>,
     pub image_urls: Option<Vec<String>>,
 }
@@ -42,6 +42,7 @@ impl ProductService {
             price: Set(product_data.price),
             category: Set(product_data.category),
             image_urls: Set(product_data.image_urls),
+            quantity: Set(0), // Default quantity value
             created_at: Set(chrono::Utc::now()),
             updated_at: Set(chrono::Utc::now()),
         }
@@ -51,8 +52,8 @@ impl ProductService {
         Ok(product.into())
     }
 
-pub async fn get_product_by_id(&self, product_id: Uuid) -> Result<Option<Model>, ServiceError> {
-debug!("{}", product_id);
+    pub async fn get_product_by_id(&self, product_id: Uuid) -> Result<Option<Model>, ServiceError> {
+        debug!("{}", product_id);
         let product = product::Entity::find_by_id(product_id)
             .one(&*self.db)
             .await
@@ -104,9 +105,7 @@ debug!("{}", product_id);
         Ok(())
     }
 
-    pub async fn list_products(
-        &self,
-    ) -> Result<Vec<Model>, ServiceError> {
+    pub async fn list_products(&self) -> Result<Vec<Model>, ServiceError> {
         let query = product::Entity::find();
 
         let products = query
@@ -135,9 +134,10 @@ mod tests {
                 seller_id: Some(seller_id),
                 title: "Test Product".to_string(),
                 description: Some("Test Description".to_string()),
-                price: Decimal::new(1000, 2), // 10.00
+                price: 10.0, // 10.00
                 category: Some("Test Category".to_string()),
                 image_urls: vec!["test.jpg".to_string()],
+                quantity: 1, // Default quantity value
                 created_at: chrono::Utc::now(),
                 updated_at: chrono::Utc::now(),
             }]])
@@ -149,7 +149,7 @@ mod tests {
             seller_id,
             title: "Test Product".to_string(),
             description: Some("Test Description".to_string()),
-            price: Decimal::new(1000, 2),
+            price: 100.0,
             category: Some("Test Category".to_string()),
             image_urls: vec!["test.jpg".to_string()],
         };
@@ -159,7 +159,7 @@ mod tests {
 
         let product_response = result.unwrap();
         assert_eq!(product_response.title, "Test Product");
-        assert_eq!(product_response.price, Decimal::new(1000, 2));
+        assert_eq!(product_response.price, 100.0);
         assert_eq!(product_response.seller_id, Some(seller_id));
     }
 
@@ -173,7 +173,8 @@ mod tests {
                 seller_id: Some(seller_id),
                 title: "Test Product".to_string(),
                 description: Some("Test Description".to_string()),
-                price: Decimal::new(1000, 2),
+                price: 100.0,
+                quantity: 1,
                 category: Some("Test Category".to_string()),
                 image_urls: vec!["test.jpg".to_string()],
                 created_at: chrono::Utc::now(),
@@ -203,7 +204,8 @@ mod tests {
                     seller_id: Some(seller_id),
                     title: "Test Product".to_string(),
                     description: Some("Test Description".to_string()),
-                    price: Decimal::new(1000, 2),
+                    price: 1000.0,
+                    quantity: 1,
                     category: Some("Test Category".to_string()),
                     image_urls: vec!["test.jpg".to_string()],
                     created_at: chrono::Utc::now(),
@@ -214,7 +216,8 @@ mod tests {
                     seller_id: Some(seller_id),
                     title: "Updated Product".to_string(),
                     description: Some("Updated Description".to_string()),
-                    price: Decimal::new(2000, 2),
+                    price: 100.0,
+                    quantity: 1,
                     category: Some("Updated Category".to_string()),
                     image_urls: vec!["updated.jpg".to_string()],
                     created_at: chrono::Utc::now(),
@@ -228,7 +231,7 @@ mod tests {
         let update_data = UpdateProduct {
             title: Some("Updated Product".to_string()),
             description: Some("Updated Description".to_string()),
-            price: Some(Decimal::new(2000, 2)),
+            price: Some(100.0),
             category: Some("Updated Category".to_string()),
             image_urls: Some(vec!["updated.jpg".to_string()]),
         };
@@ -238,7 +241,7 @@ mod tests {
 
         let product_response = result.unwrap();
         assert_eq!(product_response.title, "Updated Product");
-        assert_eq!(product_response.price, Decimal::new(2000, 2));
+        assert_eq!(product_response.price, 100.0);
     }
 
     #[tokio::test]
@@ -251,7 +254,8 @@ mod tests {
                     seller_id: Some(seller_id),
                     title: "Product 1".to_string(),
                     description: Some("Description 1".to_string()),
-                    price: Decimal::new(1000, 2),
+                    price: 100.0,
+                    quantity: 1,
                     category: Some("Category A".to_string()),
                     image_urls: vec!["1.jpg".to_string()],
                     created_at: chrono::Utc::now(),
@@ -262,7 +266,8 @@ mod tests {
                     seller_id: Some(seller_id),
                     title: "Product 2".to_string(),
                     description: Some("Description 2".to_string()),
-                    price: Decimal::new(2000, 2),
+                    price: 100.0,
+                    quantity: 1,
                     category: Some("Category B".to_string()),
                     image_urls: vec!["2.jpg".to_string()],
                     created_at: chrono::Utc::now(),

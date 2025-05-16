@@ -233,7 +233,7 @@ pub struct ListProductsQuery {
 pub struct CreateProductRequest {
     title: String,
     description: String,
-    price: rust_decimal::Decimal,
+    price: f64,
     category: String,
     image_urls: Vec<String>,
 }
@@ -242,7 +242,7 @@ pub struct CreateProductRequest {
 pub struct UpdateProductRequest {
     title: Option<String>,
     description: Option<String>,
-    price: Option<rust_decimal::Decimal>,
+    price: Option<f64>,
     category: Option<String>,
     image_urls: Option<Vec<String>>,
 }
