@@ -1,5 +1,4 @@
 use chrono::{DateTime, Utc};
-use rust_decimal::Decimal;
 use sea_orm::entity::prelude::*;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;

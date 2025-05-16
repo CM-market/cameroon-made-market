@@ -86,6 +86,7 @@ pub mod tables {
                                 .timestamp_with_time_zone()
                                 .not_null(),
                         )
+                        .col(ColumnDef::new(Products::Quantity).timestamp_with_time_zone().not_null())
                         .col(
                             ColumnDef::new(Products::UpdatedAt)
                                 .timestamp_with_time_zone()
@@ -111,7 +112,7 @@ pub mod tables {
                         .if_not_exists()
                         .col(ColumnDef::new(Carts::Id).uuid().not_null().primary_key())
                         .col(
-                            ColumnDef::new(Carts::SessionId)
+                            ColumnDef::new(Carts::UserId)
                                 .uuid()
                                 .not_null()
                                 .unique_key(),
@@ -124,7 +125,7 @@ pub mod tables {
                         .foreign_key(
                             ForeignKey::create()
                                 .name("fk_carts_session_id")
-                                .from(Carts::Table, Carts::SessionId)
+                                .from(Carts::Table, Carts::UserId)
                                 .to(Users::Table, Users::Id)
                                 .on_delete(ForeignKeyAction::NoAction)
                                 .on_update(ForeignKeyAction::NoAction),
@@ -330,6 +331,7 @@ pub mod tables {
         Title,
         Description,
         Price,
+        Quantity,
         Category,
         ImageUrls,
         CreatedAt,
@@ -340,7 +342,7 @@ pub mod tables {
     enum Carts {
         Table,
         Id,
-        SessionId,
+        UserId,
         CreatedAt,
     }
 
