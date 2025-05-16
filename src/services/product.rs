@@ -1,3 +1,4 @@
+use log::debug;
 use sea_orm::{
     ActiveModelTrait, ColumnTrait, DatabaseConnection, EntityTrait, QueryFilter, QueryOrder, Set,
 };
@@ -50,7 +51,8 @@ impl ProductService {
         Ok(product.into())
     }
 
-    pub async fn get_product_by_id(&self, product_id: Uuid) -> Result<Option<Model>, ServiceError> {
+pub async fn get_product_by_id(&self, product_id: Uuid) -> Result<Option<Model>, ServiceError> {
+debug!("{}", product_id);
         let product = product::Entity::find_by_id(product_id)
             .one(&*self.db)
             .await
@@ -101,20 +103,11 @@ impl ProductService {
             .await?;
         Ok(())
     }
-    /// Lists products based on optional filters for category or seller_id.
+
     pub async fn list_products(
         &self,
-        category: Option<String>,
-        seller_id: Option<Uuid>,
     ) -> Result<Vec<Model>, ServiceError> {
-        let mut query = product::Entity::find();
-
-        if let Some(category) = category {
-            query = query.filter(product::Column::Category.eq(category));
-        }
-        if let Some(seller_id) = seller_id {
-            query = query.filter(product::Column::SellerId.eq(seller_id));
-        }
+        let query = product::Entity::find();
 
         let products = query
             .order_by_desc(product::Column::CreatedAt)
@@ -280,7 +273,7 @@ mod tests {
 
         let service = ProductService::new(Arc::new(db));
 
-        let result = service.list_products(None, Some(seller_id)).await;
+        let result = service.list_products().await;
         assert!(result.is_ok());
 
         let products = result.unwrap();
