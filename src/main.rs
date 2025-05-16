@@ -1,4 +1,6 @@
-use axum::Router;
+use axum::{http, middleware, Router};
+use cameroon_made_market::middleware::auth::{auth, generate_token};
+use cameroon_made_market::models::user::UserRole;
 use cameroon_made_market::routes;
 use cameroon_made_market::state::setup;
 use tokio::net::TcpListener;
@@ -14,7 +16,8 @@ async fn main() {
 
     // Get configuration
     let app_state = setup().await;
-
+    let token = generate_token("51048c10-784d-4acb-b8c0-88af8a7efc7a", UserRole::Vendor, &app_state.config).unwrap();
+    println!("{}", token);
     // Configure CORS
     let cors = CorsLayer::new()
         .allow_origin(Any)
@@ -25,6 +28,12 @@ async fn main() {
     let app = Router::new()
         .merge(routes::user::config())
         .merge(routes::product::config())
+        .layer(middleware::from_fn({
+            let app_state = app_state.clone();
+            move |req: http::Request<axum::body::Body>, next| {
+                auth(axum::extract::State(app_state.clone()), req, next)
+            }
+        }))
         // .merge(routes::order::config())
         // .merge(routes::cart::config())
         // .merge(routes::auth::config())

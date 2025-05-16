@@ -12,8 +12,8 @@ pub enum ServiceError {
     Unauthorized(String),
     #[error("Internal Server Error: {0}")]
     Forbidden(String),
-    #[error("Internal Server Error: {0}")]
-    InternalServerError(String),
+    #[error("Internal Server Error")]
+    InternalServerError,
     #[error("Error: {0}")]
     GenericError(String),
     #[error("User not found: {0}")]
@@ -33,7 +33,7 @@ impl From<sea_orm::DbErr> for ServiceError {
             sea_orm::DbErr::Type(e) => ServiceError::DatabaseError(e.to_string()),
             sea_orm::DbErr::Json(e) => ServiceError::DatabaseError(e.to_string()),
 
-            _ => ServiceError::InternalServerError("Internal server error".to_string()),
+            _ => ServiceError::InternalServerError,
         }
     }
 }

@@ -1,18 +1,16 @@
 use crate::{
-    middleware::auth::{AuthUser, Claims},
-    models::product::Model,
-    services::product::{CreateProduct, ProductService, UpdateProduct},
+    middleware::auth::AuthUser,
+    services::product::{CreateProduct, UpdateProduct},
     state::AppState,
     utils::shared::ApiResponse,
 };
 use axum::{
-    extract::{Path, Query, State},
+    extract::{Path, State},
     http::StatusCode,
     response::IntoResponse,
     routing::{delete, get, post, put},
     Extension, Json, Router,
 };
-use sea_orm::metric::Info;
 use tracing::info;
 use uuid::Uuid;
 
@@ -28,11 +26,10 @@ pub fn config() -> Router<AppState> {
 #[axum::debug_handler]
 async fn list_products(
     State(state): State<AppState>,
-    Query(query): Query<ListProductsQuery>,
 ) -> impl IntoResponse {
     match state
         .product_service
-        .list_products(query.category, query.seller_id)
+        .list_products()
         .await
     {
         Ok(products) => Json(ApiResponse::success(
@@ -78,8 +75,21 @@ async fn create_product(
     Extension(auth_user): Extension<AuthUser>,
     Json(product_data): Json<CreateProductRequest>,
 ) -> impl IntoResponse {
+    let seller_id = match Uuid::parse_str(&auth_user.id) {
+        Ok(id) => id,
+        Err(e) => {
+            return (
+                StatusCode::BAD_REQUEST,
+                Json(ApiResponse::<()>::error(&format!(
+                    "Invalid seller ID: {}",
+                    e
+                ))),
+            )
+                .into_response();
+        }
+    };
     let create_product = CreateProduct {
-        seller_id: Uuid::parse_str(&auth_user.id).unwrap(),
+        seller_id,
         title: product_data.title,
         description: Some(product_data.description),
         price: product_data.price,
@@ -96,11 +106,14 @@ async fn create_product(
             )),
         )
             .into_response(),
-        Err(e) => (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            Json(ApiResponse::<()>::error(&e.to_string())),
-        )
-            .into_response(),
+        Err(e) => {
+            tracing::error!("could not store products: {}", e.to_string());
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ApiResponse::<()>::error(&e.to_string())),
+            )
+                .into_response()
+        }
     }
 }
 
