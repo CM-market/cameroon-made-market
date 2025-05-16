@@ -24,7 +24,7 @@ pub fn config() -> Router<AppState> {
 }
 
 #[axum::debug_handler]
-async fn list_products(
+async fn list_products( 
     State(state): State<AppState>,
     Query(query): Query<ListProductsQuery>,
 ) -> impl IntoResponse {
@@ -32,7 +32,7 @@ async fn list_products(
         .product_service
         .list_products(query.category, query.seller_id)
         .await
-    {
+    { 
         Ok(products) => Json(ApiResponse::success(
             products,
             "Products retrieved successfully",
