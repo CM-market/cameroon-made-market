@@ -28,6 +28,7 @@ async fn main() {
     let app = Router::new()
         .merge(routes::user::config())
         .merge(routes::product::config())
+        .merge(routes::cart::config())
         .layer(middleware::from_fn({
             let app_state = app_state.clone();
             move |req: http::Request<axum::body::Body>, next| {
@@ -35,7 +36,6 @@ async fn main() {
             }
         }))
         // .merge(routes::order::config())
-        // .merge(routes::cart::config())
         // .merge(routes::auth::config())
         // .merge(routes::category::config())
         // .merge(routes::address::config())
