@@ -25,7 +25,7 @@ pub struct Model {
     pub password_hash: String,
     pub role: UserRole,
     pub full_name: String,
-    pub phone: u32,
+    pub phone: i32,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
 }

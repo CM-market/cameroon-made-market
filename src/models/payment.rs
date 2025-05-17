@@ -15,7 +15,7 @@ pub struct Model {
     /// Reference to the order this payment is associated with
     pub order_id: Uuid,
     /// Amount of the payment
-    pub amount: Decimal,
+    pub amount: f64,
     /// Current status of the payment (e.g., "pending", "completed", "failed", "refunded")
     pub status: String,
     /// Method used for payment (e.g., "credit_card", "mobile_money", "bank_transfer")

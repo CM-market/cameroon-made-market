@@ -1,5 +1,4 @@
 use chrono::{DateTime, Utc};
-use rust_decimal::Decimal;
 use sea_orm::entity::prelude::*;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
@@ -14,7 +13,7 @@ pub struct Model {
     pub id: Uuid,
     /// Reference to the seller (user) who created the product
     /// Optional to allow for system-created products
-    pub seller_id: Option<Uuid>,
+    pub seller_id: Uuid,
     /// Title of the product
     pub title: String,
     /// Detailed description of the product
@@ -23,7 +22,7 @@ pub struct Model {
     pub price: f64,
     /// Category the product belongs to (e.g., "Electronics", "Clothing")
     pub category: Option<String>,
-    pub quantity: u32,
+    pub quantity: i32,
     /// List of URLs to product images
     pub image_urls: Vec<String>,
     /// Timestamp when the product was created

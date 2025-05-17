@@ -1,6 +1,6 @@
 use log::debug;
 use sea_orm::{
-    ActiveModelTrait, ColumnTrait, DatabaseConnection, EntityTrait, QueryFilter, QueryOrder, Set,
+    ActiveModelTrait, DatabaseConnection, EntityTrait, QueryOrder, Set,
 };
 use std::sync::Arc;
 use uuid::Uuid;
@@ -36,7 +36,7 @@ impl ProductService {
     pub async fn create_product(&self, product_data: CreateProduct) -> Result<Model, ServiceError> {
         let product = product::ActiveModel {
             id: Set(Uuid::new_v4()),
-            seller_id: Set(Some(product_data.seller_id)),
+            seller_id: Set(product_data.seller_id),
             title: Set(product_data.title),
             description: Set(product_data.description),
             price: Set(product_data.price),
@@ -120,10 +120,8 @@ impl ProductService {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use mockall::predicate::*;
-    use rust_decimal::Decimal;
     use sea_orm::MockDatabase;
-    use test_log;
+
 
     #[tokio::test]
     async fn test_create_product() {
@@ -131,7 +129,7 @@ mod tests {
         let db = MockDatabase::new(sea_orm::DatabaseBackend::Postgres)
             .append_query_results(vec![vec![product::Model {
                 id: Uuid::new_v4(),
-                seller_id: Some(seller_id),
+                seller_id: seller_id,
                 title: "Test Product".to_string(),
                 description: Some("Test Description".to_string()),
                 price: 10.0, // 10.00
@@ -160,7 +158,7 @@ mod tests {
         let product_response = result.unwrap();
         assert_eq!(product_response.title, "Test Product");
         assert_eq!(product_response.price, 100.0);
-        assert_eq!(product_response.seller_id, Some(seller_id));
+        assert_eq!(product_response.seller_id,seller_id);
     }
 
     #[tokio::test]
@@ -170,7 +168,7 @@ mod tests {
         let db = MockDatabase::new(sea_orm::DatabaseBackend::Postgres)
             .append_query_results(vec![vec![product::Model {
                 id: product_id,
-                seller_id: Some(seller_id),
+                seller_id: seller_id,
                 title: "Test Product".to_string(),
                 description: Some("Test Description".to_string()),
                 price: 100.0,
@@ -201,7 +199,7 @@ mod tests {
             .append_query_results(vec![
                 vec![product::Model {
                     id: product_id,
-                    seller_id: Some(seller_id),
+                    seller_id: seller_id,
                     title: "Test Product".to_string(),
                     description: Some("Test Description".to_string()),
                     price: 1000.0,
@@ -213,7 +211,7 @@ mod tests {
                 }],
                 vec![product::Model {
                     id: product_id,
-                    seller_id: Some(seller_id),
+                    seller_id: seller_id,
                     title: "Updated Product".to_string(),
                     description: Some("Updated Description".to_string()),
                     price: 100.0,
@@ -251,7 +249,7 @@ mod tests {
             .append_query_results(vec![vec![
                 product::Model {
                     id: Uuid::new_v4(),
-                    seller_id: Some(seller_id),
+                    seller_id: seller_id,
                     title: "Product 1".to_string(),
                     description: Some("Description 1".to_string()),
                     price: 100.0,
@@ -263,7 +261,7 @@ mod tests {
                 },
                 product::Model {
                     id: Uuid::new_v4(),
-                    seller_id: Some(seller_id),
+                    seller_id: seller_id,
                     title: "Product 2".to_string(),
                     description: Some("Description 2".to_string()),
                     price: 100.0,

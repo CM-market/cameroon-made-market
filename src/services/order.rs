@@ -25,7 +25,7 @@ impl OrderService {
     ) -> Result<order::Model, ServiceError> {
         let order = order::ActiveModel {
             id: Set(Uuid::new_v4()),
-            session_id: Set(order_data.session_id),
+            user_id: Set(order_data.user_id),
             customer_name: Set(order_data.customer_name),
             customer_email: Set(order_data.customer_email),
             customer_phone: Set(order_data.customer_phone),
@@ -43,8 +43,7 @@ impl OrderService {
                 id: Set(Uuid::new_v4()),
                 order_id: Set(order.id),
                 product_id: Set(item.product_id),
-                quantity: Set(item.quantity),
-                price: Set(item.price),
+                quantity: Set(item.quantity as i32),
             }
             .insert(&self.db)
             .await?;
@@ -93,7 +92,7 @@ impl OrderService {
         let mut query = order::Entity::find();
 
         if let Some(session_id) = session_id {
-            query = query.filter(order::Column::SessionId.eq(session_id));
+            query = query.filter(order::Column::UserId.eq(session_id));
         }
         if let Some(status) = status {
             query = query.filter(order::Column::Status.eq::<String>(status.into()));
@@ -136,10 +135,7 @@ impl OrderService {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use mockall::predicate::*;
-    use rust_decimal::Decimal;
     use sea_orm::MockDatabase;
-    use test_log;
 
     #[tokio::test]
     async fn test_create_order() {
@@ -147,13 +143,13 @@ mod tests {
         let db = MockDatabase::new(sea_orm::DatabaseBackend::Postgres)
             .append_query_results(vec![vec![order::Model {
                 id: Uuid::new_v4(),
-                session_id: "test_session".to_string(),
+                user_id: "test_session".to_string(),
                 customer_name: "Test Customer".to_string(),
                 customer_email: Some("test@example.com".to_string()),
                 customer_phone: "1234567890".to_string(),
                 delivery_address: "Test Address".to_string(),
                 status: "pending".to_string(),
-                total: Decimal::new(10000, 2), // 100.00
+                total: 100.0, // 100.00
                 created_at: chrono::Utc::now(),
             }]])
             .append_query_results(vec![vec![order_item::Model {
@@ -161,7 +157,6 @@ mod tests {
                 order_id: Uuid::new_v4(),
                 product_id: Uuid::new_v4(),
                 quantity: 2,
-                price: Decimal::new(5000, 2), // 50.00
             }]])
             .into_connection();
 
@@ -170,17 +165,17 @@ mod tests {
         let order_data = CreateOrder {
             id: Uuid::new_v4(),
             created_at: chrono::Utc::now(),
-            session_id: "test_session".to_string(),
+            user_id: "test_session".to_string(),
             customer_name: "Test Customer".to_string(),
             customer_email: Some("test@example.com".to_string()),
             customer_phone: "1234567890".to_string(),
             delivery_address: "Test Address".to_string(),
             status: "pending".to_string(),
-            total: Decimal::new(10000, 2),
+            total: 1000.0,
             items: vec![order::Items {
                 product_id: Uuid::new_v4(),
                 quantity: 2,
-                price: Decimal::new(5000, 2),
+                price: 50.0,
             }],
         };
 
@@ -190,7 +185,7 @@ mod tests {
         let order_response = result.unwrap();
         assert_eq!(order_response.customer_name, "Test Customer");
         assert_eq!(order_response.status, "pending");
-        assert_eq!(order_response.total, Decimal::new(10000, 2));
+        assert_eq!(order_response.total, 100.0);
     }
 
     #[tokio::test]
@@ -199,13 +194,13 @@ mod tests {
         let db = MockDatabase::new(sea_orm::DatabaseBackend::Postgres)
             .append_query_results(vec![vec![order::Model {
                 id: order_id,
-                session_id: "test_session".to_string(),
+                user_id: "test_session".to_string(),
                 customer_name: "Test Customer".to_string(),
                 customer_email: Some("test@example.com".to_string()),
                 customer_phone: "1234567890".to_string(),
                 delivery_address: "Test Address".to_string(),
                 status: "pending".to_string(),
-                total: Decimal::new(10000, 2),
+                total: 10.0,
                 created_at: chrono::Utc::now(),
             }]])
             .into_connection();
@@ -224,28 +219,27 @@ mod tests {
     #[tokio::test]
     async fn test_update_order_status() {
         let order_id = Uuid::new_v4();
-        let user_id = Uuid::new_v4();
         let db = MockDatabase::new(sea_orm::DatabaseBackend::Postgres)
             .append_query_results(vec![vec![order::Model {
                 id: order_id,
-                session_id: "test_session".to_string(),
+                user_id: "test_session".to_string(),
                 customer_name: "Test Customer".to_string(),
                 customer_email: Some("test@example.com".to_string()),
                 customer_phone: "1234567890".to_string(),
                 delivery_address: "Test Address".to_string(),
                 status: "pending".to_string(),
-                total: Decimal::new(10000, 2),
+                total: 100.0,
                 created_at: chrono::Utc::now(),
             }]])
             .append_query_results(vec![vec![order::Model {
                 id: order_id,
-                session_id: "test_session".to_string(),
+                user_id: "test_session".to_string(),
                 customer_name: "Test Customer".to_string(),
                 customer_email: Some("test@example.com".to_string()),
                 customer_phone: "1234567890".to_string(),
                 delivery_address: "Test Address".to_string(),
                 status: "completed".to_string(),
-                total: Decimal::new(10000, 2),
+                total: 100.0,
                 created_at: chrono::Utc::now(),
             }]])
             .into_connection();
@@ -268,24 +262,24 @@ mod tests {
             .append_query_results(vec![vec![
                 order::Model {
                     id: Uuid::new_v4(),
-                    session_id: "session1".to_string(),
+                    user_id: "session1".to_string(),
                     customer_name: "Customer 1".to_string(),
                     customer_email: Some("customer1@example.com".to_string()),
                     customer_phone: "1234567890".to_string(),
                     delivery_address: "Address 1".to_string(),
                     status: "pending".to_string(),
-                    total: Decimal::new(10000, 2),
+                    total: 100.0,
                     created_at: chrono::Utc::now(),
                 },
                 order::Model {
                     id: Uuid::new_v4(),
-                    session_id: "session2".to_string(),
+                    user_id: "session2".to_string(),
                     customer_name: "Customer 2".to_string(),
                     customer_email: Some("customer2@example.com".to_string()),
                     customer_phone: "0987654321".to_string(),
                     delivery_address: "Address 2".to_string(),
                     status: "completed".to_string(),
-                    total: Decimal::new(20000, 2),
+                    total: 100.0,
                     created_at: chrono::Utc::now(),
                 },
             ]])
@@ -312,14 +306,14 @@ mod tests {
                     order_id,
                     product_id: Uuid::new_v4(),
                     quantity: 2,
-                    price: Decimal::new(5000, 2),
+            
                 },
                 order_item::Model {
                     id: Uuid::new_v4(),
                     order_id,
                     product_id: Uuid::new_v4(),
                     quantity: 1,
-                    price: Decimal::new(3000, 2),
+              
                 },
             ]])
             .into_connection();

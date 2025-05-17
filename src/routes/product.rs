@@ -127,7 +127,7 @@ async fn update_product(
     // First check if the product exists and belongs to the vendor
     match state.product_service.get_product_by_id(product_id).await {
         Ok(Some(product)) => {
-            if product.seller_id != Some(Uuid::parse_str(&auth_user.id).unwrap()) {
+            if product.seller_id != Uuid::parse_str(&auth_user.id).unwrap() {
                 return (
                     StatusCode::FORBIDDEN,
                     Json(ApiResponse::<()>::error(
@@ -184,7 +184,7 @@ async fn delete_product(
     // First check if the product exists and belongs to the vendor
     match state.product_service.get_product_by_id(product_id).await {
         Ok(Some(product)) => {
-            if product.seller_id != Some(Uuid::parse_str(&auth_user.id).unwrap()) {
+            if product.seller_id != Uuid::parse_str(&auth_user.id).unwrap() {
                 return (
                     StatusCode::FORBIDDEN,
                     Json(ApiResponse::<()>::error(

@@ -1,5 +1,4 @@
 use chrono::{DateTime, Utc};
-use rust_decimal::Decimal;
 use sea_orm::entity::prelude::*;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
@@ -12,8 +11,8 @@ pub struct Model {
     /// Unique identifier for the order
     #[sea_orm(primary_key, auto_increment = false)]
     pub id: Uuid,
-    /// Session identifier for guest checkout orders
-    pub session_id: String,
+    /// user identifier for guest checkout orders
+    pub user_id: String,
     /// Name of the customer placing the order
     pub customer_name: String,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -27,7 +26,7 @@ pub struct Model {
     #[sea_orm(column_type = "Text")]
     pub status: String,
     /// Total amount of the order including all items and fees
-    pub total: Decimal,
+    pub total: f64,
     /// Timestamp when the order was created
     pub created_at: DateTime<Utc>,
 }
@@ -75,7 +74,7 @@ pub enum Relation {
     /// If the user is deleted, the order remains but user_id becomes null
     #[sea_orm(
         belongs_to = "super::user::Entity",
-        from = "Column::SessionId",
+        from = "Column::UserId",
         to = "super::user::Column::Id",
         on_update = "NoAction",
         on_delete = "SetNull"
@@ -114,7 +113,7 @@ pub struct CreateOrder {
     /// Unique identifier for the order
     pub id: Uuid,
     /// Session identifier for guest checkout orders
-    pub session_id: String,
+    pub user_id: String,
     /// Name of the customer placing the order
     pub customer_name: String,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -127,7 +126,7 @@ pub struct CreateOrder {
     /// Current status of the ord
     pub status: String,
     /// Total amount of the order including all items and fees
-    pub total: Decimal,
+    pub total: f64,
     /// Timestamp when the order was created
     pub created_at: DateTime<Utc>,
     pub items: Vec<Items>,
@@ -135,8 +134,8 @@ pub struct CreateOrder {
 #[derive(Serialize, Deserialize)]
 pub struct Items {
     pub product_id: Uuid,
-    pub quantity: i32,
-    pub price: Decimal,
+    pub quantity: u32,
+    pub price: f64,
 }
 
 /// Implements default behavior for active model operations

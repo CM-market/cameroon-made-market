@@ -1,4 +1,3 @@
-use axum::extract::State;
 use sea_orm::{ActiveModelTrait, ColumnTrait, DatabaseConnection, EntityTrait, QueryFilter, Set};
 use uuid::Uuid;
 
@@ -14,7 +13,7 @@ pub struct PaymentService {
 }
 pub struct CreatePayment {
     pub order_id: Uuid,
-    pub amount: rust_decimal::Decimal,
+    pub amount: f64,
     pub payment_method: String,
     pub payment_details: Option<serde_json::Value>,
 }
@@ -125,7 +124,7 @@ mod tests {
             .append_query_results(vec![vec![payment::Model {
                 id: Uuid::new_v4(),
                 order_id,
-                amount: Decimal::new(10000, 2), // 100.00
+                amount: 200.0, // 100.00
                 status: "pending".to_string(),
                 payment_method: "card".to_string(),
                 payment_details: Some(json!({
@@ -141,7 +140,7 @@ mod tests {
 
         let payment_data = CreatePayment {
             order_id,
-            amount: Decimal::new(10000, 2),
+            amount: 100.0,
             payment_method: "card".to_string(),
             payment_details: Some(json!({
                 "card_last4": "4242",
@@ -155,7 +154,7 @@ mod tests {
         let payment_response = result.unwrap();
         assert_eq!(payment_response.order_id, order_id);
         assert_eq!(payment_response.status, "pending");
-        assert_eq!(payment_response.amount, Decimal::new(10000, 2));
+        assert_eq!(payment_response.amount, 100.0);
     }
 
     #[tokio::test]
@@ -166,7 +165,7 @@ mod tests {
             .append_query_results(vec![vec![payment::Model {
                 id: payment_id,
                 order_id,
-                amount: Decimal::new(10000, 2),
+                amount: 100.0,
                 status: "pending".to_string(),
                 payment_method: "card".to_string(),
                 payment_details: Some(json!({
@@ -198,7 +197,7 @@ mod tests {
                 vec![payment::Model {
                     id: payment_id,
                     order_id,
-                    amount: Decimal::new(10000, 2),
+                    amount: 100.0,
                     status: "pending".to_string(),
                     payment_method: "card".to_string(),
                     payment_details: Some(json!({
@@ -211,7 +210,7 @@ mod tests {
                 vec![payment::Model {
                     id: payment_id,
                     order_id,
-                    amount: Decimal::new(10000, 2),
+                    amount: 100.0,
                     status: "completed".to_string(),
                     payment_method: "card".to_string(),
                     payment_details: Some(json!({
