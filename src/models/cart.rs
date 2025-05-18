@@ -14,7 +14,7 @@ pub struct Model {
     /// Unique session identifier for guest shopping carts
     /// This allows tracking cart items for users who haven't logged in
     #[sea_orm(unique)]
-    pub session_id: Uuid,
+    pub user_id: Uuid,
     /// Timestamp when the cart was created
     pub created_at: DateTime<Utc>,
 }
@@ -27,7 +27,7 @@ pub enum Relation {
     CartItem,
     #[sea_orm(
         belongs_to = "super::user::Entity",
-        from = "Column::SessionId",
+        from = "Column::UserId",
         to = "super::user::Column::Id"
     )]
     User,

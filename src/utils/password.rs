@@ -23,6 +23,6 @@ pub fn verify_password(password: &str, hash: &str) -> Result<bool, argon2::passw
 
 impl From<argon2::password_hash::Error> for ServiceError {
     fn from(err: argon2::password_hash::Error) -> Self {
-        ServiceError::InternalServerError(err.to_string())
+        ServiceError::InternalServerError
     }
 }

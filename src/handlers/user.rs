@@ -1,4 +1,5 @@
 use axum::{extract::State, Extension, Json};
+use tracing::info;
 use uuid::Uuid;
 
 use crate::{
@@ -15,13 +16,17 @@ pub async fn register(
     State(state): State<AppState>,
     Json(user_data): Json<CreateUser>,
 ) -> Json<ApiResponse<Model>> {
+    print!("Registering user: {:?}", user_data);
     let user_service = UserService::new(
         state.db,
         state.config.jwt_secret.clone(),
         state.config.jwt_expires_in,
     );
     match user_service.create_user(user_data).await {
-        Ok(user) => Json(ApiResponse::success(user, "User created successfully")),
+        Ok(user) => {
+            info!("User Successfully created");
+            Json(ApiResponse::success(user, "User created successfully"))
+        }
         Err(e) => Json(ApiResponse::error(&e.to_string())),
     }
 }

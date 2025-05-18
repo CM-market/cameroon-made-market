@@ -10,6 +10,8 @@ impl MigratorTrait for Migrator {
 }
 
 pub mod tables {
+    use sea_orm::sea_query::extension::postgres::Type;
+
     use super::*;
 
     #[derive(DeriveMigrationName)]
@@ -18,6 +20,16 @@ pub mod tables {
     #[async_trait::async_trait]
     impl MigrationTrait for Migration {
         async fn up(&self, manager: &SchemaManager) -> Result<(), DbErr> {
+            // Create user_role enum type
+            manager
+                .create_type(
+                    Type::create()
+                        .as_enum(Alias::new("user_role"))
+                        .values(vec!["Admin", "Vendor", "User"])
+                        .to_owned(),
+                )
+                .await?;
+
             // Create users table
             manager
                 .create_table(
@@ -25,15 +37,23 @@ pub mod tables {
                         .table(Users::Table)
                         .if_not_exists()
                         .col(ColumnDef::new(Users::Id).uuid().not_null().primary_key())
-                        .col(ColumnDef::new(Users::Email).string().unique_key())
+                        .col(ColumnDef::new(Users::Email).string())
                         .col(ColumnDef::new(Users::PasswordHash).string().not_null())
                         .col(
                             ColumnDef::new(Users::Role)
-                                .enumeration(Alias::new("user_role"), vec!["Admin", "Vendor"])
+                                .enumeration(
+                                    Alias::new("user_role"),
+                                    vec!["Admin", "Vendor", "User"],
+                                )
                                 .not_null(),
                         )
                         .col(ColumnDef::new(Users::FullName).string().not_null())
-                        .col(ColumnDef::new(Users::Phone).unsigned().not_null())
+                        .col(
+                            ColumnDef::new(Users::Phone)
+                                .integer()
+                                .not_null()
+                                .unique_key(),
+                        )
                         .col(
                             ColumnDef::new(Users::CreatedAt)
                                 .timestamp_with_time_zone()
@@ -58,11 +78,8 @@ pub mod tables {
                         .col(ColumnDef::new(Products::SellerId).uuid())
                         .col(ColumnDef::new(Products::Title).string().not_null())
                         .col(ColumnDef::new(Products::Description).string())
-                        .col(
-                            ColumnDef::new(Products::Price)
-                                .decimal_len(10, 2)
-                                .not_null(),
-                        )
+                        .col(ColumnDef::new(Products::Quantity).integer().not_null())
+                        .col(ColumnDef::new(Products::Price).double().not_null())
                         .col(ColumnDef::new(Products::Category).string())
                         .col(
                             ColumnDef::new(Products::ImageUrls)
@@ -163,7 +180,7 @@ pub mod tables {
                         .table(Orders::Table)
                         .if_not_exists()
                         .col(ColumnDef::new(Orders::Id).uuid().not_null().primary_key())
-                        .col(ColumnDef::new(Orders::SessionId).string().not_null())
+                        .col(ColumnDef::new(Orders::SessionId).uuid().not_null())
                         .col(ColumnDef::new(Orders::CustomerName).string().not_null())
                         .col(ColumnDef::new(Orders::CustomerEmail).string())
                         .col(ColumnDef::new(Orders::CustomerPhone).string().not_null())
@@ -202,11 +219,7 @@ pub mod tables {
                         .col(ColumnDef::new(OrderItems::OrderId).uuid().not_null())
                         .col(ColumnDef::new(OrderItems::ProductId).uuid().not_null())
                         .col(ColumnDef::new(OrderItems::Quantity).integer().not_null())
-                        .col(
-                            ColumnDef::new(OrderItems::Price)
-                                .decimal_len(10, 2)
-                                .not_null(),
-                        )
+                        .col(ColumnDef::new(Products::Price).double().not_null())
                         .foreign_key(
                             ForeignKey::create()
                                 .name("fk_order_items_order_id")
@@ -315,6 +328,7 @@ pub mod tables {
         Table,
         Id,
         SellerId,
+        Quantity,
         Title,
         Description,
         Price,
@@ -362,7 +376,6 @@ pub mod tables {
         OrderId,
         ProductId,
         Quantity,
-        Price,
     }
 
     #[derive(Iden)]

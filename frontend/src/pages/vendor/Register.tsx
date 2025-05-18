@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import Footer from "@/components/Footer";
 import { toast } from "@/hooks/use-toast";
+import { userApi } from "@/lib/api";
 
 const VendorRegister: React.FC = () => {
   const navigate = useNavigate();
@@ -19,7 +20,7 @@ const VendorRegister: React.FC = () => {
     confirmPassword: "",
     businessName: "",
     businessDescription: "",
-    phoneNumber: "",
+    phoneNumber: 0,
     address: "",
   });
 
@@ -45,8 +46,12 @@ const VendorRegister: React.FC = () => {
     }
 
     try {
-      // TODO: Implement actual registration logic here
-      // For now, just simulate a successful registration
+      await userApi.register({
+        full_name: formData.firstName + " " + formData.lastName,
+        email: formData.email,
+        phone: formData.phoneNumber,
+        password: formData.password,
+      });
       toast({
         title: "Registration successful",
         description: "Welcome to Made in Cameroon! Please log in to continue."
