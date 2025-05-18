@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -28,10 +27,15 @@ const Home = () => {
               <p className="text-white/90 mb-8 max-w-2xl mx-auto">
                 Are you a Cameroonian artisan, farmer, or small business owner? Start selling your products to customers across the country.
               </p>
-              <Button asChild size="lg" className="bg-cm-yellow text-black hover:bg-yellow-400 text-lg px-10 py-7 h-auto font-bold text-xl shadow-lg">
-                <Link to="/vendor/register">Start Selling Today</Link>
-              </Button>
-            </div>
+              <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
+                <Button asChild size="lg" className="bg-cm-yellow text-black hover:bg-yellow-400 text-lg px-10 py-7 h-auto font-bold text-xl shadow-lg">
+                  <Link to="/vendor/register">Start Selling Today</Link>
+                </Button>
+                <Button asChild size="lg" className="bg-white text-cm-green hover:bg-cm-sand text-lg px-10 py-7 h-auto font-bold text-xl shadow-lg border border-cm-green">
+                  <Link to="/buyer/register">Start Buying</Link>
+                </Button>
+              </div>
+            </div> 
           </section>
         </div>
       </div>

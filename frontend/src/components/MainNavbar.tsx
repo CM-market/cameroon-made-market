@@ -1,6 +1,5 @@
-
-import React, { useState, useEffect } from "react";
-import { Link, useLocation } from "react-router-dom";
+import React, { useState, useEffect, useRef } from "react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { 
   NavigationMenu,
   NavigationMenuItem,
@@ -9,8 +8,10 @@ import {
   navigationMenuTriggerStyle
 } from "@/components/ui/navigation-menu";
 import { Button } from "@/components/ui/button";
-import { Search, ShoppingCart, User, Download } from "lucide-react";
+import { Search, ShoppingCart, User, Download, ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useTranslation } from 'react-i18next';
+import i18n from '@/i18n';
 
 // Define the BeforeInstallPromptEvent interface
 interface BeforeInstallPromptEvent extends Event {
@@ -22,12 +23,25 @@ interface BeforeInstallPromptEvent extends Event {
   prompt(): Promise<void>;
 }
 
+const languageOptions = [
+  { code: "en", label: "English", flag: "🇺🇸" },
+  { code: "fr", label: "Français", flag: "🇫🇷" }
+];
+
 const MainNavbar: React.FC = () => {
   const location = useLocation();
+  const navigate = useNavigate();
   const isActive = (path: string) => location.pathname === path;
   
   // For demo purposes, we'll use localStorage to simulate persistence
   const [cartCount, setCartCount] = useState(0);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+  const [langDropdownOpen, setLangDropdownOpen] = useState(false);
+  const [selectedLang, setSelectedLang] = useState(() => localStorage.getItem('lang') || 'en');
+  const langButtonRef = useRef<HTMLButtonElement>(null);
+  
+  const { t } = useTranslation();
   
   useEffect(() => {
     // Check localStorage for cart items on initial load and when it changes
@@ -100,6 +114,68 @@ const MainNavbar: React.FC = () => {
     }
   };
 
+  // Check if user is logged in as Buyer
+  const userRole = localStorage.getItem('userRole');
+  const userName = localStorage.getItem('userName');
+  const token = localStorage.getItem('token');
+  const isBuyerLoggedIn = userRole === 'Buyer' && !!token;
+
+  const handleLogout = () => {
+    setShowLogoutConfirm(true);
+  };
+
+  const confirmLogout = () => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('userId');
+    localStorage.removeItem('userRole');
+    localStorage.removeItem('userName');
+    setShowLogoutConfirm(false);
+    setDropdownOpen(false);
+    navigate('/');
+    window.location.reload(); // To force navbar update
+  };
+
+  const cancelLogout = () => {
+    setShowLogoutConfirm(false);
+  };
+
+  // Close dropdown on outside click
+  useEffect(() => {
+    const handleClick = (e: MouseEvent) => {
+      if (!(e.target as HTMLElement).closest('.buyer-dropdown')) {
+        setDropdownOpen(false);
+      }
+    };
+    if (dropdownOpen) {
+      window.addEventListener('mousedown', handleClick);
+    }
+    return () => window.removeEventListener('mousedown', handleClick);
+  }, [dropdownOpen]);
+
+  const handleLangSelect = (code: string) => {
+    setSelectedLang(code);
+    localStorage.setItem('lang', code);
+    i18n.changeLanguage(code);
+    setLangDropdownOpen(false);
+  };
+
+  // Close language dropdown on outside click
+  useEffect(() => {
+    const handleClick = (e: MouseEvent) => {
+      if (
+        langDropdownOpen &&
+        langButtonRef.current &&
+        !(e.target as HTMLElement).closest('.lang-dropdown')
+      ) {
+        setLangDropdownOpen(false);
+      }
+    };
+    if (langDropdownOpen) {
+      window.addEventListener('mousedown', handleClick);
+    }
+    return () => window.removeEventListener('mousedown', handleClick);
+  }, [langDropdownOpen]);
+
   return (
     <header className="border-b bg-background sticky top-0 z-50">
       <div className="container mx-auto flex items-center justify-between h-16 px-4">
@@ -110,7 +186,7 @@ const MainNavbar: React.FC = () => {
             alt="Made in Cameroon"
             className="h-8 w-8 mr-2"
           />
-          <span className="hidden sm:inline">Made in Cameroon</span>
+          <span className="hidden sm:inline">{t('welcome')}</span>
         </Link>
 
         {/* Main Navigation */}
@@ -175,12 +251,99 @@ const MainNavbar: React.FC = () => {
           <Button variant="ghost" size="icon" onClick={handleInstallPWA} className="md:flex hidden">
             <Download className="h-5 w-5" />
           </Button>
-          <Link to="/login">
-            <Button variant="outline" size="sm" className="ml-2">
-              <User className="h-4 w-4 mr-2" />
-              Login
-            </Button>
-          </Link>
+          {/* Language Selector */}
+          <div className="relative lang-dropdown">
+            <button
+              ref={langButtonRef}
+              className="flex items-center gap-1 px-2 py-1 border rounded bg-white hover:bg-gray-100 focus:outline-none"
+              onClick={() => setLangDropdownOpen((open) => !open)}
+            >
+              <span className="text-xl">
+                {languageOptions.find(l => l.code === selectedLang)?.flag || '🌐'}
+              </span>
+              <span className="font-semibold uppercase">{selectedLang}</span>
+              <ChevronDown className="w-4 h-4" />
+            </button>
+            {langDropdownOpen && (
+              <div className="absolute right-0 mt-2 w-48 bg-white border rounded shadow-lg z-50">
+                <div className="px-4 py-2 text-xs text-gray-500">{t('changeLanguage')}</div>
+                {languageOptions.map(opt => (
+                  <button
+                    key={opt.code}
+                    className={`w-full text-left px-4 py-2 flex items-center gap-2 hover:bg-cm-green/10 ${selectedLang === opt.code ? 'text-cm-green font-bold' : ''}`}
+                    onClick={() => handleLangSelect(opt.code)}
+                  >
+                    <span className="text-lg">{opt.flag}</span>
+                    <span>{opt.label}</span>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+          {isBuyerLoggedIn ? (
+            <div className="relative buyer-dropdown">
+              <button
+                className="ml-4 font-semibold text-cm-green flex items-center gap-1 focus:outline-none"
+                onClick={() => setDropdownOpen((open) => !open)}
+              >
+                {userName}
+                <ChevronDown className="w-4 h-4" />
+              </button>
+              {dropdownOpen && (
+                <div className="absolute right-0 mt-2 w-48 bg-white border rounded shadow-lg z-50">
+                  <button
+                    className="w-full text-left px-4 py-2 hover:bg-cm-green/10"
+                    onClick={() => { setDropdownOpen(false); navigate('/buyer/account-info'); }}
+                  >
+                    {t('accountInfo')}
+                  </button>
+                  <button
+                    className="w-full text-left px-4 py-2 hover:bg-cm-green/10"
+                    onClick={() => { setDropdownOpen(false); navigate('/buyer/settings'); }}
+                  >
+                    {t('settings')}
+                  </button>
+                  <button
+                    className="w-full text-left px-4 py-2 hover:bg-cm-green/10"
+                    onClick={() => { setDropdownOpen(false); navigate('/buyer/account'); }}
+                  >
+                    {t('account')}
+                  </button>
+                  <button
+                    className="w-full text-left px-4 py-2 text-red-600 hover:bg-red-50"
+                    onClick={handleLogout}
+                  >
+                    {t('logout')}
+                  </button>
+                </div>
+              )}
+              {showLogoutConfirm && (
+                <div className="fixed inset-0 flex items-center justify-center z-50 bg-black/30">
+                  <div className="bg-white rounded shadow-lg p-6 w-80">
+                    <p className="mb-4">{t('logoutConfirm')}</p>
+                    <div className="flex justify-end gap-2">
+                      <Button variant="outline" onClick={cancelLogout}>{t('cancel')}</Button>
+                      <Button variant="destructive" onClick={confirmLogout}>{t('yesLogout')}</Button>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          ) : (
+            <>
+              <Link to="/login">
+                <Button variant="outline" size="sm" className="ml-2">
+                  <User className="h-4 w-4 mr-2" />
+                  {t('login')}
+                </Button>
+              </Link>
+              <Link to="/buyer/register">
+                <Button variant="default" size="sm" className="ml-2 bg-cm-green text-white hover:bg-cm-forest">
+                  {t('signUp')}
+                </Button>
+              </Link>
+            </>
+          )}
         </div>
       </div>
     </header>

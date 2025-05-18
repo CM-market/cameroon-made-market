@@ -104,7 +104,7 @@ pub struct UpdateCartRequest {
     quantity: i32,
 }
 
-#[axum::debug_handler]
+#[axum::debug_handler] 
 async fn remove_from_cart(
     State(state): State<AppState>,
     Extension(auth): Extension<AuthUser>,
