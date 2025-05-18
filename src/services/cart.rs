@@ -1,3 +1,5 @@
+use std::sync::Arc;
+
 use sea_orm::{ActiveModelTrait, ColumnTrait, DatabaseConnection, EntityTrait, QueryFilter, Set};
 use uuid::Uuid;
 
@@ -9,18 +11,18 @@ use crate::models::{
 use super::errors::ServiceError;
 
 pub struct CartService {
-    db: DatabaseConnection,
+    db: Arc<DatabaseConnection>,
 }
 
 impl CartService {
-    pub fn new(db: DatabaseConnection) -> Self {
+    pub fn new(db: Arc<DatabaseConnection>) -> Self {
         Self { db }
     }
 
-    pub async fn get_or_create_cart(&self, session_id: String) -> Result<Model, ServiceError> {
+    pub async fn get_or_create_cart(&self, user_id: String) -> Result<Model, ServiceError> {
         let cart = cart::Entity::find()
-            .filter(cart::Column::SessionId.eq(&session_id))
-            .one(&self.db)
+            .filter(cart::Column::UserId.eq(&user_id))
+            .one(&*self.db) // Convert Arc<DatabaseConnection> to &DatabaseConnection
             .await?;
 
         match cart {
@@ -28,11 +30,11 @@ impl CartService {
             None => {
                 let new_cart = cart::ActiveModel {
                     id: Set(Uuid::new_v4()),
-                    session_id: Set(Uuid::parse_str(&session_id)
+                    user_id: Set(Uuid::parse_str(&user_id)
                         .map_err(|e| ServiceError::Validation(e.to_string()))?),
                     created_at: Set(chrono::Utc::now()),
                 }
-                .insert(&self.db)
+                .insert(&*self.db)
                 .await?;
 
                 Ok(new_cart.into())
@@ -49,7 +51,7 @@ impl CartService {
         let existing_item = cart_item::Entity::find()
             .filter(cart_item::Column::CartId.eq(cart_id))
             .filter(cart_item::Column::ProductId.eq(item_data.product_id))
-            .one(&self.db)
+            .one(&*self.db)
             .await?;
 
         match existing_item {
@@ -57,7 +59,7 @@ impl CartService {
                 // Update quantity if item exists
                 let mut active_model: cart_item::ActiveModel = item.clone().into();
                 active_model.quantity = Set(item.quantity + item_data.quantity);
-                let updated_item = active_model.update(&self.db).await?;
+                let updated_item = active_model.update(&*self.db).await?;
                 Ok(updated_item)
             }
             None => {
@@ -68,7 +70,7 @@ impl CartService {
                     product_id: Set(item_data.product_id),
                     quantity: Set(item_data.quantity),
                 }
-                .insert(&self.db)
+                .insert(&*self.db)
                 .await?;
 
                 Ok(new_item.into())
@@ -85,20 +87,20 @@ impl CartService {
         let item = cart_item::Entity::find()
             .filter(cart_item::Column::CartId.eq(cart_id))
             .filter(cart_item::Column::Id.eq(item_id))
-            .one(&self.db)
+            .one(&*self.db)
             .await
             .map_err(|e| ServiceError::NotFound(e.to_string()))?;
 
         if quantity <= 0 {
             cart_item::Entity::delete_by_id(item_id)
-                .exec(&self.db)
+                .exec(&*self.db)
                 .await
                 .map_err(|e| ServiceError::Validation(e.to_string()))?;
         }
         if let Some(item) = item {
             let mut active_model: cart_item::ActiveModel = item.into();
             active_model.quantity = Set(quantity);
-            let updated_item = active_model.update(&self.db).await?;
+            let updated_item = active_model.update(&*self.db).await?;
 
             Ok(updated_item.into())
         } else {
@@ -114,14 +116,17 @@ impl CartService {
         cart_item::Entity::delete_many()
             .filter(cart_item::Column::CartId.eq(cart_id))
             .filter(cart_item::Column::Id.eq(item_id))
-            .exec(&self.db)
+            .exec(&*self.db)
             .await?;
 
         Ok(())
     }
 
-    pub async fn get_cart(&self, cart_id: Uuid) -> Result<Option<cart::Model>, ServiceError> {
-        let cart = cart::Entity::find_by_id(cart_id).one(&self.db).await?;
+    pub async fn get_cart(&self, user_id: String) -> Result<Option<cart::Model>, ServiceError> {
+        let cart = cart::Entity::find()
+            .filter(cart::Column::UserId.eq(&user_id))
+            .one(&*self.db)
+            .await?;
 
         Ok(cart)
     }
@@ -129,7 +134,7 @@ impl CartService {
     pub async fn clear_cart(&self, cart_id: Uuid) -> Result<(), ServiceError> {
         cart_item::Entity::delete_many()
             .filter(cart_item::Column::CartId.eq(cart_id))
-            .exec(&self.db)
+            .exec(&*self.db)
             .await?;
 
         Ok(())
@@ -148,18 +153,19 @@ mod tests {
             // .append_query_results(vec![vec![]]) // Empty result for initial search
             .append_query_results(vec![vec![cart::Model {
                 id: Uuid::new_v4(),
-                session_id: Uuid::parse_str("test_session").unwrap(),
+                user_id: Uuid::parse_str("test_user").unwrap(),
+
                 created_at: chrono::Utc::now(),
             }]])
             .into_connection();
 
-        let service = CartService::new(db);
+        let service = CartService::new(Arc::new(db));
 
         let result = service.get_or_create_cart("test_session".to_string()).await;
         assert!(result.is_ok());
 
         let cart_response = result.unwrap();
-        assert_eq!(cart_response.session_id.to_string(), "test_session");
+        assert_eq!(cart_response.user_id.to_string(), "test_session");
     }
 
     #[tokio::test]
@@ -176,10 +182,9 @@ mod tests {
             }]])
             .into_connection();
 
-        let service = CartService::new(db);
+        let service = CartService::new(db.into());
 
         let item_data = CartItem {
-            id: Uuid::new_v4(),
             cart_id,
             product_id,
             quantity: 1,
@@ -214,7 +219,7 @@ mod tests {
             }]])
             .into_connection();
 
-        let service = CartService::new(db);
+        let service = CartService::new(db.into());
 
         let result = service.update_cart_item_quantity(cart_id, item_id, 2).await;
         assert!(result.is_ok());
@@ -238,7 +243,7 @@ mod tests {
             .append_exec_results(vec![]) // Simulate successful deletion
             .into_connection();
 
-        let service = CartService::new(db);
+        let service = CartService::new(db.into());
 
         let result = service.update_cart_item_quantity(cart_id, item_id, 0).await;
         assert!(result.is_err());
@@ -254,20 +259,20 @@ mod tests {
         let db = MockDatabase::new(sea_orm::DatabaseBackend::Postgres)
             .append_query_results(vec![vec![cart::Model {
                 id: cart_id,
-                session_id: Uuid::parse_str("test_session").unwrap(),
+                user_id: Uuid::parse_str("test_session").unwrap(),
                 created_at: chrono::Utc::now(),
             }]])
             .into_connection();
 
-        let service = CartService::new(db);
+        let service = CartService::new(db.into());
 
-        let result = service.get_cart(cart_id).await;
+        let result = service.get_cart(cart_id.to_string()).await;
         assert!(result.is_ok());
 
         let cart_response = result.unwrap();
         let cart_response = cart_response.unwrap();
         assert_eq!(cart_response.id, cart_id);
-        assert_eq!(cart_response.session_id.to_string(), "test_session");
+        assert_eq!(cart_response.user_id.to_string(), "test_session");
     }
 
     #[tokio::test]
@@ -277,7 +282,7 @@ mod tests {
             .append_exec_results(vec![]) // Simulate successful deletion
             .into_connection();
 
-        let service = CartService::new(db);
+        let service = CartService::new(db.into());
 
         let result = service.clear_cart(cart_id).await;
         assert!(result.is_ok());

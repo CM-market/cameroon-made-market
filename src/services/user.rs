@@ -24,7 +24,7 @@ pub struct UserService {
 pub struct CreateUser {
     pub full_name: String,
     pub email: Option<String>,
-    pub phone: u32,
+    pub phone: i32,
     pub password: String,
     pub role: UserRole,
 }
@@ -44,7 +44,7 @@ pub struct LoginResponse {
 pub struct UpdateUser {
     pub full_name: Option<String>,
     pub email: Option<String>,
-    pub phone: u32,
+    pub phone: i32,
     pub password: String,
 }
 
@@ -75,7 +75,7 @@ impl UserService {
             Ok(user) => Ok(user.into()),
             Err(e) => {
                 error!(error = %e, "Failed to insert user");
-                Err(ServiceError::DatabaseError(e.to_string()))
+                Err(ServiceError::InternalServerError)
             }
         }
     }
@@ -90,13 +90,13 @@ impl UserService {
             .filter(user::Column::Phone.eq(phone))
             .one(&*self.db)
             .await
-            .map_err(|e| ServiceError::InternalServerError(e.to_string()))?;
+            .map_err(|e| ServiceError::InternalServerError)?;
         if let Some(user) = user {
             if !verify_password(&password, &user.password_hash)? {
                 return Err(ServiceError::InvalidPassword)?;
             }
             let token = generate_token(&user.id.to_string(), user.role.clone(), &config)
-                .map_err(|e| ServiceError::InternalServerError(e.to_string()))?;
+                .map_err(|e| ServiceError::InternalServerError)?;
             Ok((user, token))
         } else {
             Err(ServiceError::UserNotFound("User not found".to_string()))

@@ -16,6 +16,7 @@ pub struct Model {
     pub product_id: Uuid,
     /// Quantity of the product in the cart
     pub quantity: i32,
+
 }
 
 /// Defines the relationships between CartItem and other entities
@@ -58,7 +59,6 @@ impl Related<super::product::Entity> for Entity {
 }
 
 pub struct CartItem {
-    pub id: Uuid,
     pub cart_id: Uuid,
     pub product_id: Uuid,
     pub quantity: i32,

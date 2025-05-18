@@ -1,11 +1,5 @@
-use axum::{
-    async_trait,
-    extract::FromRequestParts,
-    http::request::Parts,
-    response::{IntoResponse, Response},
-};
+use axum::response::{IntoResponse, Response};
 
-use super::auth::AuthUser;
 
 // Custom error for authentication failures
 #[derive(Debug)]

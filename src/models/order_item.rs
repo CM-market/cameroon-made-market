@@ -1,5 +1,4 @@
-use rust_decimal::Decimal;
-use sea_orm::entity::prelude::*;
+use rust_decimal::Decimal;use sea_orm::entity::prelude::*;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
@@ -17,8 +16,7 @@ pub struct Model {
     pub product_id: Uuid,
     /// Quantity of the product ordered
     pub quantity: i32,
-    /// Price of the product at the time of order
-    pub price: Decimal,
+
 }
 
 /// Defines the relationships between OrderItem and other entities

@@ -41,11 +41,19 @@ pub mod tables {
                         .col(ColumnDef::new(Users::PasswordHash).string().not_null())
                         .col(
                             ColumnDef::new(Users::Role)
-                                .enumeration(Alias::new("user_role"), vec!["Admin", "Vendor", "Buyer"])
+                                .enumeration(
+                                    Alias::new("user_role"),
+                                    vec!["Admin", "Vendor", "User"],
+                                )
                                 .not_null(),
                         )
                         .col(ColumnDef::new(Users::FullName).string().not_null())
-                        .col(ColumnDef::new(Users::Phone).unsigned().not_null().unique_key())
+                        .col(
+                            ColumnDef::new(Users::Phone)
+                                .integer()
+                                .not_null()
+                                .unique_key(),
+                        )
                         .col(
                             ColumnDef::new(Users::CreatedAt)
                                 .timestamp_with_time_zone()
@@ -70,11 +78,8 @@ pub mod tables {
                         .col(ColumnDef::new(Products::SellerId).uuid())
                         .col(ColumnDef::new(Products::Title).string().not_null())
                         .col(ColumnDef::new(Products::Description).string())
-                        .col(
-                            ColumnDef::new(Products::Price)
-                                .decimal_len(10, 2)
-                                .not_null(),
-                        )
+                        .col(ColumnDef::new(Products::Quantity).integer().not_null())
+                        .col(ColumnDef::new(Products::Price).double().not_null())
                         .col(ColumnDef::new(Products::Category).string())
                         .col(
                             ColumnDef::new(Products::ImageUrls)
@@ -214,11 +219,7 @@ pub mod tables {
                         .col(ColumnDef::new(OrderItems::OrderId).uuid().not_null())
                         .col(ColumnDef::new(OrderItems::ProductId).uuid().not_null())
                         .col(ColumnDef::new(OrderItems::Quantity).integer().not_null())
-                        .col(
-                            ColumnDef::new(OrderItems::Price)
-                                .decimal_len(10, 2)
-                                .not_null(),
-                        )
+                        .col(ColumnDef::new(Products::Price).double().not_null())
                         .foreign_key(
                             ForeignKey::create()
                                 .name("fk_order_items_order_id")
@@ -327,6 +328,7 @@ pub mod tables {
         Table,
         Id,
         SellerId,
+        Quantity,
         Title,
         Description,
         Price,
@@ -374,7 +376,6 @@ pub mod tables {
         OrderId,
         ProductId,
         Quantity,
-        Price,
     }
 
     #[derive(Iden)]

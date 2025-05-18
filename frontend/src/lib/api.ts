@@ -35,8 +35,19 @@ export const productApi = {
     const params = new URLSearchParams();
     if (category) params.append('category', category);
     if (seller_id) params.append('seller_id', seller_id);
-    
-    const response = await axios.get<{ success: boolean; message: string; data: Product[] }>(`${API_URL}/products?${params.toString()}`);
+
+    const token = localStorage.getItem('token');
+
+    const response = await axios.get<{ success: boolean; message: string; data: Product[] }>(
+      `${API_URL}/products`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      }
+    );
+
+
     return response.data;
   },
 
