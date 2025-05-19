@@ -8,6 +8,8 @@ pub struct Config {
     pub server_port: u16,
     pub server_host: String,
     pub cors_origins: Vec<String>,
+    pub fapshi_api_user: String,
+    pub fapshi_api_key: String,
 }
 
 impl Config {
@@ -29,6 +31,8 @@ impl Config {
                 .split(',')
                 .map(|s| s.trim().to_string())
                 .collect(),
+            fapshi_api_user: env::var("FAPSHI_API_USER").expect("FAPSHI_API_USER not set"),
+            fapshi_api_key: env::var("FAPSHI_API_KEY").expect("FAPSHI_API_KEY not set"),
         }
     }
 }

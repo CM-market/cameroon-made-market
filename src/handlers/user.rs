@@ -16,7 +16,6 @@ pub async fn register(
     State(state): State<AppState>,
     Json(user_data): Json<CreateUser>,
 ) -> Json<ApiResponse<Model>> {
-    print!("Registering user: {:?}", user_data);
     let user_service = UserService::new(
         state.db,
         state.config.jwt_secret.clone(),

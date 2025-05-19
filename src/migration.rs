@@ -180,13 +180,13 @@ pub mod tables {
                         .table(Orders::Table)
                         .if_not_exists()
                         .col(ColumnDef::new(Orders::Id).uuid().not_null().primary_key())
-                        .col(ColumnDef::new(Orders::SessionId).uuid().not_null())
+                        .col(ColumnDef::new(Orders::UserId).uuid().not_null())
                         .col(ColumnDef::new(Orders::CustomerName).string().not_null())
                         .col(ColumnDef::new(Orders::CustomerEmail).string())
                         .col(ColumnDef::new(Orders::CustomerPhone).string().not_null())
                         .col(ColumnDef::new(Orders::DeliveryAddress).string().not_null())
                         .col(ColumnDef::new(Orders::Status).text().not_null())
-                        .col(ColumnDef::new(Orders::Total).decimal_len(10, 2).not_null())
+                        .col(ColumnDef::new(Orders::Total).double().not_null())
                         .col(
                             ColumnDef::new(Orders::CreatedAt)
                                 .timestamp_with_time_zone()
@@ -194,8 +194,8 @@ pub mod tables {
                         )
                         .foreign_key(
                             ForeignKey::create()
-                                .name("fk_orders_session_id")
-                                .from(Orders::Table, Orders::SessionId)
+                                .name("fk_orders_user_id")
+                                .from(Orders::Table, Orders::UserId)
                                 .to(Users::Table, Users::Id)
                                 .on_delete(ForeignKeyAction::SetNull)
                                 .on_update(ForeignKeyAction::NoAction),
@@ -359,7 +359,7 @@ pub mod tables {
     enum Orders {
         Table,
         Id,
-        SessionId,
+        UserId,
         CustomerName,
         CustomerEmail,
         CustomerPhone,
