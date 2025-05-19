@@ -15,6 +15,12 @@ import { useNavigate } from "react-router-dom";
 
 const Checkout: React.FC = () => {
   const [paymentMethod, setPaymentMethod] = useState("mobileMoney");
+  const cartitems = localStorage.getItem("cartItems")
+const orderItems = cartitems.map(item => ({
+  product_id: item.id,
+  quantity: item.quantity,
+  price: item.price,
+}));
   const navigate = useNavigate();
   const [form, setForm] = useState({
     customer_name: '',
