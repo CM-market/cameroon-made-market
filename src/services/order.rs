@@ -6,7 +6,7 @@ use sea_orm::{
 use uuid::Uuid;
 
 use crate::models::{
-    order::{self, CreateOrder, Model, NewOrder, Status},
+    order::{self, Model, NewOrder, Status},
     order_item,
 };
 
@@ -44,7 +44,7 @@ impl OrderService {
             order_item::ActiveModel {
                 id: Set(Uuid::new_v4()),
                 order_id: Set(order.id),
-                product_id: Set(item.product_id),
+                product_id: Set(Uuid::parse_str(&item.product_id).map_err(|_| ServiceError::Validation("malformed body".to_string()))?),
                 quantity: Set(item.quantity as i32),
             }
             .insert(&*self.db)

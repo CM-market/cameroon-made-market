@@ -30,13 +30,13 @@ export interface UpdateProductData {
   image_urls?: string[];
 }
 
+const token = localStorage.getItem('token');
 export const productApi = {
   list: async (category?: string, seller_id?: string) => {
     const params = new URLSearchParams();
     if (category) params.append('category', category);
     if (seller_id) params.append('seller_id', seller_id);
 
-    const token = localStorage.getItem('token');
 
     const response = await axios.get<{ success: boolean; message: string; data: Product[] }>(
       `${API_URL}/products`,
@@ -70,6 +70,37 @@ export const productApi = {
     await axios.delete(`${API_URL}/products/${id}`);
   },
 };
+export interface CreateOrderData {
+  customer_name: string;
+  customer_phone: string;
+  delivery_address: string;
+  city: string;
+  region: string;
+  paymentMethod: string;
+  items: [{ product_id: string, quantity: number, price: number }];
+  total: number;
+}
+
+export interface Order {
+  id: string;
+  total: number;
+  status: string;
+  created_at: string;
+}
+
+export const orderApi = {
+  create: async (data: CreateOrderData): Promise<Order> => {
+    const res = await axios.post(`${API_URL}/orders`, data, 
+      {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      }
+    );
+    return res.data;
+  }
+};
+
 
 export const userApi = {
   register: async (data: {

@@ -40,7 +40,7 @@ pub struct CreateOrderRequest {
 
 #[derive(Deserialize, Debug)]
 pub struct OrderItemRequest {
-    pub product_id: Uuid,
+    pub product_id: String,
     pub quantity: u32,
     pub price: f64,
 }
