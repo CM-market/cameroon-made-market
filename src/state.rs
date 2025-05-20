@@ -30,7 +30,7 @@ impl AppState {
             product_service: Arc::new(ProductService::new(db.clone())),
             cart_service: Arc::new(CartService::new(db.clone())),
             payment_service: Arc::new(
-                FapshiClient::new(&config.fapshi_api_user, &config.fapshi_api_key, false).unwrap(),
+                FapshiClient::new(&config.fapshi_api_user, &config.fapshi_api_key, true).unwrap(),
             ),
             order_service: Arc::new(OrderService::new(db.clone())),
         }

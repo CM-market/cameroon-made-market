@@ -109,6 +109,7 @@ async fn create_order(
         .iter()
         .map(|item| item.quantity as f64 * item.price)
         .sum();
+    info!("total for this order is: {}", total);
     let req = NewOrder {
         user_id: Uuid::parse_str(&auth.id).expect("Invalid UUID in auth.id"),
         customer_name: payload.customer_name,

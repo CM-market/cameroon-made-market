@@ -90,7 +90,7 @@ export interface Order {
 
 export const orderApi = {
   create: async (data: CreateOrderData): Promise<Order> => {
-    const res = await axios.post(`${API_URL}/orders`, data, 
+    const res = await axios.post(`${API_URL}/orders`, data,
       {
         headers: {
           Authorization: `Bearer ${token}`
@@ -101,6 +101,25 @@ export const orderApi = {
   }
 };
 
+export const paymentApi = {
+  create: async (data: { order_id: string; name: string; redirect_url: string; phone: string }) => {
+    const res = await axios.post(`${API_URL}/indirect_payment`, data, {
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    });
+    return res.data;
+  },
+  
+  verify: async (transactionId: string) => {
+    const res = await axios.get(`${API_URL}/verify_payment/${transactionId}`, {
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    });
+    return res.data;
+  }
+};
 
 export const userApi = {
   register: async (data: {
