@@ -1,7 +1,7 @@
 use crate::{config::Config, models::user::UserRole, state::AppState, utils::shared::ApiResponse};
 use axum::{
     body::Body,
-    extract::{Request, State},
+    extract::Request,
     http::StatusCode,
     middleware::Next,
     response::{IntoResponse, Response},
@@ -29,10 +29,12 @@ pub struct AuthUser {
 /// Middleware to validate JWT token
 // #[axum::debug_handler]
 pub async fn auth(
-    State(state): State<AppState>,
     mut req: Request,
     next: Next,
 ) -> Result<Response, StatusCode> {
+    // Get state from request extensions
+    let state = req.extensions().get::<AppState>().cloned().ok_or(StatusCode::INTERNAL_SERVER_ERROR)?;
+
     let token = req
         .headers()
         .get("Authorization")
@@ -55,8 +57,8 @@ pub async fn auth(
         Err(e) => {
             tracing::error!("error decoding token: {}", e.to_string());
             Err(StatusCode::UNAUTHORIZED)
+        }
     }
-}
 }
 
 /// Generate JWT token for a user

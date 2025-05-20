@@ -127,8 +127,18 @@ export const userApi = {
     email?: string;
     phone: number;
     password: string;
+    role?: string;
   }) => {
     const response = await axios.post(`${API_URL}/api/users`, data);
+    return response.data;
+  },
+
+  login: async (data: {
+    phone: number;
+    password: string;
+    role?: "Vendor" | "Buyer";
+  }) => {
+    const response = await axios.post(`${API_URL}/api/users/login`, data);
     return response.data;
   },
   // ...other user API methods

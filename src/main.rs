@@ -18,7 +18,12 @@ async fn main() {
 
     // Get configuration
     let app_state = setup().await;
-    let token = generate_token("407f30d0-d77d-40a9-8016-6dcff419a881", UserRole::Vendor, &app_state.config).unwrap();
+    let token = generate_token(
+        "407f30d0-d77d-40a9-8016-6dcff419a881",
+        UserRole::Vendor,
+        &app_state.config,
+    )
+    .unwrap();
     println!("{}", token);
     // Configure CORS
     let cors = CorsLayer::new()
@@ -34,10 +39,7 @@ async fn main() {
         .merge(routes::payment::config())
         .merge(routes::orders::config())
         .layer(middleware::from_fn({
-            let app_state = app_state.clone();
-            move |req: http::Request<axum::body::Body>, next| {
-                auth(axum::extract::State(app_state.clone()), req, next)
-            }
+            move |req: http::Request<axum::body::Body>, next| auth(req, next)
         }))
         .route("/products", get(list_products))
         // .merge(routes::auth::config())
