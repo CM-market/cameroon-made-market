@@ -174,7 +174,7 @@ mod tests {
             status: "pending".to_string(),
             total: 1000.0,
             items: vec![OrderItemRequest {
-                product_id: Uuid::new_v4(),
+                product_id: Uuid::new_v4().to_string(),
                 quantity: 2,
                 price: 50.0,
             }],

@@ -219,7 +219,6 @@ pub mod tables {
                         .col(ColumnDef::new(OrderItems::OrderId).uuid().not_null())
                         .col(ColumnDef::new(OrderItems::ProductId).uuid().not_null())
                         .col(ColumnDef::new(OrderItems::Quantity).integer().not_null())
-                        .col(ColumnDef::new(Products::Price).double().not_null())
                         .foreign_key(
                             ForeignKey::create()
                                 .name("fk_order_items_order_id")

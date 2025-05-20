@@ -15,12 +15,13 @@ import { useNavigate } from "react-router-dom";
 
 const Checkout: React.FC = () => {
   const [paymentMethod, setPaymentMethod] = useState("mobileMoney");
-  const cartitems = localStorage.getItem("cartItems")
-const orderItems = cartitems.map(item => ({
-  product_id: item.id,
-  quantity: item.quantity,
-  price: item.price,
-}));
+  const cartItemsString = localStorage.getItem("cartItems");
+  const cartItems = cartItemsString ? JSON.parse(cartItemsString) : [];
+  const orderItems = cartItems.map(item => ({
+    product_id: item.id,
+    quantity: item.quantity,
+    price: item.price,
+  }));
   const navigate = useNavigate();
   const [form, setForm] = useState({
     customer_name: '',
@@ -31,10 +32,11 @@ const orderItems = cartitems.map(item => ({
     total: Number(),
     items: [{ product_id: '', quantity: Number(), price: Number() }],
   });
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
+    const total = orderSummary.total;
+
     const data = {
       customer_name: form.customer_name,
       customer_phone: form.customer_phone,
@@ -42,18 +44,21 @@ const orderItems = cartitems.map(item => ({
       city: form.city,
       region: form.region,
       paymentMethod,
-      items: form.items,
-      total: form.total, 
+      items: orderItems,
+      total,
     };
 
     try {
       const order = await orderApi.create(data);
-      navigate(`/payment?orderId=${order.id}`);
+      // Store full order in localStorage
+      localStorage.setItem("currentOrder", JSON.stringify(order));
+      navigate("/payment");
     } catch (error) {
       console.error("Failed to place order", error);
       alert("There was an issue placing your order. Please try again.");
     }
   };
+
 
 
   // Sample order summary data

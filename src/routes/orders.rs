@@ -1,5 +1,8 @@
 use crate::{
-    middleware::auth::AuthUser, models::order::{NewOrder, Status}, state::AppState, utils::shared::ApiResponse,
+    middleware::auth::AuthUser,
+    models::order::{NewOrder, Status},
+    state::AppState,
+    utils::shared::ApiResponse,
 };
 use axum::{
     extract::{Path, State},
@@ -34,7 +37,7 @@ pub struct CreateOrderRequest {
     customer_email: Option<String>,
     customer_phone: String,
     delivery_address: String,
-    total: f64,
+    city: String,
     items: Vec<OrderItemRequest>,
 }
 
@@ -101,6 +104,11 @@ async fn create_order(
     Extension(auth): Extension<AuthUser>, // require auth if needed
     Json(payload): Json<CreateOrderRequest>,
 ) -> impl IntoResponse {
+    let total: f64 = payload
+        .items
+        .iter()
+        .map(|item| item.quantity as f64 * item.price)
+        .sum();
     let req = NewOrder {
         user_id: Uuid::parse_str(&auth.id).expect("Invalid UUID in auth.id"),
         customer_name: payload.customer_name,
@@ -108,7 +116,7 @@ async fn create_order(
         customer_phone: payload.customer_phone,
         delivery_address: payload.delivery_address,
         status: "pending".to_string(),
-        total: payload.total,
+        total,
         items: payload.items,
     };
 
@@ -133,7 +141,6 @@ async fn update_order_status(
     Path(order_id): Path<Uuid>,
     Json(payload): Json<UpdateOrderStatusRequest>,
 ) -> impl IntoResponse {
-    
     match state
         .order_service
         .update_order_status(order_id, payload.status.into())
