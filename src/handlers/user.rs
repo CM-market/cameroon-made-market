@@ -4,9 +4,10 @@ use uuid::Uuid;
 
 use crate::{
     middleware::auth::AuthUser,
-    models::user::Model,
+    models::user::{Model, UserRole},
     services::user::{CreateUser, LoginRequest, LoginResponse, UserService},
     state::AppState,
+    utils::rbac::require_role,
     utils::shared::ApiResponse,
 };
 
@@ -14,8 +15,28 @@ use crate::{
 #[axum::debug_handler]
 pub async fn register(
     State(state): State<AppState>,
+    auth_user: Option<Extension<AuthUser>>,
     Json(user_data): Json<CreateUser>,
 ) -> Json<ApiResponse<Model>> {
+    // Only restrict Admin user creation
+    if user_data.role == UserRole::Admin {
+        // Only allow if the requester is an Admin
+        match auth_user {
+            Some(Extension(user)) => {
+                if user.role != UserRole::Admin {
+                    return Json(ApiResponse::error(
+                        "Only admins can create Admin users.", 
+                    ));
+                }
+            }
+            None => {
+                return Json(ApiResponse::error(
+                    "Authentication required to create Admin users.",
+                ));
+            }
+        }
+    }
+
     print!("Registering user: {:?}", user_data);
     let user_service = UserService::new(
         state.db,
@@ -43,8 +64,10 @@ pub async fn login(
         state.config.jwt_expires_in,
     );
     let config = state.config.as_ref();
+    // Accept role from frontend (optional)
+    let expected_role = login_data.role;
     match user_service
-        .login(login_data.phone, login_data.password, config)
+        .login(login_data.phone, login_data.password, config, expected_role)
         .await
     {
         Ok((user, token)) => {
@@ -53,6 +76,7 @@ pub async fn login(
                     role: user.role,
                     user_id: user.id,
                     token,
+                    full_name: user.full_name,
                 },
                 "Login successful",
             );
@@ -69,6 +93,13 @@ pub async fn get_me(
     State(state): State<AppState>,
     Extension(auth_user): Extension<AuthUser>,
 ) -> Json<ApiResponse<Option<Model>>> {
+    // RBAC: Only allow Buyer, Vendor, or Admin (all roles)
+    if let Err((status, msg)) = require_role(
+        &auth_user,
+        &[UserRole::Buyer, UserRole::Vendor, UserRole::Admin],
+    ) {
+        return Json(ApiResponse::error(msg));
+    }
     let user_service = UserService::new(
         state.db,
         state.config.jwt_secret.clone(),
@@ -94,5 +125,29 @@ pub async fn get_me(
             "Failed to retrieve user: {}",
             e
         ))),
+    }
+}
+
+/// Get all users
+#[axum::debug_handler]
+pub async fn get_all_users(
+    State(state): State<AppState>,
+    Extension(auth_user): Extension<AuthUser>,
+) -> Json<ApiResponse<Vec<Model>>> {
+    // Only admins can access
+    if let Err((_status, msg)) = require_role(&auth_user, &[UserRole::Admin]) {
+        return Json(ApiResponse::error(msg));
+    }
+    let user_service = UserService::new(
+        state.db,
+        state.config.jwt_secret.clone(),
+        state.config.jwt_expires_in,
+    );
+    match user_service.list_users().await {
+        Ok(users) => Json(ApiResponse::success(
+            users,
+            "All users retrieved successfully",
+        )),
+        Err(e) => Json(ApiResponse::error(&e.to_string())),
     }
 }

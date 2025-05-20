@@ -23,6 +23,10 @@ import Payment from "./pages/Payment";
 import Orders from "./pages/Orders";
 import Search from "./pages/Search";
 import AdminDashboard from "./pages/admin/Dashboard";
+import BuyerRegister from "./pages/buyer/Register";
+import BuyerAccountInfo from "./pages/buyer/AccountInfo";
+import BuyerSettings from "./pages/buyer/Settings";
+import BuyerAccount from "./pages/buyer/Account";
 
 const queryClient = new QueryClient();
 
@@ -44,6 +48,12 @@ const App = () => (
           <Route path="/checkout" element={<Checkout />} />
           <Route path="/payment" element={<Payment />} />
           <Route path="/orders" element={<Orders />} />
+          
+          {/* Buyer registration and account routes */}
+          <Route path="/buyer/register" element={<BuyerRegister />} />
+          <Route path="/buyer/account-info" element={<BuyerAccountInfo />} />
+          <Route path="/buyer/settings" element={<BuyerSettings />} />
+          <Route path="/buyer/account" element={<BuyerAccount />} />
           
           {/* Producer routes */}
           <Route path="/login" element={<Login />} />

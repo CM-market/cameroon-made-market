@@ -11,8 +11,8 @@ pub enum UserRole {
     Admin,
     #[sea_orm(string_value = "Vendor")]
     Vendor,
-    #[sea_orm(string_value = "User")]
-    User,
+    #[sea_orm(string_value = "Buyer")]
+    Buyer,
 }
 
 #[derive(Clone, Debug, PartialEq, DeriveEntityModel, Serialize, Deserialize)]

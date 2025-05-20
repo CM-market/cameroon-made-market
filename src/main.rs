@@ -29,12 +29,12 @@ async fn main() {
         .merge(routes::user::config())
         .merge(routes::product::config())
         .merge(routes::cart::config())
-        .layer(middleware::from_fn({
-            let app_state = app_state.clone();
-            move |req: http::Request<axum::body::Body>, next| {
-                auth(axum::extract::State(app_state.clone()), req, next)
-            }
-        }))
+        // .layer(middleware::from_fn({
+        //     let app_state = app_state.clone();
+        //     move |req: http::Request<axum::body::Body>, next| {
+        //         auth(axum::extract::State(app_state.clone()), req, next)
+        //     }
+        // }))
         // .merge(routes::order::config())
         // .merge(routes::auth::config())
         // .merge(routes::category::config())

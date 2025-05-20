@@ -25,7 +25,7 @@ pub mod tables {
                 .create_type(
                     Type::create()
                         .as_enum(Alias::new("user_role"))
-                        .values(vec!["Admin", "Vendor", "User"])
+                        .values(vec!["Admin", "Vendor", "Buyer"])
                         .to_owned(),
                 )
                 .await?;

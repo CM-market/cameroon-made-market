@@ -31,8 +31,9 @@ pub struct CreateUser {
 
 #[derive(Deserialize)]
 pub struct LoginRequest {
-    pub phone: u32,
+    pub phone: i32,
     pub password: String,
+    pub role: Option<UserRole>,
 }
 
 #[derive(Deserialize, Serialize)]
@@ -40,6 +41,7 @@ pub struct LoginResponse {
     pub role: UserRole,
     pub user_id: Uuid,
     pub token: String,
+    pub full_name: String,
 }
 pub struct UpdateUser {
     pub full_name: Option<String>,
@@ -82,9 +84,10 @@ impl UserService {
 
     pub async fn login(
         &self,
-        phone: u32,
+        phone: i32,
         password: String,
         config: &Config,
+        expected_role: Option<UserRole>,
     ) -> Result<(Model, String), ServiceError> {
         let user = user::Entity::find()
             .filter(user::Column::Phone.eq(phone))
@@ -92,6 +95,11 @@ impl UserService {
             .await
             .map_err(|e| ServiceError::InternalServerError)?;
         if let Some(user) = user {
+            if let Some(role) = expected_role {
+                if user.role != role {
+                    return Err(ServiceError::InvalidPassword)?;
+                }
+            }
             if !verify_password(&password, &user.password_hash)? {
                 return Err(ServiceError::InvalidPassword)?;
             }
@@ -213,7 +221,7 @@ mod tests {
             jwt_expires_in: 24,
             ..Default::default()
         };
-        let result = service.login(123, "password123".to_string(), &config).await;
+        let result = service.login(123, "password123".to_string(), &config, None).await;
         assert!(result.is_ok());
     }
 
@@ -226,7 +234,7 @@ mod tests {
                 email: Some("test@example.com".to_string()),
                 phone: 1234567890,
                 password_hash: hash_password("password123").unwrap(),
-                role: UserRole::User.into(),
+                role: UserRole::Buyer.into(),
                 created_at: Utc::now(),
                 updated_at: Utc::now(),
             }]])
@@ -240,7 +248,7 @@ mod tests {
             ..Default::default()
         };
         let result = service
-            .login(123, "wrong_password".to_string(), &config)
+            .login(123, "wrong_password".to_string(), &config, None)
             .await;
         assert!(result.is_err());
     }
@@ -329,7 +337,7 @@ mod tests {
                     email: Some("user1@example.com".to_string()),
                     phone: 123,
                     password_hash: "hashed_password".to_string(),
-                    role: UserRole::User.into(),
+                    role: UserRole::Buyer.into(),
                     created_at: Utc::now(),
                     updated_at: Utc::now(),
                 },
@@ -355,7 +363,7 @@ mod tests {
         assert_eq!(users.len(), 2);
         assert_eq!(users[0].full_name, "User 1");
         assert_eq!(users[1].full_name, "User 2");
-        assert_eq!(users[0].role, UserRole::User);
+        assert_eq!(users[0].role, UserRole::Buyer);
         assert_eq!(users[1].role, UserRole::Vendor);
     }
 }
