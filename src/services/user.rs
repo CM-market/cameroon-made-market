@@ -24,7 +24,7 @@ pub struct UserService {
 pub struct CreateUser {
     pub full_name: String,
     pub email: Option<String>,
-    pub phone: u32,
+    pub phone: i32,
     pub password: String,
     pub role: UserRole,
 }
@@ -44,7 +44,7 @@ pub struct LoginResponse {
 pub struct UpdateUser {
     pub full_name: Option<String>,
     pub email: Option<String>,
-    pub phone: u32,
+    pub phone: i32,
     pub password: String,
 }
 
