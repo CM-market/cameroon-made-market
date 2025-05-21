@@ -129,13 +129,14 @@ export const useProductForm = (onProductCreated?: () => void) => {
     data.append('price', formData.price === '' ? '0' : formData.price);
     data.append('category', formData.category);
     data.append('quantity', formData.stockQuantity === '' ? '0' : formData.stockQuantity);
+    data.append('returnPolicy', formData.returnPolicy);
     formData.images.forEach((file) => {
       data.append('images', file);
     });
 
     setIsSubmitting(true);
     try {
-      await productApi.create(data, true); // true = isFormData
+      await productApi.create(data);
       toast({
         title: "Product submitted",
         description: "Your product has been submitted for verification.",

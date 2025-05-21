@@ -24,14 +24,8 @@ pub fn config() -> Router<AppState> {
 }
 
 #[axum::debug_handler]
-async fn list_products( 
-    State(state): State<AppState>,
-) -> impl IntoResponse {
-    match state
-        .product_service
-        .list_products()
-        .await
-    { 
+async fn list_products(State(state): State<AppState>) -> impl IntoResponse {
+    match state.product_service.list_products().await {
         Ok(products) => Json(ApiResponse::success(
             products,
             "Products retrieved successfully",
@@ -95,6 +89,8 @@ async fn create_product(
         price: product_data.price,
         category: Some(product_data.category),
         image_urls: product_data.image_urls,
+        quantity: product_data.quantity,
+        return_policy: Some(product_data.return_policy),
     };
     info!("Creating product: {:?}", create_product);
     match state.product_service.create_product(create_product).await {
@@ -143,6 +139,8 @@ async fn update_product(
                 price: product_data.price,
                 category: product_data.category,
                 image_urls: product_data.image_urls,
+                quantity: product_data.quantity,
+                return_policy: product_data.return_policy,
             };
 
             match state
@@ -237,6 +235,7 @@ pub struct CreateProductRequest {
     category: String,
     image_urls: Vec<String>,
     quantity: i32,
+    return_policy: String,
 }
 
 #[derive(serde::Deserialize)]
@@ -247,4 +246,5 @@ pub struct UpdateProductRequest {
     price: Option<f64>,
     category: Option<String>,
     image_urls: Option<Vec<String>>,
+    return_policy: Option<String>,
 }

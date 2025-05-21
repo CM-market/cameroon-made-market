@@ -79,6 +79,7 @@ pub mod tables {
                         .col(ColumnDef::new(Products::Title).string().not_null())
                         .col(ColumnDef::new(Products::Description).string())
                         .col(ColumnDef::new(Products::Quantity).integer().not_null())
+                        .col(ColumnDef::new(Products::ReturnPolicy).string())
                         .col(ColumnDef::new(Products::Price).double().not_null())
                         .col(ColumnDef::new(Products::Category).string())
                         .col(
@@ -329,6 +330,7 @@ pub mod tables {
         Id,
         SellerId,
         Quantity,
+        ReturnPolicy,
         Title,
         Description,
         Price,

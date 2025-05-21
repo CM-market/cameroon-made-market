@@ -1,4 +1,3 @@
-
 import React from "react";
 import type { ProductFormData } from "@/hooks/useProductForm";
 
@@ -22,7 +21,7 @@ export const ProductDetailsInfo = ({ materials, dimensions, returnPolicy }: Prod
           <li><span className="font-medium">Dimensions:</span> {dimensions}</li>
         )}
         {returnPolicy && (
-          <li><span className="font-medium">returnPolicy:</span> {returnPolicy} kg</li>
+          <li><span className="font-medium">Return Policy:</span> {returnPolicy}</li>
         )}
       </ul>
     </div>

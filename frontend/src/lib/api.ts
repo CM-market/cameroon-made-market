@@ -12,6 +12,7 @@ export interface Product {
   image_urls: string[];
   created_at: string;
   updated_at: string;
+  returnPolicy?: string;
 }
 
 export interface CreateProductData {
@@ -21,6 +22,7 @@ export interface CreateProductData {
   category?: string;
   image_urls: string[];
   quantity?: number;
+  returnPolicy?: string;
 }
 
 export interface UpdateProductData {
