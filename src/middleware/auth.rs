@@ -1,7 +1,7 @@
 use crate::{config::Config, models::user::UserRole, state::AppState, utils::shared::ApiResponse};
 use axum::{
     body::Body,
-    extract::Request,
+    extract::{Request, State},
     http::StatusCode,
     middleware::Next,
     response::{IntoResponse, Response},
@@ -34,7 +34,7 @@ pub async fn auth(
 ) -> Result<Response, StatusCode> {
     // Get state from request extensions
     let state = req.extensions().get::<AppState>().cloned().ok_or(StatusCode::INTERNAL_SERVER_ERROR)?;
-
+    print!("cadcadc");
     let token = req
         .headers()
         .get("Authorization")

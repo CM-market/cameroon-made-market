@@ -128,11 +128,14 @@ async fn create_order(
             Json(ApiResponse::success(order, "Order created successfully")),
         )
             .into_response(),
-        Err(e) => (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            Json(ApiResponse::<()>::error(&e.to_string())),
-        )
-            .into_response(),
+        Err(e) => {
+            error!("Error creating order: {}", e);
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ApiResponse::<()>::error("Could not create order")),
+            )
+                .into_response()
+        }
     }
 }
 

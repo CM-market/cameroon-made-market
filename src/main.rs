@@ -1,5 +1,5 @@
 use axum::routing::get;
-use axum::{http, middleware, Router};
+use axum::{http, middleware, Extension, Router};
 use cameroon_made_market::middleware::auth::{auth, generate_token};
 use cameroon_made_market::models::user::UserRole;
 use cameroon_made_market::routes;
@@ -19,7 +19,7 @@ async fn main() {
     // Get configuration
     let app_state = setup().await;
     let token = generate_token(
-        "407f30d0-d77d-40a9-8016-6dcff419a881",
+        "ae1313bb-511b-465c-a887-6027ca1fa15d",
         UserRole::Vendor,
         &app_state.config,
     )
@@ -51,6 +51,7 @@ async fn main() {
         // .merge(routes::shipping::config())
         // .merge(routes::search::config())
         // .merge(routes::admin::config())
+        .layer(Extension(app_state.clone()))
         .layer(cors)
         .layer(TraceLayer::new_for_http())
         .with_state(app_state.clone());
