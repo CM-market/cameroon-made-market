@@ -16,7 +16,12 @@ async fn main() {
 
     // Get configuration
     let app_state = setup().await;
-    let token = generate_token("6a7ad2e4-9fda-4ca2-a988-34c702ddb86b", UserRole::Vendor, &app_state.config).unwrap();
+    let token = generate_token(
+        "6a7ad2e4-9fda-4ca2-a988-34c702ddb86b",
+        UserRole::Vendor,
+        &app_state.config,
+    )
+    .unwrap();
     println!("{}", token);
     // Configure CORS
     let cors = CorsLayer::new()
@@ -29,12 +34,10 @@ async fn main() {
         .merge(routes::user::config())
         .merge(routes::product::config())
         .merge(routes::cart::config())
-        // .layer(middleware::from_fn({
-        //     let app_state = app_state.clone();
-        //     move |req: http::Request<axum::body::Body>, next| {
-        //         auth(axum::extract::State(app_state.clone()), req, next)
-        //     }
-        // }))
+        .layer(middleware::from_fn({
+            move |req: http::Request<axum::body::Body>, next| auth(req, next)
+        }))
+        .route("/products", axum::routing::get(routes::product::list_products))
         // .merge(routes::order::config())
         // .merge(routes::auth::config())
         // .merge(routes::category::config())
