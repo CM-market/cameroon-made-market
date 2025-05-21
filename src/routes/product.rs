@@ -236,12 +236,14 @@ pub struct CreateProductRequest {
     price: f64,
     category: String,
     image_urls: Vec<String>,
+    quantity: i32,
 }
 
 #[derive(serde::Deserialize)]
 pub struct UpdateProductRequest {
     title: Option<String>,
     description: Option<String>,
+    quantity: Option<i32>,
     price: Option<f64>,
     category: Option<String>,
     image_urls: Option<Vec<String>>,

@@ -1,6 +1,6 @@
-
 import { useState } from "react";
 import { useToast } from "./use-toast";
+import { productApi } from '@/lib/api';
 
 export interface ProductFormData {
   name: string;
@@ -9,6 +9,7 @@ export interface ProductFormData {
   stockQuantity: string;
   category: string;
   selectedTags: string[];
+  quantity: number;
   images: File[];
   imagePreviewUrls: string[];
   shippingInfo: string;
@@ -18,7 +19,7 @@ export interface ProductFormData {
   returnPolicy: string;
 }
 
-export const useProductForm = () => {
+export const useProductForm = (onProductCreated?: () => void) => {
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState<string>("details");
   const [formData, setFormData] = useState<ProductFormData>({
@@ -30,6 +31,7 @@ export const useProductForm = () => {
     selectedTags: [],
     images: [],
     imagePreviewUrls: [],
+    quantity: 1,
     shippingInfo: "",
     dimensions: "",
     weight: "",
@@ -67,6 +69,7 @@ export const useProductForm = () => {
 
     const newFiles = Array.from(files);
     const newPreviewUrls = newFiles.map((file) => URL.createObjectURL(file));
+    console.log(newPreviewUrls);
 
     setFormData((prev) => ({
       ...prev,
@@ -75,7 +78,7 @@ export const useProductForm = () => {
     }));
 
     toast({
-      title: "Images uploaded",
+      title: "Images added",
       description: `${newFiles.length} image(s) have been added to your product.`,
     });
   };
@@ -111,9 +114,28 @@ export const useProductForm = () => {
   };
 
   const submitProduct = async () => {
+    if (!formData.images || formData.images.length === 0) {
+      toast({
+        title: "Image required",
+        description: "Please upload at least one product image before submitting.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const data = new FormData();
+    data.append('title', formData.name);
+    data.append('description', formData.description);
+    data.append('price', formData.price === '' ? '0' : formData.price);
+    data.append('category', formData.category);
+    data.append('quantity', formData.stockQuantity === '' ? '0' : formData.stockQuantity);
+    formData.images.forEach((file) => {
+      data.append('images', file);
+    });
+
     setIsSubmitting(true);
     try {
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      await productApi.create(data, true); // true = isFormData
       toast({
         title: "Product submitted",
         description: "Your product has been submitted for verification.",
@@ -124,6 +146,7 @@ export const useProductForm = () => {
         price: "",
         stockQuantity: "",
         category: "",
+        quantity: 1,
         selectedTags: [],
         images: [],
         imagePreviewUrls: [],
@@ -134,6 +157,7 @@ export const useProductForm = () => {
         returnPolicy: "",
       });
       setActiveTab("details");
+      if (onProductCreated) onProductCreated();
     } catch (error) {
       toast({
         title: "Error submitting product",

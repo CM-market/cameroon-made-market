@@ -20,6 +20,7 @@ export interface CreateProductData {
   price: number;
   category?: string;
   image_urls: string[];
+  quantity?: number;
 }
 
 export interface UpdateProductData {
@@ -56,9 +57,25 @@ export const productApi = {
     return response.data;
   },
 
-  create: async (data: CreateProductData) => {
-    const response = await axios.post<Product>(`${API_URL}/products`, data);
-    return response.data;
+  create: async (data: any) => {
+    // If data is FormData, send as multipart/form-data
+    if (data instanceof FormData) {
+      const response = await axios.post(`${API_URL}/products`, data, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+          Authorization: `Bearer ${localStorage.getItem('token')}`,
+        },
+      });
+      return response.data;
+    } else {
+      // Otherwise, send as JSON
+      const response = await axios.post<Product>(`${API_URL}/products`, data, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('token')}`,
+        },
+      });
+      return response.data;
+    }
   },
 
   update: async (id: string, data: UpdateProductData) => {

@@ -1,7 +1,5 @@
 use log::debug;
-use sea_orm::{
-    ActiveModelTrait, DatabaseConnection, EntityTrait, QueryOrder, Set,
-};
+use sea_orm::{ActiveModelTrait, DatabaseConnection, EntityTrait, QueryOrder, Set};
 use std::sync::Arc;
 use uuid::Uuid;
 
@@ -54,7 +52,7 @@ impl ProductService {
 
     pub async fn get_product_by_id(&self, product_id: Uuid) -> Result<Option<Model>, ServiceError> {
         debug!("{}", product_id);
-        let product = product::Entity::find_by_id(product_id)
+        let product = product::Entity::find_by_id(product_id) 
             .one(&*self.db)
             .await
             .map_err(|e| ServiceError::NotFound(e.to_string()))?;
@@ -122,7 +120,6 @@ mod tests {
     use super::*;
     use sea_orm::MockDatabase;
 
-
     #[tokio::test]
     async fn test_create_product() {
         let seller_id = Uuid::new_v4();
@@ -158,7 +155,7 @@ mod tests {
         let product_response = result.unwrap();
         assert_eq!(product_response.title, "Test Product");
         assert_eq!(product_response.price, 100.0);
-        assert_eq!(product_response.seller_id,seller_id);
+        assert_eq!(product_response.seller_id, seller_id);
     }
 
     #[tokio::test]

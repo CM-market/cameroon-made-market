@@ -24,9 +24,7 @@ pub async fn register(
         match auth_user {
             Some(Extension(user)) => {
                 if user.role != UserRole::Admin {
-                    return Json(ApiResponse::error(
-                        "Only admins can create Admin users.", 
-                    ));
+                    return Json(ApiResponse::error("Only admins can create Admin users."));
                 }
             }
             None => {

@@ -15,6 +15,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import ProductForm from '@/components/ProductForm';
 
 const VendorProducts: React.FC = () => {
   const [products, setProducts] = useState<Product[]>([]);
@@ -29,6 +30,7 @@ const VendorProducts: React.FC = () => {
     price: 0,
     category: '',
     image_urls: [],
+    quantity: 1,
   });
 
   useEffect(() => {
@@ -175,79 +177,9 @@ const VendorProducts: React.FC = () => {
       <div className="container mx-auto px-4 py-8">
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-3xl font-bold">My Products</h1>
-          <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-            <DialogTrigger asChild>
-              <Button className="bg-cm-green hover:bg-cm-forest">
-                <Plus className="h-4 w-4 mr-2" />
-                Add New Product
-              </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Add New Product</DialogTitle>
-              </DialogHeader>
-              <form onSubmit={handleCreateProduct} className="space-y-4">
-                <div>
-                  <Label htmlFor="title">Title</Label>
-                  <Input
-                    id="title"
-                    value={formData.title}
-                    onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                    required
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="description">Description</Label>
-                  <Textarea
-                    id="description"
-                    value={formData.description}
-                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="price">Price (FCFA)</Label>
-                  <Input
-                    id="price"
-                    type="number"
-                    value={formData.price}
-                    onChange={(e) => setFormData({ ...formData, price: Number(e.target.value) })}
-                    required
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="category">Category</Label>
-                  <Input
-                    id="category"
-                    value={formData.category}
-                    onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="image_urls">Image URLs (one per line)</Label>
-                  <Textarea
-                    id="image_urls"
-                    value={formData.image_urls.join('\n')}
-                    onChange={(e) => setFormData({ 
-                      ...formData, 
-                      image_urls: e.target.value.split('\n').filter(url => url.trim() !== '')
-                    })}
-                  />
-                </div>
-                <div className="flex justify-end space-x-2">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => setIsCreateDialogOpen(false)}
-                  >
-                    Cancel
-                  </Button>
-                  <Button type="submit" className="bg-cm-green hover:bg-cm-forest">
-                    Create Product
-                  </Button>
-                </div>
-              </form>
-            </DialogContent>
-          </Dialog>
+        </div>
+        <div className="mb-8">
+          <ProductForm onProductCreated={fetchProducts} />
         </div>
 
         {products.length === 0 ? (

@@ -29,7 +29,6 @@ pub struct Model {
     pub created_at: DateTime<Utc>,
     /// Timestamp when the product was last updated
     pub updated_at: DateTime<Utc>,
-
 }
 
 /// Defines the relationships between Product and other entities

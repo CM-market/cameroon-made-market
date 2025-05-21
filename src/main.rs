@@ -16,7 +16,12 @@ async fn main() {
 
     // Get configuration
     let app_state = setup().await;
-    let token = generate_token("6a7ad2e4-9fda-4ca2-a988-34c702ddb86b", UserRole::Vendor, &app_state.config).unwrap();
+    let token = generate_token(
+        "6a7ad2e4-9fda-4ca2-a988-34c702ddb86b",
+        UserRole::Vendor,
+        &app_state.config,
+    )
+    .unwrap();
     println!("{}", token);
     // Configure CORS
     let cors = CorsLayer::new()
