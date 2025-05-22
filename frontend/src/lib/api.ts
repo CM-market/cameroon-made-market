@@ -30,13 +30,13 @@ export interface UpdateProductData {
   image_urls?: string[];
 }
 
-const token = localStorage.getItem('token');
 export const productApi = {
   list: async (category?: string, seller_id?: string) => {
     const params = new URLSearchParams();
     if (category) params.append('category', category);
     if (seller_id) params.append('seller_id', seller_id);
 
+    const token = localStorage.getItem('token');
 
     const response = await axios.get<{ success: boolean; message: string; data: Product[] }>(
       `${API_URL}/products`,
@@ -69,56 +69,6 @@ export const productApi = {
   delete: async (id: string) => {
     await axios.delete(`${API_URL}/products/${id}`);
   },
-};
-export interface CreateOrderData {
-  customer_name: string;
-  customer_phone: string;
-  delivery_address: string;
-  city: string;
-  region: string;
-  paymentMethod: string;
-  items: [{ product_id: string, quantity: number, price: number }];
-  total: number;
-}
-
-export interface Order {
-  id: string;
-  total: number;
-  status: string;
-  created_at: string;
-}
-
-export const orderApi = {
-  create: async (data: CreateOrderData): Promise<Order> => {
-    const res = await axios.post(`${API_URL}/orders`, data,
-      {
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
-      }
-    );
-    return res.data;
-  }
-};
-
-export const paymentApi = {
-  create: async (data: { order_id: string; name: string; redirect_url: string; phone: string }) => {
-    const res = await axios.post(`${API_URL}/indirect_payment`, data, {
-      headers: {
-        Authorization: `Bearer ${token}`
-      }
-    });
-    return res.data;
-  },
-  
-  verify: async (transactionId: string) => {
-    const res = await axios.get(`${API_URL}/verify_payment/${transactionId}`, {
-      headers: {
-        Authorization: `Bearer ${token}`
-      }
-    });
-    return res.data;
-  }
 };
 
 export const userApi = {

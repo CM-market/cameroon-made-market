@@ -1,5 +1,3 @@
-use std::sync::Arc;
-
 use sea_orm::{ActiveModelTrait, ColumnTrait, DatabaseConnection, EntityTrait, QueryFilter, Set};
 use uuid::Uuid;
 
@@ -11,7 +9,7 @@ use crate::models::{
 use super::errors::ServiceError;
 
 pub struct PaymentService {
-    db: Arc<DatabaseConnection>,
+    db: DatabaseConnection,
 }
 pub struct CreatePayment {
     pub order_id: Uuid,
@@ -20,7 +18,7 @@ pub struct CreatePayment {
     pub payment_details: Option<serde_json::Value>,
 }
 impl PaymentService {
-    pub fn new(db: Arc<DatabaseConnection>) -> Self {
+    pub fn new(db: DatabaseConnection) -> Self {
         Self { db }
     }
 
@@ -38,7 +36,7 @@ impl PaymentService {
             created_at: Set(chrono::Utc::now()),
             updated_at: Set(chrono::Utc::now()),
         }
-        .insert(&*self.db)
+        .insert(&self.db)
         .await?;
 
         Ok(payment.into())
@@ -46,7 +44,7 @@ impl PaymentService {
 
     pub async fn get_payment_by_id(&self, payment_id: Uuid) -> Result<Option<Model>, ServiceError> {
         let payment = payment::Entity::find_by_id(payment_id)
-            .one(&*self.db)
+            .one(&self.db)
             .await
             .map_err(|e| ServiceError::NotFound(e.to_string()))?;
 
@@ -59,7 +57,7 @@ impl PaymentService {
     ) -> Result<Option<Model>, ServiceError> {
         let payment = payment::Entity::find()
             .filter(payment::Column::OrderId.eq(order_id))
-            .one(&*self.db)
+            .one(&self.db)
             .await
             .map_err(|e| ServiceError::NotFound(e.to_string()))?;
 
@@ -72,14 +70,14 @@ impl PaymentService {
         status: String,
     ) -> Result<Option<Model>, ServiceError> {
         let payment = payment::Entity::find_by_id(payment_id)
-            .one(&*self.db)
+            .one(&self.db)
             .await
             .map_err(|e| ServiceError::NotFound(e.to_string()))?;
         if let Some(payment) = payment {
             let mut active_model: payment::ActiveModel = payment.into();
             active_model.status = Set(status);
             active_model.updated_at = Set(chrono::Utc::now());
-            let updated_payment = active_model.update(&*self.db).await?;
+            let updated_payment = active_model.update(&self.db).await?;
 
             Ok(updated_payment.into())
         } else {
@@ -93,7 +91,7 @@ impl PaymentService {
         payment_details: serde_json::Value,
     ) -> Result<Model, ServiceError> {
         let payment = payment::Entity::find_by_id(payment_id)
-            .one(&*self.db)
+            .one(&self.db)
             .await
             .map_err(|e| ServiceError::NotFound(e.to_string()))?;
 
@@ -101,7 +99,7 @@ impl PaymentService {
             let mut active_model: payment::ActiveModel = payment.into();
             active_model.payment_details = Set(Some(payment_details));
             active_model.updated_at = Set(chrono::Utc::now());
-            let updated_payment = active_model.update(&*self.db).await?;
+            let updated_payment = active_model.update(&self.db).await?;
 
             Ok(updated_payment.into())
         } else {
@@ -113,8 +111,11 @@ impl PaymentService {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use mockall::predicate::*;
+    use rust_decimal::Decimal;
     use sea_orm::MockDatabase;
     use serde_json::json;
+    use test_log;
 
     #[tokio::test]
     async fn test_create_payment() {
@@ -135,7 +136,7 @@ mod tests {
             }]])
             .into_connection();
 
-        let service = PaymentService::new(Arc::new(db));
+        let service = PaymentService::new(db);
 
         let payment_data = CreatePayment {
             order_id,
@@ -176,7 +177,7 @@ mod tests {
             }]])
             .into_connection();
 
-        let service = PaymentService::new(Arc::new(db));
+        let service = PaymentService::new(db);
 
         let result = service.get_payment_by_id(payment_id).await;
         assert!(result.is_ok());
@@ -222,7 +223,7 @@ mod tests {
             ])
             .into_connection();
 
-        let service = PaymentService::new(db.into());
+        let service = PaymentService::new(db);
 
         let result = service
             .update_payment_status(payment_id, "completed".to_string())

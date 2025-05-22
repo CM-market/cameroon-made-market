@@ -16,6 +16,7 @@ use uuid::Uuid;
 
 pub fn config() -> Router<AppState> {
     Router::new()
+        .route("/products", get(list_products))
         .route("/products", post(create_product))
         .route("/products/:id", get(get_product))
         .route("/products/:id", put(update_product))
@@ -23,7 +24,7 @@ pub fn config() -> Router<AppState> {
 }
 
 #[axum::debug_handler]
-pub async fn list_products( 
+async fn list_products( 
     State(state): State<AppState>,
 ) -> impl IntoResponse {
     match state
@@ -94,7 +95,6 @@ async fn create_product(
         price: product_data.price,
         category: Some(product_data.category),
         image_urls: product_data.image_urls,
-        quantity: product_data.quantity,
     };
     info!("Creating product: {:?}", create_product);
     match state.product_service.create_product(create_product).await {
@@ -236,7 +236,6 @@ pub struct CreateProductRequest {
     price: f64,
     category: String,
     image_urls: Vec<String>,
-    quantity: i32,
 }
 
 #[derive(serde::Deserialize)]
