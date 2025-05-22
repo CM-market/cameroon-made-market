@@ -20,7 +20,6 @@ pub struct CreateProduct {
     pub price: f64,
     pub category: Option<String>,
     pub image_urls: Vec<String>,
-    pub quantity: i32,
 }
 pub struct UpdateProduct {
     pub title: Option<String>,
@@ -43,7 +42,7 @@ impl ProductService {
             price: Set(product_data.price),
             category: Set(product_data.category),
             image_urls: Set(product_data.image_urls),
-            quantity: Set(product_data.quantity), 
+            quantity: Set(0), // Default quantity value
             created_at: Set(chrono::Utc::now()),
             updated_at: Set(chrono::Utc::now()),
         }
@@ -151,7 +150,6 @@ mod tests {
             price: 100.0,
             category: Some("Test Category".to_string()),
             image_urls: vec!["test.jpg".to_string()],
-            quantity: 1,
         };
 
         let result = service.create_product(product_data).await;
