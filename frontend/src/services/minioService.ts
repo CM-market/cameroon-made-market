@@ -23,7 +23,7 @@ export const uploadImage = async (file: File): Promise<string> => {
     const formData = new FormData();
     formData.append('file', file);
     
-    const response = await fetch(`${import.meta.env.VITE_API_URL}/api/products/upload-image`, {
+    const response = await fetch(`${import.meta.env.VITE_API_URL}/products/upload-image`, {
       method: 'POST',
       body: formData,
     });

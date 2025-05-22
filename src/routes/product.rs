@@ -17,12 +17,11 @@ use crate::services::image::handle_image_upload;
 
 pub fn config() -> Router<AppState> {
     Router::new()
-        .route("/products", get(list_products))
         .route("/products/:id", get(get_product))
         .route("/products", post(create_product))
         .route("/products/:id", put(update_product))
         .route("/products/:id", delete(delete_product))
-        .route("/products/upload-image", post(handle_image_upload))
+      
 }
 
 #[axum::debug_handler]

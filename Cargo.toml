@@ -45,7 +45,7 @@ tracing = "0.1.41"
 sea-orm-migration = "1.1.11"
 
 # MinIO
-minio = "0.1"
+minio = "0.2"
 async-trait = "0.1"
 
 [dev-dependencies]
