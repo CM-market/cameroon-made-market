@@ -1,7 +1,9 @@
-use axum::{http, middleware, Router};
+use axum::routing::get;
+use axum::{http, middleware, Extension, Router};
 use cameroon_made_market::middleware::auth::{auth, generate_token};
 use cameroon_made_market::models::user::UserRole;
 use cameroon_made_market::routes;
+use cameroon_made_market::routes::product::list_products;
 use cameroon_made_market::state::setup;
 use tokio::net::TcpListener;
 use tower_http::cors::{Any, CorsLayer};
@@ -16,7 +18,12 @@ async fn main() {
 
     // Get configuration
     let app_state = setup().await;
-    let token = generate_token("6a7ad2e4-9fda-4ca2-a988-34c702ddb86b", UserRole::Vendor, &app_state.config).unwrap();
+    let token = generate_token(
+        "ae1313bb-511b-465c-a887-6027ca1fa15d",
+        UserRole::Vendor,
+        &app_state.config,
+    )
+    .unwrap();
     println!("{}", token);
     // Configure CORS
     let cors = CorsLayer::new()
@@ -29,23 +36,22 @@ async fn main() {
         .merge(routes::user::config())
         .merge(routes::product::config())
         .merge(routes::cart::config())
-        // .layer(middleware::from_fn({
-        //     let app_state = app_state.clone();
-        //     move |req: http::Request<axum::body::Body>, next| {
-        //         auth(axum::extract::State(app_state.clone()), req, next)
-        //     }
-        // }))
-        // .merge(routes::order::config())
+        .merge(routes::payment::config())
+        .merge(routes::orders::config())
+        .layer(middleware::from_fn({
+            move |req: http::Request<axum::body::Body>, next| auth(req, next)
+        }))
+        .route("/products", get(list_products))
         // .merge(routes::auth::config())
         // .merge(routes::category::config())
         // .merge(routes::address::config())
-        // .merge(routes::payment::config())
         // .merge(routes::notification::config())
         // .merge(routes::review::config())
         // .merge(routes::wishlist::config())
         // .merge(routes::shipping::config())
         // .merge(routes::search::config())
         // .merge(routes::admin::config())
+        .layer(Extension(app_state.clone()))
         .layer(cors)
         .layer(TraceLayer::new_for_http())
         .with_state(app_state.clone());

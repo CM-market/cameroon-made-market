@@ -1,7 +1,11 @@
+use std::fmt::Display;
+
 use chrono::{DateTime, Utc};
 use sea_orm::entity::prelude::*;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
+
+use crate::routes::orders::OrderItemRequest;
 
 /// Order model representing customer purchases in the marketplace
 /// This model tracks the entire order lifecycle from creation to completion
@@ -12,7 +16,7 @@ pub struct Model {
     #[sea_orm(primary_key, auto_increment = false)]
     pub id: Uuid,
     /// user identifier for guest checkout orders
-    pub user_id: String,
+    pub user_id: Uuid,
     /// Name of the customer placing the order
     pub customer_name: String,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -54,7 +58,16 @@ impl From<Status> for String {
         }
     }
 }
-
+impl Display for Status {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Status::Pending => write!(f, "pending"),
+            Status::Paid => write!(f, "paid"),
+            Status::Shipped => write!(f, "shipped"),
+            Status::Delivered => write!(f, "delivered"),
+        }
+    }
+}
 impl From<String> for Status {
     fn from(status: String) -> Status {
         match status.as_str() {
@@ -130,6 +143,18 @@ pub struct CreateOrder {
     /// Timestamp when the order was created
     pub created_at: DateTime<Utc>,
     pub items: Vec<Items>,
+}
+
+#[derive(Debug)]
+pub struct NewOrder {
+    pub user_id: Uuid,
+    pub customer_name: String,
+    pub customer_email: Option<String>,
+    pub customer_phone: String,
+    pub delivery_address: String,
+    pub status: String,
+    pub total: f64,
+    pub items: Vec<OrderItemRequest>,
 }
 #[derive(Serialize, Deserialize)]
 pub struct Items {

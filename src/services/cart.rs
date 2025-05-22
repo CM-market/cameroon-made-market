@@ -144,8 +144,7 @@ impl CartService {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use mockall::predicate::*;
-    use sea_orm::{MockDatabase, MockExecResult};
+    use sea_orm::MockDatabase;
 
     #[tokio::test]
     async fn test_get_or_create_cart() {
