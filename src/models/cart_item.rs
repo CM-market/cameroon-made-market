@@ -16,7 +16,6 @@ pub struct Model {
     pub product_id: Uuid,
     /// Quantity of the product in the cart
     pub quantity: i32,
-
 }
 
 /// Defines the relationships between CartItem and other entities

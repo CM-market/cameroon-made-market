@@ -23,14 +23,8 @@ pub fn config() -> Router<AppState> {
 }
 
 #[axum::debug_handler]
-pub async fn list_products( 
-    State(state): State<AppState>,
-) -> impl IntoResponse {
-    match state
-        .product_service
-        .list_products()
-        .await
-    { 
+pub async fn list_products(State(state): State<AppState>) -> impl IntoResponse {
+    match state.product_service.list_products().await {
         Ok(products) => Json(ApiResponse::success(
             products,
             "Products retrieved successfully",

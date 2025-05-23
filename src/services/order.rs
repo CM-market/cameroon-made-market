@@ -21,10 +21,7 @@ impl OrderService {
         Self { db }
     }
 
-    pub async fn create_order(
-        &self,
-        order_data: NewOrder,
-    ) -> Result<order::Model, ServiceError> {
+    pub async fn create_order(&self, order_data: NewOrder) -> Result<order::Model, ServiceError> {
         let order = order::ActiveModel {
             id: Set(Uuid::new_v4()),
             user_id: Set(order_data.user_id),
@@ -44,7 +41,8 @@ impl OrderService {
             order_item::ActiveModel {
                 id: Set(Uuid::new_v4()),
                 order_id: Set(order.id),
-                product_id: Set(Uuid::parse_str(&item.product_id).map_err(|_| ServiceError::Validation("malformed body".to_string()))?),
+                product_id: Set(Uuid::parse_str(&item.product_id)
+                    .map_err(|_| ServiceError::Validation("malformed body".to_string()))?),
                 quantity: Set(item.quantity as i32),
             }
             .insert(&*self.db)
@@ -128,7 +126,9 @@ impl OrderService {
             .await?;
 
         // Then delete the order
-        order::Entity::delete_by_id(order_id).exec(&*self.db).await?;
+        order::Entity::delete_by_id(order_id)
+            .exec(&*self.db)
+            .await?;
 
         Ok(())
     }
@@ -319,14 +319,12 @@ mod tests {
                     order_id,
                     product_id: Uuid::new_v4(),
                     quantity: 2,
-            
                 },
                 order_item::Model {
                     id: Uuid::new_v4(),
                     order_id,
                     product_id: Uuid::new_v4(),
                     quantity: 1,
-              
                 },
             ]])
             .into_connection();

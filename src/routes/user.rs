@@ -1,19 +1,17 @@
 use axum::{
+    middleware,
     routing::{get, post},
     Router,
-    middleware,
 };
 
 use crate::{
-    handlers::user::{get_me, login, register, get_all_users},
-    state::AppState,
+    handlers::user::{get_all_users, get_me, login, register},
     middleware::auth::auth,
+    state::AppState,
 };
 
 pub fn config() -> Router<AppState> {
     Router::new()
-        .route("/api/users", post(register))
-        .route("/api/users/login", post(login))
         .route("/api/users/me", get(get_me))
-        .route("/api/users/all", get(get_all_users)) 
+        .route("/api/users/all", get(get_all_users))
 }

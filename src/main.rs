@@ -1,5 +1,6 @@
-use axum::routing::get;
+use axum::routing::{get, post};
 use axum::{http, middleware, Extension, Router};
+use cameroon_made_market::handlers::user::{login, register};
 use cameroon_made_market::middleware::auth::{auth, generate_token};
 use cameroon_made_market::models::user::UserRole;
 use cameroon_made_market::routes;
@@ -42,6 +43,8 @@ async fn main() {
             move |req: http::Request<axum::body::Body>, next| auth(req, next)
         }))
         .route("/products", get(list_products))
+        .route("/api/users", post(register))
+        .route("/api/users/login", post(login))
         // .merge(routes::auth::config())
         // .merge(routes::category::config())
         // .merge(routes::address::config())

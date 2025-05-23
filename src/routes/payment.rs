@@ -38,7 +38,8 @@ async fn list_payments(
         }
     };
 
-    match TransactionApi::get_transactions_by_user_id(&state.payment_service, &user_id.to_string()).await
+    match TransactionApi::get_transactions_by_user_id(&state.payment_service, &user_id.to_string())
+        .await
     {
         Ok(payments) => Json(ApiResponse::success(
             payments,
@@ -136,7 +137,9 @@ async fn create_payment(
 
             info!("Initiating payment for order: {:?}", payment_request);
 
-            match PaymentApi::initiate_direct_payment(&state.payment_service, &payment_request).await {
+            match PaymentApi::initiate_direct_payment(&state.payment_service, &payment_request)
+                .await
+            {
                 Ok(fapshi_response) => {
                     let payment = Payment {
                         id: Uuid::new_v4(),
@@ -158,10 +161,7 @@ async fn create_payment(
                 }
                 Err(e) => (
                     StatusCode::INTERNAL_SERVER_ERROR,
-                    error!(
-                        "Error initiating payment: {}",
-                        e.to_string()
-                    ),
+                    error!("Error initiating payment: {}", e.to_string()),
                     Json(ApiResponse::<()>::error("Payment initiation failed")),
                 )
                     .into_response(),
@@ -229,7 +229,7 @@ async fn create_indirect_payment(
                         status: "pending".to_string(),
                         transaction_id: fapshi_response.transaction_id,
                         created_at: chrono::Utc::now(),
-                        payment_link: fapshi_response.payment_link
+                        payment_link: fapshi_response.payment_link,
                     };
                     (
                         StatusCode::CREATED,
@@ -242,10 +242,7 @@ async fn create_indirect_payment(
                 }
                 Err(e) => (
                     StatusCode::INTERNAL_SERVER_ERROR,
-                    error!(
-                        "Error initiating payment: {}",
-                        e.to_string()
-                    ),
+                    error!("Error initiating payment: {}", e.to_string()),
                     Json(ApiResponse::<()>::error("Payment initiation failed")),
                 )
                     .into_response(),
@@ -307,5 +304,5 @@ pub struct IndirectPayment {
     pub status: String,
     pub transaction_id: String,
     pub created_at: chrono::DateTime<chrono::Utc>,
-    pub payment_link: String
+    pub payment_link: String,
 }

@@ -1,7 +1,5 @@
 use log::debug;
-use sea_orm::{
-    ActiveModelTrait, DatabaseConnection, EntityTrait, QueryOrder, Set,
-};
+use sea_orm::{ActiveModelTrait, DatabaseConnection, EntityTrait, QueryOrder, Set};
 use std::sync::Arc;
 use uuid::Uuid;
 
@@ -43,7 +41,7 @@ impl ProductService {
             price: Set(product_data.price),
             category: Set(product_data.category),
             image_urls: Set(product_data.image_urls),
-            quantity: Set(product_data.quantity), 
+            quantity: Set(product_data.quantity),
             created_at: Set(chrono::Utc::now()),
             updated_at: Set(chrono::Utc::now()),
         }
@@ -123,7 +121,6 @@ mod tests {
     use super::*;
     use sea_orm::MockDatabase;
 
-
     #[tokio::test]
     async fn test_create_product() {
         let seller_id = Uuid::new_v4();
@@ -160,7 +157,7 @@ mod tests {
         let product_response = result.unwrap();
         assert_eq!(product_response.title, "Test Product");
         assert_eq!(product_response.price, 100.0);
-        assert_eq!(product_response.seller_id,seller_id);
+        assert_eq!(product_response.seller_id, seller_id);
     }
 
     #[tokio::test]

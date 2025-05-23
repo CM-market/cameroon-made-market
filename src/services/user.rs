@@ -3,8 +3,8 @@ use std::sync::Arc;
 use chrono::Utc;
 use sea_orm::{ActiveModelTrait, ColumnTrait, DatabaseConnection, EntityTrait, QueryFilter, Set};
 use serde::{Deserialize, Serialize};
-use uuid::Uuid;
 use tracing::error;
+use uuid::Uuid;
 
 use crate::{
     config::Config,
@@ -139,7 +139,7 @@ impl UserService {
                 active_model.email = Set(Some(email));
             }
             active_model.phone = Set(user_data.phone);
-                active_model.password_hash = Set(hash_password(&user_data.password)?);
+            active_model.password_hash = Set(hash_password(&user_data.password)?);
 
             let updated_user = active_model.update(self.db.as_ref()).await?;
             Ok(updated_user.into())
@@ -221,7 +221,9 @@ mod tests {
             jwt_expires_in: 24,
             ..Default::default()
         };
-        let result = service.login(123, "password123".to_string(), &config, None).await;
+        let result = service
+            .login(123, "password123".to_string(), &config, None)
+            .await;
         assert!(result.is_ok());
     }
 
