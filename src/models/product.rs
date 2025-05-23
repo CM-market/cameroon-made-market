@@ -22,14 +22,16 @@ pub struct Model {
     pub price: f64,
     /// Category the product belongs to (e.g., "Electronics", "Clothing")
     pub category: Option<String>,
+    /// Quantity of the product available for sale
     pub quantity: i32,
     /// List of URLs to product images
     pub image_urls: Vec<String>,
+    /// Refund policy for the product
+    pub return_policy: Option<String>,
     /// Timestamp when the product was created
     pub created_at: DateTime<Utc>,
     /// Timestamp when the product was last updated
     pub updated_at: DateTime<Utc>,
-
 }
 
 /// Defines the relationships between Product and other entities

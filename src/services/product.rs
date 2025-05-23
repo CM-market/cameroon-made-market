@@ -1,7 +1,5 @@
 use log::debug;
-use sea_orm::{
-    ActiveModelTrait, DatabaseConnection, EntityTrait, QueryOrder, Set,
-};
+use sea_orm::{ActiveModelTrait, DatabaseConnection, EntityTrait, QueryOrder, Set};
 use std::sync::Arc;
 use uuid::Uuid;
 
@@ -17,16 +15,20 @@ pub struct CreateProduct {
     pub seller_id: Uuid,
     pub title: String,
     pub description: Option<String>,
+    pub quantity: i32,
     pub price: f64,
     pub category: Option<String>,
     pub image_urls: Vec<String>,
+    pub return_policy: Option<String>,
 }
 pub struct UpdateProduct {
     pub title: Option<String>,
     pub description: Option<String>,
+    pub quantity: Option<i32>,
     pub price: Option<f64>,
     pub category: Option<String>,
     pub image_urls: Option<Vec<String>>,
+    pub return_policy: Option<String>,
 }
 impl ProductService {
     pub fn new(db: Arc<DatabaseConnection>) -> Self {
@@ -42,7 +44,8 @@ impl ProductService {
             price: Set(product_data.price),
             category: Set(product_data.category),
             image_urls: Set(product_data.image_urls),
-            quantity: Set(0), // Default quantity value
+            quantity: Set(product_data.quantity),
+            return_policy: Set(product_data.return_policy),
             created_at: Set(chrono::Utc::now()),
             updated_at: Set(chrono::Utc::now()),
         }
@@ -89,6 +92,12 @@ impl ProductService {
             if let Some(image_urls) = product_data.image_urls {
                 active_model.image_urls = Set(image_urls);
             }
+            if let Some(quantity) = product_data.quantity {
+                active_model.quantity = Set(quantity);
+            }
+            if let Some(return_policy) = product_data.return_policy {
+                active_model.return_policy = Set(Some(return_policy));
+            }
             active_model.updated_at = Set(chrono::Utc::now());
 
             let updated_product = active_model.update(&*self.db).await?;
@@ -122,7 +131,6 @@ mod tests {
     use super::*;
     use sea_orm::MockDatabase;
 
-
     #[tokio::test]
     async fn test_create_product() {
         let seller_id = Uuid::new_v4();
@@ -136,6 +144,7 @@ mod tests {
                 category: Some("Test Category".to_string()),
                 image_urls: vec!["test.jpg".to_string()],
                 quantity: 1, // Default quantity value
+                return_policy: Some("Test Refund Policy".to_string()),
                 created_at: chrono::Utc::now(),
                 updated_at: chrono::Utc::now(),
             }]])
@@ -150,6 +159,8 @@ mod tests {
             price: 100.0,
             category: Some("Test Category".to_string()),
             image_urls: vec!["test.jpg".to_string()],
+            return_policy: Some("Test Refund Policy".to_string()),
+            quantity: 1,
         };
 
         let result = service.create_product(product_data).await;
@@ -158,7 +169,7 @@ mod tests {
         let product_response = result.unwrap();
         assert_eq!(product_response.title, "Test Product");
         assert_eq!(product_response.price, 100.0);
-        assert_eq!(product_response.seller_id,seller_id);
+        assert_eq!(product_response.seller_id, seller_id);
     }
 
     #[tokio::test]
@@ -175,6 +186,7 @@ mod tests {
                 quantity: 1,
                 category: Some("Test Category".to_string()),
                 image_urls: vec!["test.jpg".to_string()],
+                return_policy: Some("Test Refund Policy".to_string()),
                 created_at: chrono::Utc::now(),
                 updated_at: chrono::Utc::now(),
             }]])
@@ -206,6 +218,7 @@ mod tests {
                     quantity: 1,
                     category: Some("Test Category".to_string()),
                     image_urls: vec!["test.jpg".to_string()],
+                    return_policy: Some("Test Refund Policy".to_string()),
                     created_at: chrono::Utc::now(),
                     updated_at: chrono::Utc::now(),
                 }],
@@ -218,6 +231,7 @@ mod tests {
                     quantity: 1,
                     category: Some("Updated Category".to_string()),
                     image_urls: vec!["updated.jpg".to_string()],
+                    return_policy: Some("Updated Refund Policy".to_string()),
                     created_at: chrono::Utc::now(),
                     updated_at: chrono::Utc::now(),
                 }],
@@ -229,9 +243,11 @@ mod tests {
         let update_data = UpdateProduct {
             title: Some("Updated Product".to_string()),
             description: Some("Updated Description".to_string()),
+            quantity: Some(1),
             price: Some(100.0),
             category: Some("Updated Category".to_string()),
             image_urls: Some(vec!["updated.jpg".to_string()]),
+            return_policy: Some("Updated Refund Policy".to_string()),
         };
 
         let result = service.update_product(product_id, update_data).await;
@@ -256,6 +272,7 @@ mod tests {
                     quantity: 1,
                     category: Some("Category A".to_string()),
                     image_urls: vec!["1.jpg".to_string()],
+                    return_policy: Some("Refund Policy 1".to_string()),
                     created_at: chrono::Utc::now(),
                     updated_at: chrono::Utc::now(),
                 },
@@ -268,6 +285,7 @@ mod tests {
                     quantity: 1,
                     category: Some("Category B".to_string()),
                     image_urls: vec!["2.jpg".to_string()],
+                    return_policy: Some("Refund Policy 2".to_string()),
                     created_at: chrono::Utc::now(),
                     updated_at: chrono::Utc::now(),
                 },

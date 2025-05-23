@@ -1,6 +1,5 @@
 use axum::response::{IntoResponse, Response};
 
-
 // Custom error for authentication failures
 #[derive(Debug)]
 pub enum AuthError {

@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -27,7 +26,7 @@ export const BasicDetails = ({
   return (
     <div className="space-y-4">
       <div className="space-y-2">
-        <Label htmlFor="name">Product Name</Label>
+        <Label htmlFor="name">Product Name</Label> 
         <Input
           id="name"
           name="name"
@@ -88,7 +87,7 @@ export const BasicDetails = ({
           </SelectTrigger>
           <SelectContent>
             {CATEGORIES.map((category) => (
-              <SelectItem key={category.id} value={category.id}>
+              <SelectItem key={category.id} value={category.name}>
                 {category.name}
               </SelectItem>
             ))}
