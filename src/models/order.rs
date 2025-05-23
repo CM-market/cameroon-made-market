@@ -22,6 +22,10 @@ pub struct Model {
     pub customer_phone: String,
     /// Delivery address for the order
     pub delivery_address: String,
+    /// region where the order is to be delivered
+    pub region: String,
+    /// City where the order is to be delivered
+    pub city: String,
     /// Current status of the order
     #[sea_orm(column_type = "Text")]
     pub status: String,
@@ -127,6 +131,10 @@ pub struct CreateOrder {
     pub status: String,
     /// Total amount of the order including all items and fees
     pub total: f64,
+    /// region where the order is to be delivered
+    pub region: String,
+    /// City where the order is to be delivered
+    pub city: String,
     /// Timestamp when the order was created
     pub created_at: DateTime<Utc>,
     pub items: Vec<Items>,

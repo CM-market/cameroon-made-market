@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import MainNavbar from "@/components/MainNavbar";
 import { Button } from "@/components/ui/button";
@@ -9,15 +8,38 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useNavigate } from "react-router-dom";
+import { Badge } from "@/components/ui/badge";
+import { Banknote, CreditCard, Smartphone } from "lucide-react";
 
 const Checkout: React.FC = () => {
   const [paymentMethod, setPaymentMethod] = useState("mobileMoney");
+  const [formData, setFormData] = useState({
+    fullName: "",
+    phone: "",
+    address: "",
+    city: "",
+    region: "",
+    mobileMoneyNumber: ""
+  });
   const navigate = useNavigate();
+  
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { id, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [id]: value
+    }));
+  };
   
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     // In a real app, this would process payment and create order
-    // For demo, just navigate to success page
+    const checkoutData = {
+      ...formData,
+      paymentMethod,
+      // Add other order details here
+    };
+    console.log('Checkout data:', checkoutData);
     navigate("/payment");
   };
 
@@ -49,23 +71,49 @@ const Checkout: React.FC = () => {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div className="space-y-2">
                         <Label htmlFor="fullName">Full Name</Label>
-                        <Input id="fullName" required />
+                        <Input 
+                          id="fullName" 
+                          required 
+                          value={formData.fullName}
+                          onChange={handleInputChange}
+                        />
                       </div>
                       <div className="space-y-2">
                         <Label htmlFor="phone">Phone Number</Label>
-                        <Input id="phone" type="tel" required />
+                        <Input 
+                          id="phone" 
+                          type="tel" 
+                          required 
+                          value={formData.phone}
+                          onChange={handleInputChange}
+                        />
                       </div>
                       <div className="space-y-2 md:col-span-2">
                         <Label htmlFor="address">Street Address</Label>
-                        <Input id="address" required />
+                        <Input 
+                          id="address" 
+                          required 
+                          value={formData.address}
+                          onChange={handleInputChange}
+                        />
                       </div>
                       <div className="space-y-2">
                         <Label htmlFor="city">City</Label>
-                        <Input id="city" required />
+                        <Input 
+                          id="city" 
+                          required 
+                          value={formData.city}
+                          onChange={handleInputChange}
+                        />
                       </div>
                       <div className="space-y-2">
                         <Label htmlFor="region">Region</Label>
-                        <Input id="region" required />
+                        <Input 
+                          id="region" 
+                          required 
+                          value={formData.region}
+                          onChange={handleInputChange}
+                        />
                       </div>
                     </div>
                   </CardContent>
@@ -89,20 +137,22 @@ const Checkout: React.FC = () => {
                           <p className="text-sm text-muted-foreground">MTN Mobile Money, Orange Money</p>
                         </Label>
                         <div className="flex gap-2">
-                          <div className="w-10 h-6 bg-gray-200 rounded"></div>
-                          <div className="w-10 h-6 bg-gray-200 rounded"></div>
+                          <img src="/mtn-money-logo.png" alt="MTN Money" className="h-10 w-auto" />
+                          <img src="/orange-money-logo.png" alt="Orange Money" className="h-10 w-auto" />
                         </div>
                       </div>
                       
-                      <div className="flex items-center space-x-2 border rounded-md p-4">
-                        <RadioGroupItem value="card" id="card" />
-                        <Label htmlFor="card" className="flex-1 cursor-pointer">
-                          Credit/Debit Card
+                      <div className="flex items-center space-x-2 border rounded-md p-4 relative">
+                        <RadioGroupItem value="card" id="card" disabled />
+                        <Label htmlFor="card" className="flex-1 cursor-not-allowed">
+                          <div className="flex items-center gap-2">
+                            <span>Credit/Debit Card</span>
+                            <Badge variant="destructive">Not Available</Badge>
+                          </div>
                           <p className="text-sm text-muted-foreground">Visa, MasterCard</p>
                         </Label>
                         <div className="flex gap-2">
-                          <div className="w-10 h-6 bg-gray-200 rounded"></div>
-                          <div className="w-10 h-6 bg-gray-200 rounded"></div>
+                          <CreditCard className="h-6 w-6 text-muted-foreground" />
                         </div>
                       </div>
                       
@@ -112,34 +162,22 @@ const Checkout: React.FC = () => {
                           Cash on Delivery
                           <p className="text-sm text-muted-foreground">Pay when you receive the products</p>
                         </Label>
+                        <Banknote className="h-6 w-6 text-muted-foreground" />
                       </div>
                     </RadioGroup>
-                    
-                    {paymentMethod === "card" && (
-                      <div className="mt-4 space-y-4">
-                        <div className="space-y-2">
-                          <Label htmlFor="cardNumber">Card Number</Label>
-                          <Input id="cardNumber" placeholder="1234 5678 9012 3456" />
-                        </div>
-                        <div className="grid grid-cols-2 gap-4">
-                          <div className="space-y-2">
-                            <Label htmlFor="expiry">Expiry Date</Label>
-                            <Input id="expiry" placeholder="MM/YY" />
-                          </div>
-                          <div className="space-y-2">
-                            <Label htmlFor="cvv">CVV</Label>
-                            <Input id="cvv" placeholder="123" />
-                          </div>
-                        </div>
-                      </div>
-                    )}
                     
                     {paymentMethod === "mobileMoney" && (
                       <div className="mt-4">
                         <Tabs defaultValue="mtn">
                           <TabsList className="grid w-full grid-cols-2">
-                            <TabsTrigger value="mtn">MTN Mobile Money</TabsTrigger>
-                            <TabsTrigger value="orange">Orange Money</TabsTrigger>
+                            <TabsTrigger value="mtn" className="flex items-center gap-2">
+                              <img src="/mtn-money-logo.png" alt="MTN" className="h-8 w-auto" />
+                              MTN Mobile Money
+                            </TabsTrigger>
+                            <TabsTrigger value="orange" className="flex items-center gap-2">
+                              <img src="/orange-money-logo.png" alt="Orange" className="h-8 w-auto" />
+                              Orange Money
+                            </TabsTrigger>
                           </TabsList>
                           <TabsContent value="mtn" className="space-y-4 mt-4">
                             <div className="space-y-2">

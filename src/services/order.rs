@@ -30,6 +30,8 @@ impl OrderService {
             customer_email: Set(order_data.customer_email),
             customer_phone: Set(order_data.customer_phone),
             delivery_address: Set(order_data.delivery_address),
+            city: Set(order_data.city),
+            region: Set(order_data.region),
             status: Set(order_data.status),
             total: Set(order_data.total),
             created_at: Set(chrono::Utc::now()),
@@ -139,7 +141,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_create_order() {
-        let user_id = Uuid::new_v4();
+        let _user_id = Uuid::new_v4();
         let db = MockDatabase::new(sea_orm::DatabaseBackend::Postgres)
             .append_query_results(vec![vec![order::Model {
                 id: Uuid::new_v4(),
@@ -148,6 +150,8 @@ mod tests {
                 customer_email: Some("test@example.com".to_string()),
                 customer_phone: "1234567890".to_string(),
                 delivery_address: "Test Address".to_string(),
+                region: "Test Region".to_string(),
+                city: "Test City".to_string(),
                 status: "pending".to_string(),
                 total: 100.0, // 100.00
                 created_at: chrono::Utc::now(),
@@ -170,6 +174,8 @@ mod tests {
             customer_email: Some("test@example.com".to_string()),
             customer_phone: "1234567890".to_string(),
             delivery_address: "Test Address".to_string(),
+            region: "Test Region".to_string(),
+            city: "Test City".to_string(),
             status: "pending".to_string(),
             total: 1000.0,
             items: vec![order::Items {
@@ -199,6 +205,8 @@ mod tests {
                 customer_email: Some("test@example.com".to_string()),
                 customer_phone: "1234567890".to_string(),
                 delivery_address: "Test Address".to_string(),
+                region: "Test Region".to_string(),
+                city: "Test City".to_string(),
                 status: "pending".to_string(),
                 total: 10.0,
                 created_at: chrono::Utc::now(),
@@ -227,6 +235,8 @@ mod tests {
                 customer_email: Some("test@example.com".to_string()),
                 customer_phone: "1234567890".to_string(),
                 delivery_address: "Test Address".to_string(),
+                region: "Test Region".to_string(),
+                city: "Test City".to_string(),
                 status: "pending".to_string(),
                 total: 100.0,
                 created_at: chrono::Utc::now(),
@@ -238,6 +248,8 @@ mod tests {
                 customer_email: Some("test@example.com".to_string()),
                 customer_phone: "1234567890".to_string(),
                 delivery_address: "Test Address".to_string(),
+                region: "Test Region".to_string(),
+                city: "Test City".to_string(),
                 status: "completed".to_string(),
                 total: 100.0,
                 created_at: chrono::Utc::now(),
@@ -267,6 +279,8 @@ mod tests {
                     customer_email: Some("customer1@example.com".to_string()),
                     customer_phone: "1234567890".to_string(),
                     delivery_address: "Address 1".to_string(),
+                    region: "Region 1".to_string(),
+                    city: "City 1".to_string(),
                     status: "pending".to_string(),
                     total: 100.0,
                     created_at: chrono::Utc::now(),
@@ -278,6 +292,8 @@ mod tests {
                     customer_email: Some("customer2@example.com".to_string()),
                     customer_phone: "0987654321".to_string(),
                     delivery_address: "Address 2".to_string(),
+                    region: "Region 2".to_string(),
+                    city: "City 2".to_string(),
                     status: "completed".to_string(),
                     total: 100.0,
                     created_at: chrono::Utc::now(),
