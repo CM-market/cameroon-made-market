@@ -65,6 +65,8 @@ const ProductList: React.FC = () => {
       try {
         setLoading(true);
         const data = await productApi.list(selectedCategory || undefined);
+        console.log(data)
+        console.log('Fetched products:', data.data); // Debug log
         setProducts(data.data);
         setError(null);
       } catch (err) {
@@ -338,9 +340,13 @@ const ProductList: React.FC = () => {
                   <Card key={product.id} className={viewMode === 'list' ? 'flex' : ''}>
                     <div className={viewMode === 'list' ? 'w-48' : 'w-full'}>
                       <img
-                        src={product.image_urls[0] || '/placeholder.svg'}
+                        src={"http://localhost:9001/browser/product-images/06d2b1b1-21ed-46c6-abea-612f56e62f7c.jpg"}
                         alt={product.title}
                         className="w-full h-48 object-cover"
+                        onError={(e) => {
+                          console.log('Image load failed:', product.image_urls[0]);
+                          (e.target as HTMLImageElement).src = '/placeholder.svg';
+                        }}
                       />
                     </div>
                     <CardContent className={viewMode === 'list' ? 'flex-grow p-6' : 'p-6'}>

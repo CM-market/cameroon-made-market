@@ -21,7 +21,7 @@ async fn main() {
     // Get configuration
     let app_state = setup().await;
     let token = generate_token(
-        "d037ae2d-31af-474c-8423-b7bc89588ed1",
+        "abaf2b7d-c64e-44c0-ba5c-ab7f541e72d0",
         UserRole::Vendor,
         &app_state.config,
     )

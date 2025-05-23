@@ -21,7 +21,7 @@ pub struct ImageService {
 
 impl ImageService {
     pub async fn upload_image(&self, file: Vec<u8>) -> Result<String> {
-        let object_name = format!("{}.jpg", Uuid::new_v4());
+        let object_name = format!("{}", Uuid::new_v4());
         let content = ObjectContent::from(file);
         self.client
             .put_object_content(&self.bucket, &object_name, content)
@@ -49,9 +49,7 @@ pub async fn handle_image_upload(
     State(state): State<AppState>,
     mut multipart: Multipart,
 ) -> Result<Response, (StatusCode, String)> {
-      println!("in fuction above");
     let image_service = state.config.image_service.clone();
-    println!("in fu");
 
     while let Some(field) = multipart.next_field().await.map_err(|e| {
         (
