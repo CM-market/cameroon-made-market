@@ -13,7 +13,6 @@ use axum::{
 };
 use tracing::info;
 use uuid::Uuid;
-use crate::services::image::handle_image_upload;
 
 pub fn config() -> Router<AppState> {
     Router::new()
@@ -65,7 +64,7 @@ async fn get_product(
 }
 
 #[axum::debug_handler]
-async fn create_product(
+pub async fn create_product(
     State(state): State<AppState>,
     Extension(auth_user): Extension<AuthUser>,
     Json(product_data): Json<CreateProductRequest>,

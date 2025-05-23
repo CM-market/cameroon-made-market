@@ -6,9 +6,8 @@ use axum::{
 };
 
 use minio::s3::{
-    builders::ObjectContent, client::Client, creds::StaticProvider, http::BaseUrl, types::S3Api,
+    builders::ObjectContent, client::Client, types::S3Api,
 };
-use std::{env, str::FromStr};
 
 use uuid::Uuid;
 

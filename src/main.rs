@@ -4,6 +4,7 @@ use cameroon_made_market::handlers::user::{login, register};
 use cameroon_made_market::middleware::auth::{auth, generate_token};
 use cameroon_made_market::models::user::UserRole;
 use cameroon_made_market::routes;
+use cameroon_made_market::routes::product::create_product;
 use cameroon_made_market::services::image::handle_image_upload;
 use cameroon_made_market::state::setup;
 use tokio::net::TcpListener;
@@ -20,7 +21,7 @@ async fn main() {
     // Get configuration
     let app_state = setup().await;
     let token = generate_token(
-        "6a7ad2e4-9fda-4ca2-a988-34c702ddb86b",
+        "d037ae2d-31af-474c-8423-b7bc89588ed1",
         UserRole::Vendor,
         &app_state.config,
     )
