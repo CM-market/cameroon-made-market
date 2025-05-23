@@ -1,15 +1,23 @@
 use log::debug;
-use sea_orm::{ActiveModelTrait, DatabaseConnection, EntityTrait, QueryOrder, Set};
+use sea_orm::{
+    ActiveModelTrait, ColumnTrait, DatabaseConnection, EntityTrait, JoinType, QueryFilter,
+    QueryOrder, QuerySelect, RelationTrait, Set,
+};
 use std::sync::Arc;
 use uuid::Uuid;
 
-use crate::models::product::{self, Model};
+use crate::models::{
+    order::{self, Status},
+    order_item,
+    product::{self, Model},
+};
 
 use super::errors::ServiceError;
 
 pub struct ProductService {
     db: Arc<DatabaseConnection>,
 }
+
 #[derive(Debug, Clone)]
 pub struct CreateProduct {
     pub seller_id: Uuid,
@@ -21,6 +29,7 @@ pub struct CreateProduct {
     pub image_urls: Vec<String>,
     pub return_policy: Option<String>,
 }
+
 pub struct UpdateProduct {
     pub title: Option<String>,
     pub description: Option<String>,
@@ -30,6 +39,15 @@ pub struct UpdateProduct {
     pub image_urls: Option<Vec<String>>,
     pub return_policy: Option<String>,
 }
+
+#[derive(Debug, Clone, serde::Serialize)]
+pub struct ProductWithStats {
+    #[serde(flatten)]
+    pub product: Model,
+    pub sales: i32,
+    pub revenue: f64,
+}
+
 impl ProductService {
     pub fn new(db: Arc<DatabaseConnection>) -> Self {
         Self { db }
@@ -55,14 +73,25 @@ impl ProductService {
         Ok(product.into())
     }
 
-    pub async fn get_product_by_id(&self, product_id: Uuid) -> Result<Option<Model>, ServiceError> {
-        debug!("{}", product_id);
+    pub async fn get_product_by_id(
+        &self,
+        product_id: Uuid,
+    ) -> Result<Option<ProductWithStats>, ServiceError> {
         let product = product::Entity::find_by_id(product_id)
             .one(&*self.db)
             .await
             .map_err(|e| ServiceError::NotFound(e.to_string()))?;
 
-        Ok(product.into())
+        if let Some(product) = product {
+            let stats = self.calculate_product_stats(product_id).await?;
+            Ok(Some(ProductWithStats {
+                product,
+                sales: stats.sales,
+                revenue: stats.revenue,
+            }))
+        } else {
+            Ok(None)
+        }
     }
 
     pub async fn update_product(
@@ -114,16 +143,88 @@ impl ProductService {
         Ok(())
     }
 
-    pub async fn list_products(&self) -> Result<Vec<Model>, ServiceError> {
-        let query = product::Entity::find();
+    pub async fn list_products(
+        &self,
+        seller_id: Option<Uuid>,
+    ) -> Result<Vec<ProductWithStats>, ServiceError> {
+        let mut query = product::Entity::find();
+
+        if let Some(seller_id) = seller_id {
+            query = query.filter(product::Column::SellerId.eq(seller_id));
+        }
 
         let products = query
             .order_by_desc(product::Column::CreatedAt)
             .all(&*self.db)
-            .await?;
+            .await
+            .map_err(|e| ServiceError::DatabaseError(format!("Failed to fetch products: {}", e)))?;
 
-        Ok(products)
+        let mut products_with_stats = Vec::new();
+        for product in products {
+            match self.calculate_product_stats(product.id).await {
+                Ok(stats) => {
+                    products_with_stats.push(ProductWithStats {
+                        product,
+                        sales: stats.sales,
+                        revenue: stats.revenue,
+                    });
+                }
+                Err(e) => {
+                    tracing::error!(
+                        "Failed to calculate stats for product {}: {}",
+                        product.id,
+                        e
+                    );
+                    // Continue with other products even if one fails
+                    products_with_stats.push(ProductWithStats {
+                        product,
+                        sales: 0,
+                        revenue: 0.0,
+                    });
+                }
+            }
+        }
+
+        Ok(products_with_stats)
     }
+
+    async fn calculate_product_stats(
+        &self,
+        product_id: Uuid,
+    ) -> Result<ProductStats, ServiceError> {
+        // Get the product first to get its price
+        let product = product::Entity::find_by_id(product_id)
+            .one(&*self.db)
+            .await
+            .map_err(|e| ServiceError::DatabaseError(format!("Failed to fetch product: {}", e)))?
+            .ok_or_else(|| {
+                ServiceError::NotFound(format!("Product with ID {} not found", product_id))
+            })?;
+
+        // Join order_items with orders to get only completed orders
+        let order_items = order_item::Entity::find()
+            .join(JoinType::InnerJoin, order_item::Relation::Order.def())
+            .filter(order_item::Column::ProductId.eq(product_id))
+            .filter(order::Column::Status.eq(Status::Delivered.to_string()))
+            .all(&*self.db)
+            .await
+            .map_err(|e| {
+                ServiceError::DatabaseError(format!("Failed to fetch order items: {}", e))
+            })?;
+
+        let sales = order_items.iter().map(|item| item.quantity).sum();
+        let revenue = order_items.iter().fold(0.0, |acc, item| {
+            acc + (item.quantity as f64 * product.price)
+        });
+
+        Ok(ProductStats { sales, revenue })
+    }
+}
+
+#[derive(Debug)]
+struct ProductStats {
+    sales: i32,
+    revenue: f64,
 }
 
 #[cfg(test)]
@@ -140,10 +241,10 @@ mod tests {
                 seller_id: seller_id,
                 title: "Test Product".to_string(),
                 description: Some("Test Description".to_string()),
-                price: 10.0, // 10.00
+                price: 10.0,
                 category: Some("Test Category".to_string()),
                 image_urls: vec!["test.jpg".to_string()],
-                quantity: 1, // Default quantity value
+                quantity: 1,
                 return_policy: Some("Test Refund Policy".to_string()),
                 created_at: chrono::Utc::now(),
                 updated_at: chrono::Utc::now(),
@@ -199,8 +300,8 @@ mod tests {
 
         let product_response = result.unwrap();
         let product_response = product_response.unwrap();
-        assert_eq!(product_response.id, product_id);
-        assert_eq!(product_response.title, "Test Product");
+        assert_eq!(product_response.product.id, product_id);
+        assert_eq!(product_response.product.title, "Test Product");
     }
 
     #[tokio::test]
@@ -243,11 +344,11 @@ mod tests {
         let update_data = UpdateProduct {
             title: Some("Updated Product".to_string()),
             description: Some("Updated Description".to_string()),
-            quantity: Some(1),
             price: Some(100.0),
             category: Some("Updated Category".to_string()),
             image_urls: Some(vec!["updated.jpg".to_string()]),
             return_policy: Some("Updated Refund Policy".to_string()),
+            quantity: Some(1),
         };
 
         let result = service.update_product(product_id, update_data).await;
@@ -294,12 +395,12 @@ mod tests {
 
         let service = ProductService::new(Arc::new(db));
 
-        let result = service.list_products().await;
+        let result = service.list_products(Some(seller_id)).await;
         assert!(result.is_ok());
 
         let products = result.unwrap();
         assert_eq!(products.len(), 2);
-        assert_eq!(products[0].title, "Product 1");
-        assert_eq!(products[1].title, "Product 2");
+        assert_eq!(products[0].product.title, "Product 1");
+        assert_eq!(products[1].product.title, "Product 2");
     }
 }

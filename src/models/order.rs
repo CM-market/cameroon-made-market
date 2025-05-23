@@ -1,6 +1,7 @@
 use chrono::{DateTime, Utc};
 use sea_orm::entity::prelude::*;
 use serde::{Deserialize, Serialize};
+use std::fmt;
 use uuid::Uuid;
 
 /// Order model representing customer purchases in the marketplace
@@ -32,25 +33,40 @@ pub struct Model {
 }
 
 /// Order status enum
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum Status {
     /// Order is pending and awaiting payment
     Pending,
     /// Order has been paid and is being processed
-    Paid,
+    Processing,
     /// Order has been shipped to the customer
     Shipped,
     /// Order has been delivered to the customer
     Delivered,
+    /// Order has been cancelled
+    Cancelled,
+}
+
+impl fmt::Display for Status {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Status::Pending => write!(f, "Pending"),
+            Status::Processing => write!(f, "Processing"),
+            Status::Shipped => write!(f, "Shipped"),
+            Status::Delivered => write!(f, "Delivered"),
+            Status::Cancelled => write!(f, "Cancelled"),
+        }
+    }
 }
 
 impl From<Status> for String {
     fn from(status: Status) -> String {
         match status {
             Status::Pending => "pending".to_string(),
-            Status::Paid => "paid".to_string(),
+            Status::Processing => "processing".to_string(),
             Status::Shipped => "shipped".to_string(),
             Status::Delivered => "delivered".to_string(),
+            Status::Cancelled => "cancelled".to_string(),
         }
     }
 }
@@ -59,9 +75,10 @@ impl From<String> for Status {
     fn from(status: String) -> Status {
         match status.as_str() {
             "pending" => Status::Pending,
-            "paid" => Status::Paid,
+            "processing" => Status::Processing,
             "shipped" => Status::Shipped,
             "delivered" => Status::Delivered,
+            "cancelled" => Status::Cancelled,
             _ => Status::Pending,
         }
     }

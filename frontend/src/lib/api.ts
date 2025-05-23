@@ -13,6 +13,8 @@ export interface Product {
   created_at: string;
   updated_at: string;
   returnPolicy?: string;
+  sales?: number;
+  revenue?: number;
 }
 
 export interface CreateProductData {
@@ -49,7 +51,6 @@ export const productApi = {
         }
       }
     );
-
 
     return response.data;
   },
