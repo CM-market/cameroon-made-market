@@ -8,6 +8,7 @@ interface MinioConfig {
   secretKey: string;
   bucketName: string;
 }
+const API_URL = "http://localhost:8080"
 
 const config: MinioConfig = {
   endpoint: import.meta.env.VITE_MINIO_ENDPOINT || 'localhost',
@@ -23,7 +24,7 @@ export const uploadImage = async (file: File): Promise<string> => {
     const formData = new FormData();
     formData.append('file', file);
     
-    const response = await fetch(`${import.meta.env.VITE_API_URL}/products/upload-image`, {
+    const response = await fetch(`${API_URL}/products/upload-image`, {
       method: 'POST',
       body: formData,
     });

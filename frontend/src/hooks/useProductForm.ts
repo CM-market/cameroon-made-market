@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useToast } from "./use-toast";
 import { uploadImage } from "@/services/minioService";
 import { useNavigate } from "react-router-dom";
-import { createProduct } from "@/services/productService";
+import { productApi } from "@/lib/api";
 
 export interface ProductFormData {
   name: string;
@@ -164,7 +164,7 @@ export const useProductForm = () => {
       };
 
       // Submit product to backend
-      const product = await createProduct(productData);
+      const product = await productApi.create(productData);
 
       toast({
         title: "Product submitted",
