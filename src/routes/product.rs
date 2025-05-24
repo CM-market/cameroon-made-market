@@ -1,6 +1,6 @@
 use crate::{
     middleware::auth::AuthUser,
-    services::product::{CreateProduct, ProductWithStats, UpdateProduct},
+    services::product::{CreateProduct, UpdateProduct},
     state::AppState,
     utils::shared::ApiResponse,
 };
@@ -23,8 +23,7 @@ pub fn config() -> Router<AppState> {
         .route("/products/:id", delete(delete_product))
 }
 
-#[axum::debug_handler]
-async fn list_products(
+pub async fn list_products(
     State(state): State<AppState>,
     extension_auth_user: Option<Extension<AuthUser>>,
 ) -> impl IntoResponse {
@@ -58,7 +57,6 @@ async fn list_products(
     }
 }
 
-#[axum::debug_handler]
 async fn get_product(
     State(state): State<AppState>,
     Path(product_id): Path<Uuid>,

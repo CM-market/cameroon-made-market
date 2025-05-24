@@ -1,4 +1,4 @@
-use crate::{config::Config, models::user::UserRole, state::AppState, utils::shared::ApiResponse};
+use crate::{config::Config, models::user::UserRole, state::AppState};
 use axum::{
     extract::Request,
     http::StatusCode,
