@@ -11,6 +11,7 @@ export interface ProductFormData {
   stockQuantity: string;
   category: string;
   selectedTags: string[];
+  quantity: number;
   images: File[];
   imagePreviewUrls: string[];
   uploadedImageUrls: string[];
@@ -21,7 +22,7 @@ export interface ProductFormData {
   returnPolicy: string;
 }
 
-export const useProductForm = () => {
+export const useProductForm = (onProductCreated?: () => void) => {
   const { toast } = useToast();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<string>("details");
@@ -157,6 +158,26 @@ export const useProductForm = () => {
   };
 
   const submitProduct = async () => {
+    if (!formData.images || formData.images.length === 0) {
+      toast({
+        title: "Image required",
+        description: "Please upload at least one product image before submitting.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const data = new FormData();
+    data.append('title', formData.name);
+    data.append('description', formData.description);
+    data.append('price', formData.price === '' ? '0' : formData.price);
+    data.append('category', formData.category);
+    data.append('quantity', formData.stockQuantity === '' ? '0' : formData.stockQuantity);
+    data.append('returnPolicy', formData.returnPolicy);
+    formData.images.forEach((file) => {
+      data.append('images', file);
+    });
+
     setIsSubmitting(true);
     try {
       // Validate required fields
@@ -189,6 +210,7 @@ export const useProductForm = () => {
         price: "",
         stockQuantity: "",
         category: "",
+        quantity: 1,
         selectedTags: [],
         images: [],
         imagePreviewUrls: [],

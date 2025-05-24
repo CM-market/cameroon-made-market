@@ -305,14 +305,12 @@ mod tests {
                     order_id,
                     product_id: Uuid::new_v4(),
                     quantity: 2,
-            
                 },
                 order_item::Model {
                     id: Uuid::new_v4(),
                     order_id,
                     product_id: Uuid::new_v4(),
                     quantity: 1,
-              
                 },
             ]])
             .into_connection();

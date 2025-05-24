@@ -26,14 +26,14 @@ pub struct AuthUser {
 
 /// Middleware to validate JWT token
 // #[axum::debug_handler]
-pub async fn auth(
-    mut req: Request,
-    next: Next,
-) -> Result<Response, StatusCode> {
+pub async fn auth(mut req: Request, next: Next) -> Result<Response, StatusCode> {
     // Get state from request extensions
-    print!("auth middleware");
-    let state = req.extensions().get::<AppState>().cloned().ok_or(StatusCode::INTERNAL_SERVER_ERROR)?;
-    print!("auth middleware");
+    let state = req
+        .extensions()
+        .get::<AppState>()
+        .cloned()
+        .ok_or(StatusCode::INTERNAL_SERVER_ERROR)?;
+
     let token = req
         .headers()
         .get("Authorization")

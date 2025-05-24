@@ -86,6 +86,8 @@ pub async fn create_product(
         price: product_data.price,
         category: Some(product_data.category),
         image_urls: product_data.image_urls,
+        quantity: product_data.quantity,
+        return_policy: Some(product_data.return_policy),
     };
     info!("Creating product: {:?}", create_product);
     match state.product_service.create_product(create_product).await {
@@ -117,7 +119,7 @@ async fn update_product(
     // First check if the product exists and belongs to the vendor
     match state.product_service.get_product_by_id(product_id).await {
         Ok(Some(product)) => {
-            if product.seller_id != Uuid::parse_str(&auth_user.id).unwrap() {
+            if product.product.seller_id != Uuid::parse_str(&auth_user.id).unwrap() {
                 return (
                     StatusCode::FORBIDDEN,
                     Json(ApiResponse::<()>::error(
@@ -133,11 +135,13 @@ async fn update_product(
                 price: product_data.price,
                 category: product_data.category,
                 image_urls: product_data.image_urls,
+                quantity: product_data.quantity,
+                return_policy: product_data.return_policy,
             };
 
             match state
                 .product_service
-                .update_product(product.id, update_product)
+                .update_product(product.product.id, update_product)
                 .await
             {
                 Ok(updated_product) => Json(ApiResponse::success(
@@ -173,7 +177,7 @@ async fn delete_product(
     // First check if the product exists and belongs to the vendor
     match state.product_service.get_product_by_id(product_id).await {
         Ok(Some(product)) => {
-            if product.seller_id != Uuid::parse_str(&auth_user.id).unwrap() {
+            if product.product.seller_id != Uuid::parse_str(&auth_user.id).unwrap() {
                 return (
                     StatusCode::FORBIDDEN,
                     Json(ApiResponse::<()>::error(
@@ -183,7 +187,11 @@ async fn delete_product(
                     .into_response();
             }
 
-            match state.product_service.delete_product(product.id).await {
+            match state
+                .product_service
+                .delete_product(product.product.id)
+                .await
+            {
                 Ok(_) => (
                     StatusCode::NO_CONTENT,
                     Json(ApiResponse::<()>::success(
@@ -225,13 +233,17 @@ pub struct CreateProductRequest {
     price: f64,
     category: String,
     image_urls: Vec<String>,
+    quantity: i32,
+    return_policy: String,
 }
 
 #[derive(serde::Deserialize)]
 pub struct UpdateProductRequest {
     title: Option<String>,
     description: Option<String>,
+    quantity: Option<i32>,
     price: Option<f64>,
     category: Option<String>,
     image_urls: Option<Vec<String>>,
+    return_policy: Option<String>,
 }

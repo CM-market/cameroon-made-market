@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
@@ -19,7 +18,11 @@ import { ProductImages } from "./product/ProductImages";
 import { ProductTags } from "./product/ProductTags";
 import { ProductPreview } from "./product/ProductPreview";
 
-const ProductForm: React.FC = () => {
+interface ProductFormProps {
+  onProductCreated?: () => void;
+}
+
+const ProductForm: React.FC<ProductFormProps> = ({ onProductCreated }) => {
   const {
     activeTab,
     setActiveTab,
@@ -35,7 +38,7 @@ const ProductForm: React.FC = () => {
     removeImage,
     saveDraft,
     submitProduct,
-  } = useProductForm();
+  } = useProductForm(onProductCreated);
 
   const isFormValid = () => {
     return (
@@ -124,7 +127,7 @@ const ProductForm: React.FC = () => {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="dimensions">Dimensions</Label>
+                  <Label htmlFor="dimensions">Size</Label>
                   <Input
                     id="dimensions"
                     name="dimensions"
@@ -137,14 +140,13 @@ const ProductForm: React.FC = () => {
               
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="weight">Weight (kg)</Label>
+                  <Label htmlFor="returnPolicy"> Refund Policy</Label>
                   <Input
-                    id="weight"
-                    name="weight"
-                    type="number"
-                    value={formData.weight}
+                    id="returnPolicy"
+                    name="returnPolicy"
+                    value={formData.returnPolicy}
                     onChange={handleInputChange}
-                    placeholder="0.00"
+                    placeholder="Refund policy (optional)"
                   />
                 </div>
                 <div className="space-y-2">

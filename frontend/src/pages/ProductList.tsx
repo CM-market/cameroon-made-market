@@ -27,6 +27,7 @@ interface CartItem {
   quantity: number;
   category: string;
   image: string;
+  returnPolicy: string;
 }
 
 const ProductList: React.FC = () => {
@@ -99,7 +100,8 @@ const ProductList: React.FC = () => {
           price: Number(product.price),
           quantity: 1,
           category: product.category || 'Uncategorized',
-          image: product.image_urls[0] || '/placeholder.svg'
+          image: product.image_urls[0] || '/placeholder.svg',
+          returnPolicy: product.returnPolicy || 'No return policy specified'
         }
       ]);
     }
