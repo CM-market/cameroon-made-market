@@ -21,6 +21,18 @@ const config: MinioConfig = {
 
 export const uploadImage = async (file: File): Promise<string> => {
   try {
+    // Validate file type
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+    if (!allowedTypes.includes(file.type)) {
+      throw new Error(`Invalid file type. Allowed types: ${allowedTypes.join(', ')}`);
+    }
+
+    // Validate file size (2MB)
+    const maxSize = 2 * 1024 * 1024; // 2MB in bytes
+    if (file.size > maxSize) {
+      throw new Error(`File size exceeds the maximum limit of 2MB`);
+    }
+
     const formData = new FormData();
     formData.append('file', file);
     
@@ -30,7 +42,8 @@ export const uploadImage = async (file: File): Promise<string> => {
     });
 
     if (!response.ok) {
-      throw new Error('Failed to upload image');
+      const errorText = await response.text();
+      throw new Error(errorText || 'Failed to upload image');
     }
 
     const imageUrl = await response.text();
@@ -42,5 +55,16 @@ export const uploadImage = async (file: File): Promise<string> => {
 };
 
 export const getImageUrl = (objectName: string): string => {
-  return `${import.meta.env.VITE_MINIO_PUBLIC_URL}/${config.bucketName}/${objectName}`;
+  // If the objectName is already a full URL, return it as is
+  if (objectName.startsWith('http://') || objectName.startsWith('https://')) {
+    return objectName;
+  }
+  
+  // Remove any /browser/ prefix if present
+  const cleanObjectName = objectName.replace('/browser/', '');
+  
+  // Construct the URL using the MinIO configuration
+  const baseUrl = import.meta.env.VITE_MINIO_PUBLIC_URL || `http://${config.endpoint}:${config.port}`;
+  console.log("baseUrl: " + baseUrl);
+  return `${baseUrl}/${config.bucketName}/${cleanObjectName}`;
 }; 

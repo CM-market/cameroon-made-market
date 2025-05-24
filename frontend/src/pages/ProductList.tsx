@@ -3,7 +3,7 @@ import MainNavbar from "@/components/MainNavbar";
 import Footer from "@/components/Footer";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { 
+import {
   Select,
   SelectContent,
   SelectItem,
@@ -17,6 +17,7 @@ import { Badge } from "@/components/ui/badge";
 import { useNavigate } from "react-router-dom";
 import { toast } from "@/hooks/use-toast";
 import { productApi, Product } from "@/lib/api";
+import { getImageUrl } from "@/services/minioService";
 
 // Type definition for cart items
 interface CartItem {
@@ -82,7 +83,7 @@ const ProductList: React.FC = () => {
 
   const handleAddToCart = (product: Product) => {
     const existingItem = cartItems.find(item => item.id === product.id);
-    
+
     if (existingItem) {
       setCartItems(prevItems =>
         prevItems.map(item =>
@@ -102,7 +103,7 @@ const ProductList: React.FC = () => {
         }
       ]);
     }
-    
+
     toast({
       title: "Added to Cart",
       description: `${product.title} has been added to your cart.`
@@ -118,7 +119,7 @@ const ProductList: React.FC = () => {
       handleRemoveFromCart(productId);
       return;
     }
-    
+
     setCartItems(prevItems =>
       prevItems.map(item =>
         item.id === productId ? { ...item, quantity: newQuantity } : item
@@ -156,7 +157,7 @@ const ProductList: React.FC = () => {
         <div className="container mx-auto px-4 py-8 flex-grow flex items-center justify-center">
           <div className="text-center">
             <p className="text-red-500 text-lg">{error}</p>
-            <Button 
+            <Button
               className="mt-4 bg-cm-green hover:bg-cm-forest"
               onClick={() => window.location.reload()}
             >
@@ -172,7 +173,7 @@ const ProductList: React.FC = () => {
   return (
     <div className="min-h-screen bg-background flex flex-col">
       <MainNavbar />
-      
+
       <div className="container mx-auto px-4 py-8 flex-grow">
         <div className="flex flex-col md:flex-row gap-6">
           {/* Filters sidebar */}
@@ -180,16 +181,16 @@ const ProductList: React.FC = () => {
             <Card>
               <CardContent className="p-6">
                 <h2 className="text-lg font-semibold mb-4">Filters</h2>
-                
+
                 <div className="space-y-6">
                   <div>
                     <h3 className="text-sm font-medium mb-2">Categories</h3>
                     <div className="space-y-2">
                       {['All', 'Crafts', 'Food', 'Textiles', 'Art', 'Jewelry'].map((category) => (
                         <div key={category} className="flex items-center">
-                          <input 
-                            type="checkbox" 
-                            id={category} 
+                          <input
+                            type="checkbox"
+                            id={category}
                             className="mr-2"
                             checked={selectedCategory === category}
                             onChange={() => setSelectedCategory(category === 'All' ? null : category)}
@@ -199,15 +200,15 @@ const ProductList: React.FC = () => {
                       ))}
                     </div>
                   </div>
-                  
+
                   <Separator />
-                  
+
                   <div>
                     <h3 className="text-sm font-medium mb-2">Price Range</h3>
-                    <Slider 
+                    <Slider
                       value={priceRange}
-                      min={0} 
-                      max={50000} 
+                      min={0}
+                      max={50000}
                       step={1000}
                       onValueChange={setPriceRange}
                       className="my-4"
@@ -217,9 +218,9 @@ const ProductList: React.FC = () => {
                       <span>{priceRange[1]} FCFA</span>
                     </div>
                   </div>
-                  
+
                   <Separator />
-                  
+
                   <div>
                     <h3 className="text-sm font-medium mb-2">Region</h3>
                     <Select defaultValue="all">
@@ -239,7 +240,7 @@ const ProductList: React.FC = () => {
                 </div>
               </CardContent>
             </Card>
-            
+
             {/* Cart summary section */}
             <Card className="mt-4">
               <CardContent className="p-6">
@@ -247,21 +248,24 @@ const ProductList: React.FC = () => {
                   <h2 className="text-lg font-semibold">Your Cart</h2>
                   <Badge variant="secondary">{totalCartItems} items</Badge>
                 </div>
-                
+
                 {totalCartItems > 0 && (
                   <>
                     <div className="mt-4 font-semibold text-right">
                       Total: {totalCartPrice.toLocaleString()} FCFA
                     </div>
-                    
+
                     <div className="mt-4 space-y-2">
                       {cartItems.map((item) => (
                         <div key={item.id} className="flex items-center justify-between">
                           <div className="flex items-center space-x-2">
-                            <img 
-                              src={item.image} 
-                              alt={item.name} 
+                            <img
+                              src={getImageUrl(item.image)}
+                              alt={item.name}
                               className="w-10 h-10 object-cover rounded"
+                              onError={(e) => {
+                                (e.target as HTMLImageElement).src = '/placeholder.svg';
+                              }}
                             />
                             <div>
                               <p className="text-sm font-medium">{item.name}</p>
@@ -295,8 +299,8 @@ const ProductList: React.FC = () => {
                         </div>
                       ))}
                     </div>
-                    
-                    <Button 
+
+                    <Button
                       className="w-full mt-4 bg-cm-green hover:bg-cm-forest"
                       onClick={() => navigate('/checkout')}
                     >
@@ -307,7 +311,7 @@ const ProductList: React.FC = () => {
               </CardContent>
             </Card>
           </div>
-          
+
           {/* Products grid/list */}
           <div className="flex-grow">
             <div className="flex justify-between items-center mb-6">
@@ -329,7 +333,7 @@ const ProductList: React.FC = () => {
                 </Button>
               </div>
             </div>
-            
+
             {filteredProducts.length === 0 ? (
               <div className="text-center py-12">
                 <p className="text-lg text-gray-500">No products found matching your criteria.</p>
@@ -340,7 +344,7 @@ const ProductList: React.FC = () => {
                   <Card key={product.id} className={viewMode === 'list' ? 'flex' : ''}>
                     <div className={viewMode === 'list' ? 'w-48' : 'w-full'}>
                       <img
-                        src={"http://localhost:9001/browser/product-images/06d2b1b1-21ed-46c6-abea-612f56e62f7c.jpg"}
+                        src={getImageUrl(product.image_urls[0])}
                         alt={product.title}
                         className="w-full h-48 object-cover"
                         onError={(e) => {
@@ -369,7 +373,7 @@ const ProductList: React.FC = () => {
           </div>
         </div>
       </div>
-      
+
       <Footer />
     </div>
   );

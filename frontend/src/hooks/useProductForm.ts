@@ -72,15 +72,23 @@ export const useProductForm = () => {
     if (!files) return;
 
     setIsUploading(true);
+    let newPreviewUrls: string[] = [];
+    
     try {
       const newFiles = Array.from(files);
-      const newPreviewUrls = newFiles.map((file) => URL.createObjectURL(file)); 
+      newPreviewUrls = newFiles.map((file) => URL.createObjectURL(file)); 
       const uploadedUrls: string[] = [];
 
       for (let i = 0; i < newFiles.length; i++) {
         const file = newFiles[i];
-        const imageUrl = await uploadImage(file);
-        uploadedUrls.push(imageUrl);
+        try {
+          const imageUrl = await uploadImage(file);
+          uploadedUrls.push(imageUrl);
+        } catch (error) {
+          // Clean up any preview URLs created so far
+          newPreviewUrls.forEach(URL.revokeObjectURL);
+          throw error;
+        }
       }
 
       setFormData((prev) => ({
@@ -95,9 +103,12 @@ export const useProductForm = () => {
         description: `${newFiles.length} image(s) have been added to your product.`,
       });
     } catch (error) {
+      // Clean up any preview URLs
+      newPreviewUrls.forEach(URL.revokeObjectURL);
+
       toast({
         title: "Error uploading images",
-        description: "There was an error uploading your images. Please try again.", 
+        description: error instanceof Error ? error.message : "There was an error uploading your images. Please try again.",
         variant: "destructive",
       });
     } finally {

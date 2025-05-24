@@ -39,7 +39,7 @@ impl Config {
                 .parse()
                 .expect("JWT_EXPIRES_IN must be a number"),
             server_port: env::var("SERVER_PORT")
-                .unwrap_or_else(|_| "80".to_string())
+                .unwrap_or_else(|_| "8080".to_string())
                 .parse()
                 .expect("SERVER_PORT must be a number"),
             server_host: env::var("SERVER_HOST").unwrap_or_else(|_| "127.0.0.1".to_string()),

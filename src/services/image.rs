@@ -5,13 +5,15 @@ use axum::{
     response::{IntoResponse, Response},
 };
 
-use minio::s3::{
-    builders::ObjectContent, client::Client, types::S3Api,
-};
+use minio::s3::{builders::ObjectContent, client::Client, types::S3Api};
 
 use uuid::Uuid;
 
 use crate::state::AppState;
+
+const ALLOWED_MIME_TYPES: [&str; 4] = ["image/jpeg", "image/png", "image/gif", "image/webp"];
+
+const MAX_FILE_SIZE: usize = 2 * 1024 * 1024; // 2MB
 
 #[derive(Debug, Clone, Default)]
 pub struct ImageService {
@@ -20,8 +22,30 @@ pub struct ImageService {
 }
 
 impl ImageService {
-    pub async fn upload_image(&self, file: Vec<u8>) -> Result<String> {
-        let object_name = format!("{}", Uuid::new_v4());
+    pub async fn upload_image(&self, file: Vec<u8>, content_type: &str) -> Result<String> {
+        // Validate file type
+        if !ALLOWED_MIME_TYPES.contains(&content_type) {
+            return Err(anyhow::anyhow!(
+                "Invalid file type. Only JPEG, PNG, GIF, and WebP images are allowed."
+            ));
+        }
+
+        // Validate file size
+        if file.len() > MAX_FILE_SIZE {
+            return Err(anyhow::anyhow!(
+                "File size exceeds the maximum limit of 2MB."
+            ));
+        }
+
+        let extension = match content_type {
+            "image/jpeg" => "jpg",
+            "image/png" => "png",
+            "image/gif" => "gif",
+            "image/webp" => "webp",
+            _ => return Err(anyhow::anyhow!("Unsupported image format")),
+        };
+
+        let object_name = format!("{}.{}", Uuid::new_v4(), extension);
         let content = ObjectContent::from(file);
         self.client
             .put_object_content(&self.bucket, &object_name, content)
@@ -32,24 +56,22 @@ impl ImageService {
     }
 
     pub async fn get_image_url(&self, object_name: &str) -> Result<std::path::PathBuf> {
-        let get_object = self
+        let _get_object = self
             .client
             .get_object(&self.bucket, object_name)
             .send()
             .await?;
-        let file_path = std::path::PathBuf::from(format!("./{}.png", object_name));
-        let _ = get_object.content.to_file(&file_path).await?;
+        let file_path = std::path::PathBuf::from(object_name);
 
         Ok(file_path)
     }
 }
 
-#[axum::debug_handler]
 pub async fn handle_image_upload(
     State(state): State<AppState>,
     mut multipart: Multipart,
 ) -> Result<Response, (StatusCode, String)> {
-    let image_service = state.config.image_service.clone();
+    let image_service = state.config.image_service.clone(); 
 
     while let Some(field) = multipart.next_field().await.map_err(|e| {
         (
@@ -60,6 +82,23 @@ pub async fn handle_image_upload(
         let name = field.name().unwrap_or_default();
 
         if name == "file" {
+            // Get content type as an owned String
+            let content_type = field
+                .content_type()
+                .map(|s| s.to_string())
+                .unwrap_or_default();
+
+            // Validate content type
+            if !ALLOWED_MIME_TYPES.contains(&content_type.as_str()) {
+                return Err((
+                    StatusCode::BAD_REQUEST,
+                    format!(
+                        "Invalid file type. Allowed types: {}",
+                        ALLOWED_MIME_TYPES.join(", ")
+                    ),
+                ));
+            }
+
             let data = field.bytes().await.map_err(|e| {
                 (
                     StatusCode::BAD_REQUEST,
@@ -67,8 +106,19 @@ pub async fn handle_image_upload(
                 )
             })?;
 
+            // Validate file size
+            if data.len() > MAX_FILE_SIZE {
+                return Err((
+                    StatusCode::BAD_REQUEST,
+                    format!(
+                        "File size exceeds the maximum limit of {}MB",
+                        MAX_FILE_SIZE / 1024 / 1024
+                    ),
+                ));
+            }
+
             let object_name = image_service
-                .upload_image((&data).to_vec())
+                .upload_image((&data).to_vec(), &content_type)
                 .await
                 .map_err(|e| {
                     (

@@ -1,6 +1,6 @@
 use crate::{
     middleware::auth::AuthUser,
-    services::product::{CreateProduct, UpdateProduct},
+    services::{image::handle_image_upload, product::{CreateProduct, UpdateProduct}},
     state::AppState,
     utils::shared::ApiResponse,
 };
@@ -20,10 +20,9 @@ pub fn config() -> Router<AppState> {
         .route("/products", post(create_product))
         .route("/products/:id", put(update_product))
         .route("/products/:id", delete(delete_product))
-      
+        .route("/products/upload-image", post(handle_image_upload))
 }
 
-#[axum::debug_handler]
 pub async fn list_products(State(state): State<AppState>) -> impl IntoResponse {
     match state.product_service.list_products().await {
         Ok(products) => Json(ApiResponse::success(
@@ -39,7 +38,6 @@ pub async fn list_products(State(state): State<AppState>) -> impl IntoResponse {
     }
 }
 
-#[axum::debug_handler]
 async fn get_product(
     State(state): State<AppState>,
     Path(product_id): Path<Uuid>,
@@ -63,7 +61,6 @@ async fn get_product(
     }
 }
 
-#[axum::debug_handler]
 pub async fn create_product(
     State(state): State<AppState>,
     Extension(auth_user): Extension<AuthUser>,
@@ -111,7 +108,6 @@ pub async fn create_product(
     }
 }
 
-#[axum::debug_handler]
 async fn update_product(
     State(state): State<AppState>,
     Extension(auth_user): Extension<AuthUser>,
@@ -169,7 +165,6 @@ async fn update_product(
     }
 }
 
-#[axum::debug_handler]
 async fn delete_product(
     State(state): State<AppState>,
     Extension(auth_user): Extension<AuthUser>,
