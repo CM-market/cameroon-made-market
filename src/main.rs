@@ -1,10 +1,11 @@
-use axum::routing::post;
+use axum::routing::{get, post};
 use axum::{http, middleware, Extension, Router};
 use cameroon_made_market::handlers::user::{login, register};
 use cameroon_made_market::middleware::auth::{auth, generate_token};
 use cameroon_made_market::models::user::UserRole;
 use cameroon_made_market::routes;
 
+use cameroon_made_market::routes::product::list_products;
 use cameroon_made_market::services::image::handle_image_upload;
 use cameroon_made_market::state::setup;
 use tokio::net::TcpListener;
@@ -41,12 +42,10 @@ async fn main() {
         .layer(middleware::from_fn({
             move |req: http::Request<axum::body::Body>, next| auth(req, next)
         }))
-        .route(
-            "/products",
-            axum::routing::get(routes::product::list_products),
-        )
+   
         .route("/api/users", post(register))
         .route("/api/users/login", post(login))
+        .route("/products", get(list_products))
         // .merge(routes::order::config())
         // .merge(routes::auth::config())
         // .merge(routes::category::config())

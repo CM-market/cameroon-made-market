@@ -1,6 +1,9 @@
 use crate::{
     middleware::auth::AuthUser,
-    services::product::{CreateProduct, UpdateProduct},
+    services::{
+        image::handle_image_upload,
+        product::{CreateProduct, UpdateProduct},
+    },
     state::AppState,
     utils::shared::ApiResponse,
 };
@@ -16,14 +19,21 @@ use uuid::Uuid;
 
 pub fn config() -> Router<AppState> {
     Router::new()
-        .route("/products", get(list_products))
-        .route("/products", post(create_product))
-        .route("/products/:id", get(get_product))
-        .route("/products/:id", put(update_product))
-        .route("/products/:id", delete(delete_product))
+        .nest(
+            "/products",
+            Router::new()
+                .route("/", post(create_product))
+                .route("/upload-image", post(handle_image_upload))
+                .route("/:id", get(get_product_by))
+                .route("/:id", put(update_product))
+                .route("/:id", delete(delete_product)),
+        )
+        .nest(
+            "/vendor",
+            Router::new().route("/products", get(list_products_by)),
+        )
 }
-
-pub async fn list_products(
+pub async fn list_products_by(
     State(state): State<AppState>,
     extension_auth_user: Option<Extension<AuthUser>>,
 ) -> impl IntoResponse {
@@ -34,7 +44,7 @@ pub async fn list_products(
 
     tracing::info!("Fetching products for seller_id: {:?}", seller_id);
 
-    match state.product_service.list_products(seller_id).await {
+    match state.product_service.list_products_by(seller_id).await {
         Ok(products) => {
             tracing::info!("Successfully retrieved {} products", products.len());
             Json(ApiResponse::success(
@@ -57,7 +67,25 @@ pub async fn list_products(
     }
 }
 
-async fn get_product(
+pub async fn list_products(State(state): State<AppState>) -> impl IntoResponse {
+    match state.product_service.list_products().await {
+        Ok(products) => Json(ApiResponse::success(
+            products,
+            "Products retrieved successfully",
+        ))
+        .into_response(),
+        Err(e) => {
+            tracing::error!("could not retrieve products: {}", e.to_string());
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ApiResponse::<()>::error("could not retrieve products")),
+            )
+                .into_response()
+        }
+    }
+}
+
+async fn get_product_by(
     State(state): State<AppState>,
     Path(product_id): Path<Uuid>,
 ) -> impl IntoResponse {
@@ -80,7 +108,6 @@ async fn get_product(
     }
 }
 
-#[axum::debug_handler]
 async fn create_product(
     State(state): State<AppState>,
     Extension(auth_user): Extension<AuthUser>,
@@ -130,7 +157,6 @@ async fn create_product(
     }
 }
 
-#[axum::debug_handler]
 async fn update_product(
     State(state): State<AppState>,
     Extension(auth_user): Extension<AuthUser>,
@@ -190,7 +216,6 @@ async fn update_product(
     }
 }
 
-#[axum::debug_handler]
 async fn delete_product(
     State(state): State<AppState>,
     Extension(auth_user): Extension<AuthUser>,

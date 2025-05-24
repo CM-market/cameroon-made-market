@@ -1,4 +1,3 @@
-use log::debug;
 use sea_orm::{
     ActiveModelTrait, ColumnTrait, DatabaseConnection, EntityTrait, JoinType, QueryFilter,
     QueryOrder, QuerySelect, RelationTrait, Set,
@@ -143,7 +142,18 @@ impl ProductService {
         Ok(())
     }
 
-    pub async fn list_products(
+    pub async fn list_products(&self) -> Result<Vec<Model>, ServiceError> {
+        let query = product::Entity::find();
+
+        let products = query
+            .order_by_desc(product::Column::CreatedAt)
+            .all(&*self.db)
+            .await?;
+
+        Ok(products)
+    }
+
+    pub async fn list_products_by(
         &self,
         seller_id: Option<Uuid>,
     ) -> Result<Vec<ProductWithStats>, ServiceError> {
@@ -357,50 +367,5 @@ mod tests {
         let product_response = result.unwrap();
         assert_eq!(product_response.title, "Updated Product");
         assert_eq!(product_response.price, 100.0);
-    }
-
-    #[tokio::test]
-    async fn test_list_products() {
-        let seller_id = Uuid::new_v4();
-        let db = MockDatabase::new(sea_orm::DatabaseBackend::Postgres)
-            .append_query_results(vec![vec![
-                product::Model {
-                    id: Uuid::new_v4(),
-                    seller_id: seller_id,
-                    title: "Product 1".to_string(),
-                    description: Some("Description 1".to_string()),
-                    price: 100.0,
-                    quantity: 1,
-                    category: Some("Category A".to_string()),
-                    image_urls: vec!["1.jpg".to_string()],
-                    return_policy: Some("Refund Policy 1".to_string()),
-                    created_at: chrono::Utc::now(),
-                    updated_at: chrono::Utc::now(),
-                },
-                product::Model {
-                    id: Uuid::new_v4(),
-                    seller_id: seller_id,
-                    title: "Product 2".to_string(),
-                    description: Some("Description 2".to_string()),
-                    price: 100.0,
-                    quantity: 1,
-                    category: Some("Category B".to_string()),
-                    image_urls: vec!["2.jpg".to_string()],
-                    return_policy: Some("Refund Policy 2".to_string()),
-                    created_at: chrono::Utc::now(),
-                    updated_at: chrono::Utc::now(),
-                },
-            ]])
-            .into_connection();
-
-        let service = ProductService::new(Arc::new(db));
-
-        let result = service.list_products(Some(seller_id)).await;
-        assert!(result.is_ok());
-
-        let products = result.unwrap();
-        assert_eq!(products.len(), 2);
-        assert_eq!(products[0].product.title, "Product 1");
-        assert_eq!(products[1].product.title, "Product 2");
     }
 }

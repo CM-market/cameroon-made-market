@@ -19,6 +19,7 @@ const config: MinioConfig = {
   bucketName: import.meta.env.VITE_MINIO_BUCKET_NAME || 'product-images'
 };
 
+const token = localStorage.getItem('token');
 export const uploadImage = async (file: File): Promise<string> => {
   try {
     // Validate file type
@@ -39,6 +40,9 @@ export const uploadImage = async (file: File): Promise<string> => {
     const response = await fetch(`${API_URL}/products/upload-image`, {
       method: 'POST',
       body: formData,
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
     });
 
     if (!response.ok) {
