@@ -13,6 +13,8 @@ export interface Product {
   created_at: string;
   updated_at: string;
   returnPolicy?: string;
+  sales?: number;
+  revenue?: number;
 }
 
 export interface CreateProductData {
@@ -49,7 +51,6 @@ export const productApi = {
         }
       }
     );
-
 
     return response.data;
   },
@@ -107,7 +108,11 @@ export const userApi = {
     password: string;
     role?: "Vendor" | "Buyer";
   }) => {
-    const response = await axios.post(`${API_URL}/api/users/login`, data);
+    const response = await axios.post(`${API_URL}/api/users/login`, data,{
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem('token')}`,
+      },
+  });
     return response.data;
   },
   // ...other user API methods

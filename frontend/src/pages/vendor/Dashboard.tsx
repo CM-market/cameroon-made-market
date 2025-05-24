@@ -4,51 +4,83 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { useNavigate } from 'react-router-dom';
 import { ArrowUpRight, Package, DollarSign, ShoppingCart, TrendingUp } from 'lucide-react';
+import { productApi, Product } from '@/lib/api';
+import { toast } from '@/hooks/use-toast';
 
-// Mock data - replace with actual API calls
-const mockProducts = [
-  {
-    id: 1,
-    name: "Handmade Soap",
-    price: 2500,
-    stock: 50,
-    sales: 120,
-    revenue: 300000
-  },
-  {
-    id: 2,
-    name: "Traditional Basket",
-    price: 5000,
-    stock: 30,
-    sales: 45,
-    revenue: 225000
-  },
-  // Add more mock products as needed
-];
+interface VendorStats {
+  totalProducts: number;
+  totalSales: number;
+  totalRevenue: number;
+  averageOrderValue: number;
+}
 
 const VendorDashboard: React.FC = () => {
   const navigate = useNavigate();
-  const [stats, setStats] = useState({
+  const [vendorName, setVendorName] = useState<string>('');
+  const [products, setProducts] = useState<Product[]>([]);
+  const [stats, setStats] = useState<VendorStats>({
     totalProducts: 0,
     totalSales: 0,
     totalRevenue: 0,
     averageOrderValue: 0
   });
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Calculate statistics from mock data
-    const totalProducts = mockProducts.length;
-    const totalSales = mockProducts.reduce((sum, product) => sum + product.sales, 0);
-    const totalRevenue = mockProducts.reduce((sum, product) => sum + product.revenue, 0);
-    const averageOrderValue = totalSales > 0 ? totalRevenue / totalSales : 0;
-
-    setStats({
-      totalProducts,
-      totalSales,
-      totalRevenue,
-      averageOrderValue
-    });
+    fetchVendorData();
   }, []);
+
+  const fetchVendorData = async () => {
+    try {
+      setLoading(true);
+      // Fetch vendor's products
+      const productsResponse = await productApi.list(undefined, localStorage.getItem('userId'));
+      setProducts(productsResponse.data);
+      
+      // Fetch vendor's name from localStorage (set during login)
+      const storedVendorName = localStorage.getItem('userName');
+      if (storedVendorName) {
+        setVendorName(storedVendorName);
+      }
+
+      // Calculate statistics
+      const totalProducts = productsResponse.data.length;
+      // TODO: Replace with actual API calls for sales and revenue
+      const totalSales = productsResponse.data.reduce((sum, product) => sum + (product.sales || 0), 0);
+      const totalRevenue = productsResponse.data.reduce((sum, product) => sum + (product.revenue || 0), 0);
+      const averageOrderValue = totalSales > 0 ? totalRevenue / totalSales : 0;
+
+      setStats({
+        totalProducts,
+        totalSales,
+        totalRevenue,
+        averageOrderValue
+      });
+    } catch (error) {
+      console.error('Error fetching vendor data:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load vendor data",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background">
+        <VendorNavbar />
+        <div className="container mx-auto px-4 py-8">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-cm-green mx-auto"></div>
+            <p className="mt-4 text-lg">Loading dashboard...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -56,7 +88,10 @@ const VendorDashboard: React.FC = () => {
       
       <div className="container mx-auto px-4 py-8">
         <div className="flex justify-between items-center mb-8">
-          <h1 className="text-3xl font-bold">Vendor Dashboard</h1>
+          <div>
+            <h1 className="text-3xl font-bold">Welcome, {vendorName}</h1>
+            <p className="text-muted-foreground mt-1">Here's an overview of your business</p>
+          </div>
           <Button 
             onClick={() => navigate('/vendor/products/new')}
             className="bg-cm-green hover:bg-cm-forest"
@@ -135,20 +170,16 @@ const VendorDashboard: React.FC = () => {
                   <tr className="border-b bg-muted/50">
                     <th className="h-12 px-4 text-left align-middle font-medium">Product</th>
                     <th className="h-12 px-4 text-left align-middle font-medium">Price</th>
-                    <th className="h-12 px-4 text-left align-middle font-medium">Stock</th>
-                    <th className="h-12 px-4 text-left align-middle font-medium">Sales</th>
-                    <th className="h-12 px-4 text-left align-middle font-medium">Revenue</th>
+                    <th className="h-12 px-4 text-left align-middle font-medium">Category</th>
                     <th className="h-12 px-4 text-left align-middle font-medium">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {mockProducts.map((product) => (
+                  {products.map((product) => (
                     <tr key={product.id} className="border-b">
-                      <td className="p-4 align-middle">{product.name}</td>
-                      <td className="p-4 align-middle">FCFA {product.price.toLocaleString()}</td>
-                      <td className="p-4 align-middle">{product.stock}</td>
-                      <td className="p-4 align-middle">{product.sales}</td>
-                      <td className="p-4 align-middle">FCFA {product.revenue.toLocaleString()}</td>
+                      <td className="p-4 align-middle">{product.title}</td>
+                      <td className="p-4 align-middle">FCFA {Number(product.price).toLocaleString()}</td>
+                      <td className="p-4 align-middle">{product.category}</td>
                       <td className="p-4 align-middle">
                         <Button
                           variant="ghost"

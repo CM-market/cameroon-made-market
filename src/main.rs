@@ -1,4 +1,4 @@
-use axum::{http, middleware, Router};
+use axum::{http, middleware, Extension, Router};
 use cameroon_made_market::middleware::auth::{auth, generate_token};
 use cameroon_made_market::models::user::UserRole;
 use cameroon_made_market::routes;
@@ -17,7 +17,7 @@ async fn main() {
     // Get configuration
     let app_state = setup().await;
     let token = generate_token(
-        "6a7ad2e4-9fda-4ca2-a988-34c702ddb86b",
+        "109ba1a9-fd96-4910-b307-ab47eb283f7f",
         UserRole::Vendor,
         &app_state.config,
     )
@@ -34,12 +34,12 @@ async fn main() {
         .merge(routes::user::config())
         .merge(routes::product::config())
         .merge(routes::cart::config())
-        // .layer(middleware::from_fn({
-        //     let app_state = app_state.clone();
-        //     move |req: http::Request<axum::body::Body>, next| {
-        //         auth(axum::extract::State(app_state.clone()), req, next)
-        //     }
-        // }))
+        .layer(middleware::from_fn({
+            let app_state = app_state.clone();
+            move |req: http::Request<axum::body::Body>, next| {
+                auth(req, next)
+            }
+        }))
         // .merge(routes::order::config())
         // .merge(routes::auth::config())
         // .merge(routes::category::config())
@@ -51,6 +51,7 @@ async fn main() {
         // .merge(routes::shipping::config())
         // .merge(routes::search::config())
         // .merge(routes::admin::config())
+        .layer(Extension(app_state.clone()))
         .layer(cors)
         .layer(TraceLayer::new_for_http())
         .with_state(app_state.clone());
