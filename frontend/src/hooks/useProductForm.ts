@@ -8,10 +8,9 @@ export interface ProductFormData {
   name: string;
   description: string;
   price: string;
-  stockQuantity: string;
   category: string;
   selectedTags: string[];
-  quantity: number;
+  quantity: string;
   images: File[];
   imagePreviewUrls: string[];
   uploadedImageUrls: string[];
@@ -30,7 +29,7 @@ export const useProductForm = (onProductCreated?: () => void) => {
     name: "",
     description: "",
     price: "",
-    stockQuantity: "",
+    quantity: "",
     category: "",
     selectedTags: [],
     images: [],
@@ -172,7 +171,7 @@ export const useProductForm = (onProductCreated?: () => void) => {
     data.append('description', formData.description);
     data.append('price', formData.price === '' ? '0' : formData.price);
     data.append('category', formData.category);
-    data.append('quantity', formData.stockQuantity === '' ? '0' : formData.stockQuantity);
+    data.append('quantity', formData.quantity === '' ? '1' : formData.quantity);
     data.append('returnPolicy', formData.returnPolicy);
     formData.images.forEach((file) => {
       data.append('images', file);
@@ -192,6 +191,8 @@ export const useProductForm = (onProductCreated?: () => void) => {
         price: parseFloat(formData.price),
         category: formData.category,
         image_urls: formData.uploadedImageUrls,
+        quantity: formData.quantity,
+        return_policy: formData.returnPolicy,
         // Add other fields as needed
       };
 
@@ -208,9 +209,8 @@ export const useProductForm = (onProductCreated?: () => void) => {
         name: "",
         description: "",
         price: "",
-        stockQuantity: "",
         category: "",
-        quantity: 1,
+        quantity: "",
         selectedTags: [],
         images: [],
         imagePreviewUrls: [],

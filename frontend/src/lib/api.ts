@@ -7,6 +7,7 @@ export interface Product {
   seller_id: string;
   title: string;
   description?: string;
+  quantity: number;
   price: number;
   category?: string;
   image_urls: string[];
@@ -23,7 +24,7 @@ export interface CreateProductData {
   price: number;
   category?: string;
   image_urls: string[];
-  quantity?: number;
+  quantity: number;
   returnPolicy?: string;
 }
 
@@ -31,6 +32,7 @@ export interface UpdateProductData {
   title?: string;
   description?: string;
   price?: number;
+  quantity: number;
   category?: string;
   image_urls?: string[];
 }
