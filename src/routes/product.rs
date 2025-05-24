@@ -1,6 +1,6 @@
 use crate::{
     middleware::auth::AuthUser,
-    services::{image::handle_image_upload, product::{CreateProduct, UpdateProduct}},
+    services::product::{CreateProduct, UpdateProduct},
     state::AppState,
     utils::shared::ApiResponse,
 };
@@ -16,25 +16,44 @@ use uuid::Uuid;
 
 pub fn config() -> Router<AppState> {
     Router::new()
-        .route("/products/:id", get(get_product))
+        .route("/products", get(list_products))
         .route("/products", post(create_product))
+        .route("/products/:id", get(get_product))
         .route("/products/:id", put(update_product))
         .route("/products/:id", delete(delete_product))
-        .route("/products/upload-image", post(handle_image_upload))
 }
 
-pub async fn list_products(State(state): State<AppState>) -> impl IntoResponse {
-    match state.product_service.list_products().await {
-        Ok(products) => Json(ApiResponse::success(
-            products,
-            "Products retrieved successfully",
-        ))
-        .into_response(),
-        Err(e) => (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            Json(ApiResponse::<()>::error(&e.to_string())),
-        )
-            .into_response(),
+pub async fn list_products(
+    State(state): State<AppState>,
+    extension_auth_user: Option<Extension<AuthUser>>,
+) -> impl IntoResponse {
+    let seller_id = match extension_auth_user {
+        Some(Extension(auth_user)) => Some(Uuid::parse_str(&auth_user.id).unwrap()),
+        None => None,
+    };
+
+    tracing::info!("Fetching products for seller_id: {:?}", seller_id);
+
+    match state.product_service.list_products(seller_id).await {
+        Ok(products) => {
+            tracing::info!("Successfully retrieved {} products", products.len());
+            Json(ApiResponse::success(
+                products,
+                "Products retrieved successfully",
+            ))
+            .into_response()
+        }
+        Err(e) => {
+            tracing::error!("Error fetching products: {}", e);
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ApiResponse::<()>::error(&format!(
+                    "Failed to fetch products: {}",
+                    e
+                ))),
+            )
+                .into_response()
+        }
     }
 }
 
@@ -61,7 +80,8 @@ async fn get_product(
     }
 }
 
-pub async fn create_product(
+#[axum::debug_handler]
+async fn create_product(
     State(state): State<AppState>,
     Extension(auth_user): Extension<AuthUser>,
     Json(product_data): Json<CreateProductRequest>,
@@ -110,6 +130,7 @@ pub async fn create_product(
     }
 }
 
+#[axum::debug_handler]
 async fn update_product(
     State(state): State<AppState>,
     Extension(auth_user): Extension<AuthUser>,
@@ -169,6 +190,7 @@ async fn update_product(
     }
 }
 
+#[axum::debug_handler]
 async fn delete_product(
     State(state): State<AppState>,
     Extension(auth_user): Extension<AuthUser>,
