@@ -46,6 +46,7 @@ impl ProductService {
             image_urls: Set(product_data.image_urls),
             quantity: Set(product_data.quantity),
             return_policy: Set(product_data.return_policy),
+            is_approved: Set(false),
             created_at: Set(chrono::Utc::now()),
             updated_at: Set(chrono::Utc::now()),
         }
@@ -145,6 +146,7 @@ mod tests {
                 image_urls: vec!["test.jpg".to_string()],
                 quantity: 1, // Default quantity value
                 return_policy: Some("Test Refund Policy".to_string()),
+                is_approved: false,
                 created_at: chrono::Utc::now(),
                 updated_at: chrono::Utc::now(),
             }]])
@@ -187,6 +189,7 @@ mod tests {
                 category: Some("Test Category".to_string()),
                 image_urls: vec!["test.jpg".to_string()],
                 return_policy: Some("Test Refund Policy".to_string()),
+                is_approved: false,
                 created_at: chrono::Utc::now(),
                 updated_at: chrono::Utc::now(),
             }]])
@@ -219,6 +222,7 @@ mod tests {
                     category: Some("Test Category".to_string()),
                     image_urls: vec!["test.jpg".to_string()],
                     return_policy: Some("Test Refund Policy".to_string()),
+                    is_approved: false,
                     created_at: chrono::Utc::now(),
                     updated_at: chrono::Utc::now(),
                 }],
@@ -232,6 +236,7 @@ mod tests {
                     category: Some("Updated Category".to_string()),
                     image_urls: vec!["updated.jpg".to_string()],
                     return_policy: Some("Updated Refund Policy".to_string()),
+                    is_approved: false,
                     created_at: chrono::Utc::now(),
                     updated_at: chrono::Utc::now(),
                 }],
@@ -273,6 +278,7 @@ mod tests {
                     category: Some("Category A".to_string()),
                     image_urls: vec!["1.jpg".to_string()],
                     return_policy: Some("Refund Policy 1".to_string()),
+                    is_approved: false,
                     created_at: chrono::Utc::now(),
                     updated_at: chrono::Utc::now(),
                 },
@@ -286,6 +292,7 @@ mod tests {
                     category: Some("Category B".to_string()),
                     image_urls: vec!["2.jpg".to_string()],
                     return_policy: Some("Refund Policy 2".to_string()),
+                    is_approved: false,
                     created_at: chrono::Utc::now(),
                     updated_at: chrono::Utc::now(),
                 },

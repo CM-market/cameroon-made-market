@@ -2,6 +2,7 @@ use axum::{http, middleware, Router};
 use cameroon_made_market::middleware::auth::{auth, generate_token};
 use cameroon_made_market::models::user::UserRole;
 use cameroon_made_market::routes;
+use cameroon_made_market::routes::admin::admin_routes;
 use cameroon_made_market::state::setup;
 use tokio::net::TcpListener;
 use tower_http::cors::{Any, CorsLayer};
@@ -34,6 +35,7 @@ async fn main() {
         .merge(routes::user::config())
         .merge(routes::product::config())
         .merge(routes::cart::config())
+        .merge(admin_routes())
         // .layer(middleware::from_fn({
         //     let app_state = app_state.clone();
         //     move |req: http::Request<axum::body::Body>, next| {

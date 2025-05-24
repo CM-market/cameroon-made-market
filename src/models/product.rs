@@ -26,6 +26,8 @@ pub struct Model {
     pub quantity: i32,
     /// List of URLs to product images
     pub image_urls: Vec<String>,
+    /// Indicates if the product is currently active and available for sale
+    pub is_approved: bool,
     /// Refund policy for the product
     pub return_policy: Option<String>,
     /// Timestamp when the product was created
