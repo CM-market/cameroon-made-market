@@ -13,6 +13,8 @@ export interface Product {
   created_at: string;
   updated_at: string;
   returnPolicy?: string;
+  sales?: number;
+  revenue?: number;
 }
 
 export interface CreateProductData {
@@ -33,13 +35,13 @@ export interface UpdateProductData {
   image_urls?: string[];
 }
 
+const token = localStorage.getItem('token');
 export const productApi = {
   list: async (category?: string, seller_id?: string) => {
     const params = new URLSearchParams();
     if (category) params.append('category', category);
     if (seller_id) params.append('seller_id', seller_id);
 
-    const token = localStorage.getItem('token');
 
     const response = await axios.get<{ success: boolean; message: string; data: Product[] }>(
       `${API_URL}/products`,
@@ -50,7 +52,6 @@ export const productApi = {
       }
     );
 
-
     return response.data;
   },
 
@@ -59,25 +60,15 @@ export const productApi = {
     return response.data;
   },
 
-  create: async (data: any) => {
-    // If data is FormData, send as multipart/form-data
-    if (data instanceof FormData) {
-      const response = await axios.post(`${API_URL}/products`, data, {
+  create: async (data: CreateProductData) => {
+    const response = await axios.post<Product>(`${API_URL}/products`, data,
+      {
         headers: {
-          'Content-Type': 'multipart/form-data',
-          Authorization: `Bearer ${localStorage.getItem('token')}`,
-        },
-      });
-      return response.data;
-    } else {
-      // Otherwise, send as JSON
-      const response = await axios.post<Product>(`${API_URL}/products`, data, {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem('token')}`,
-        },
-      });
-      return response.data;
-    }
+          Authorization: `Bearer ${token}`
+        }
+      }
+    );
+    return response.data;
   },
 
   update: async (id: string, data: UpdateProductData) => {
@@ -107,7 +98,11 @@ export const userApi = {
     password: string;
     role?: "Vendor" | "Buyer";
   }) => {
-    const response = await axios.post(`${API_URL}/api/users/login`, data);
+    const response = await axios.post(`${API_URL}/api/users/login`, data,{
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem('token')}`,
+      },
+  });
     return response.data;
   },
   // ...other user API methods
