@@ -53,7 +53,7 @@ const Login: React.FC = () => {
       if (role === "Vendor") {
         navigate("/vendor/dashboard");
       } else {
-        navigate("/"); // Or a buyer dashboard if you have one
+        navigate("/products"); // Or a buyer dashboard if you have one
       }
     } catch (error) {
       toast({
