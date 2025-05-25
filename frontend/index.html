@@ -1,12 +1,24 @@
-
 <!DOCTYPE html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/assets/logo.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Made in Cameroon Marketplace</title>
-    <meta name="description" content="Discover authentic Cameroonian products from local artisans and businesses" />
-    <meta name="author" content="Made in Cameroon" />
+    <meta name="theme-color" content="#000000" />
+    <meta name="description" content="A marketplace for Cameroonian products" />
+    <link rel="apple-touch-icon" href="/assets/icon-192x192.png" />
+    <link rel="manifest" href="/manifest.json" />
+    
+    <!-- Preload critical resources -->
+    <link rel="preload" href="/assets/logo.png" as="image" type="image/png" />
+    <link rel="preload" href="/assets/icon-192x192.png" as="image" type="image/png" />
+    <link rel="preload" href="/assets/icon-512x512.png" as="image" type="image/png" />
+    <link rel="preload" href="/assets/placeholder.png" as="image" type="image/png" />
+    
+    <!-- Preconnect to API -->
+    <link rel="preconnect" href="http://localhost:8080" />
+    
+    <title>Cameroon Made Market</title>
 
     <meta property="og:title" content="Made in Cameroon Marketplace" />
     <meta property="og:description" content="Discover authentic Cameroonian products from local artisans and businesses" />
@@ -16,11 +28,6 @@
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:site" content="@lovable_dev" />
     <meta name="twitter:image" content="https://lovable.dev/opengraph-image-p98pqg.png" />
-    
-    <!-- PWA support -->
-    <link rel="manifest" href="/manifest.json" />
-    <meta name="theme-color" content="#30734D" />
-    <link rel="apple-touch-icon" href="/icons/icon-192x192.png" />
   </head>
 
   <body>
