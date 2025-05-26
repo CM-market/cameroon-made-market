@@ -4,20 +4,21 @@ use axum::{
     middleware::Next,
     response::Response,
 };
-use crate::models::user::{Model as User, UserRole};
+use crate::models::user::UserRole;
+use crate::middleware::auth::AuthUser;
 
 pub async fn admin_auth(
     req: Request,
     next: Next,
 ) -> Result<Response, StatusCode> {
-    let user = req.extensions().get::<User>().cloned();
+    let user = req.extensions().get::<AuthUser>().cloned();
 
     match user {
         Some(user) if user.role == UserRole::Admin => {
             Ok(next.run(req).await)
         }
         _ => {
-            Err(StatusCode::UNAUTHORIZED)
+            Err(StatusCode::UNAUTHORIZED) 
         }
     }
 } 

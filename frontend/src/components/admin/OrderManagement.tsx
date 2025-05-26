@@ -41,9 +41,26 @@ export function OrderManagement() {
 
   const fetchOrders = async () => {
     try {
-      const response = await fetch('/api/admin/orders');
-      const data = await response.json();
-      setOrders(data);
+      const token = localStorage.getItem('token');
+      const response = await fetch('/api/admin/orders', {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+      const text = await response.text();
+      try {
+        const data = JSON.parse(text);
+        if (Array.isArray(data)) {
+          setOrders(data);
+        } else if (data.data) {
+          setOrders(data.data);
+        } else {
+          console.error('Error in response format:', data);
+        }
+      } catch (jsonError) {
+        console.error('Non-JSON response:', text);
+      }
     } catch (error) {
       console.error('Error fetching orders:', error);
     } finally {

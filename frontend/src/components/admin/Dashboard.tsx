@@ -18,9 +18,19 @@ export function AdminDashboard() {
   useEffect(() => {
     const fetchMetrics = async () => {
       try {
-        const response = await fetch('/api/admin/dashboard');
+        const token = localStorage.getItem('token');
+        const response = await fetch('/api/admin/dashboard', {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+        });
         const data = await response.json();
-        setMetrics(data);
+        if (data.data) {
+          setMetrics(data.data);
+        } else {
+          console.error('Error in response format:', data);
+        }
       } catch (error) {
         console.error('Error fetching dashboard metrics:', error);
       } finally {

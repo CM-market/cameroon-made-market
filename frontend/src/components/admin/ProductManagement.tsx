@@ -34,11 +34,28 @@ export function ProductManagement() {
 
   const fetchProducts = async () => {
     try {
-      const response = await fetch('/api/admin/products');
-      const data = await response.json();
-      setProducts(data);
+      const token = localStorage.getItem('token');
+      const response = await fetch('/api/admin/products', {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+      const text = await response.text();
+      try {
+        const data = JSON.parse(text);
+        if (Array.isArray(data)) {
+          setProducts(data);
+        } else if (data.data) {
+          setProducts(data.data);
+        } else {
+          console.error('Error in response format:', data);
+        }
+      } catch (jsonError) {
+        console.error('Non-JSON response:', text);
+      }
     } catch (error) {
-      console.error('Error fetching products:', error);
+      console.error('Network error:', error);
     } finally {
       setLoading(false);
     }

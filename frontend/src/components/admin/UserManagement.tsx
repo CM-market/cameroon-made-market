@@ -32,11 +32,28 @@ export function UserManagement() {
 
   const fetchUsers = async () => {
     try {
-      const response = await fetch('/api/admin/users');
-      const data = await response.json();
-      setUsers(data);
+      const token = localStorage.getItem('token');
+      const response = await fetch('/api/admin/users', {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+      const text = await response.text();
+      try {
+        const data = JSON.parse(text);
+        if (Array.isArray(data)) {
+          setUsers(data);
+        } else if (data.data) {
+          setUsers(data.data);
+        } else {
+          console.error('Error in response format:', data);
+        }
+      } catch (jsonError) {
+        console.error('Non-JSON response:', text);
+      }
     } catch (error) {
-      console.error('Error fetching users:', error);
+      console.error('Network error:', error);
     } finally {
       setLoading(false);
     }
