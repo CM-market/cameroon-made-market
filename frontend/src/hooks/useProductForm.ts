@@ -63,7 +63,12 @@ export const useProductForm = (onProductCreated?: () => void) => {
     });
   };
 
+<<<<<<< Updated upstream
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+=======
+  const token = localStorage.getItem('token');
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+>>>>>>> Stashed changes
     const files = e.target.files;
     if (!files) return;
 

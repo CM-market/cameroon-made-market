@@ -1,6 +1,6 @@
 use crate::{
     middleware::auth::AuthUser,
-    services::product::{CreateProduct, UpdateProduct},
+    services::{image::handle_image_upload, product::{CreateProduct, UpdateProduct}},
     state::AppState,
     utils::shared::ApiResponse,
 };
@@ -16,11 +16,12 @@ use uuid::Uuid;
 
 pub fn config() -> Router<AppState> {
     Router::new()
-        .route("/products", get(list_products))
+        // .route("/products", get(list_products))
         .route("/products", post(create_product))
         .route("/products/:id", get(get_product))
         .route("/products/:id", put(update_product))
         .route("/products/:id", delete(delete_product))
+        .route("/products/upload-image", post(handle_image_upload))
 }
 
 #[axum::debug_handler]

@@ -131,6 +131,7 @@ const VendorProducts: React.FC = () => {
       title: product.title,
       description: product.description || '',
       price: Number(product.price),
+      quantity: product.quantity || 1,
       category: product.category || '',
       image_urls: product.image_urls,
     });

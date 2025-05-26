@@ -11,6 +11,7 @@ export interface Product {
   category?: string;
   image_urls: string[];
   created_at: string;
+  quantity: number;
   updated_at: string;
   returnPolicy?: string;
 }
