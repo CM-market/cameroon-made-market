@@ -139,7 +139,6 @@ mod tests {
 
     #[tokio::test]
     async fn test_create_order() {
-        let user_id = Uuid::new_v4();
         let db = MockDatabase::new(sea_orm::DatabaseBackend::Postgres)
             .append_query_results(vec![vec![order::Model {
                 id: Uuid::new_v4(),

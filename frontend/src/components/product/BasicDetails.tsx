@@ -64,12 +64,12 @@ export const BasicDetails = ({
           />
         </div>
         <div className="space-y-2">
-          <Label htmlFor="stockQuantity">Stock Quantity</Label>
+          <Label htmlFor="quantiy">Stock Quantity</Label>
           <Input
-            id="stockQuantity"
-            name="stockQuantity"
+            id="quantity"
+            name="quantity"
             type="number"
-            value={formData.stockQuantity}
+            value={formData.quantity}
             onChange={onInputChange}
             placeholder="0"
           />

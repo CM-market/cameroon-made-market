@@ -29,7 +29,7 @@ const VendorProducts: React.FC = () => {
     price: 0,
     category: '',
     image_urls: [],
-    quantity: 1,
+    quantity: 0,
   });
 
   useEffect(() => {
@@ -65,6 +65,7 @@ const VendorProducts: React.FC = () => {
         price: 0,
         category: '',
         image_urls: [],
+        quantity: 0,
       });
       fetchProducts();
     } catch (err) {
@@ -87,6 +88,7 @@ const VendorProducts: React.FC = () => {
         price: formData.price,
         category: formData.category,
         image_urls: formData.image_urls,
+        quantity: formData.quantity,
       };
 
       await productApi.update(selectedProduct.id, updateData);
@@ -131,9 +133,9 @@ const VendorProducts: React.FC = () => {
       title: product.title,
       description: product.description || '',
       price: Number(product.price),
-      quantity: product.quantity || 1,
+      quantity: Number(product.quantity),
       category: product.category || '',
-      image_urls: product.image_urls,
+      image_urls: product.image_urls
     });
     setIsEditDialogOpen(true);
   };
@@ -159,7 +161,7 @@ const VendorProducts: React.FC = () => {
         <div className="container mx-auto px-4 py-8">
           <div className="text-center">
             <p className="text-red-500 text-lg">{error}</p>
-            <Button 
+            <Button
               className="mt-4 bg-cm-green hover:bg-cm-forest"
               onClick={() => window.location.reload()}
             >
@@ -202,6 +204,7 @@ const VendorProducts: React.FC = () => {
                   <p className="text-gray-500 mb-4 line-clamp-2">{product.description}</p>
                   <div className="flex justify-between items-center mb-4">
                     <span className="text-lg font-bold">{Number(product.price).toLocaleString()} FCFA</span>
+                    <span className="text-lg font-bold">{Number(product.quantity).toLocaleString()} </span>
                     <span className="text-sm text-gray-500">{product.category}</span>
                   </div>
                   <div className="flex justify-end space-x-2">
@@ -272,8 +275,8 @@ const VendorProducts: React.FC = () => {
                 <Textarea
                   id="edit-image_urls"
                   value={formData.image_urls.join('\n')}
-                  onChange={(e) => setFormData({ 
-                    ...formData, 
+                  onChange={(e) => setFormData({
+                    ...formData,
                     image_urls: e.target.value.split('\n').filter(url => url.trim() !== '')
                   })}
                 />

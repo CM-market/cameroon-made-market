@@ -1,17 +1,19 @@
 import { useState } from "react";
 import { useToast } from "./use-toast";
-import { productApi } from '@/lib/api';
+import { uploadImage } from "@/services/minioService";
+import { useNavigate } from "react-router-dom";
+import { productApi } from "@/lib/api";
 
 export interface ProductFormData {
   name: string;
   description: string;
   price: string;
-  stockQuantity: string;
   category: string;
   selectedTags: string[];
-  quantity: number;
+  quantity: string;
   images: File[];
   imagePreviewUrls: string[];
+  uploadedImageUrls: string[];
   shippingInfo: string;
   dimensions: string;
   weight: string;
@@ -21,17 +23,18 @@ export interface ProductFormData {
 
 export const useProductForm = (onProductCreated?: () => void) => {
   const { toast } = useToast();
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<string>("details");
   const [formData, setFormData] = useState<ProductFormData>({
     name: "",
     description: "",
     price: "",
-    stockQuantity: "",
+    quantity: "",
     category: "",
     selectedTags: [],
     images: [],
     imagePreviewUrls: [],
-    quantity: 1,
+    uploadedImageUrls: [],
     shippingInfo: "",
     dimensions: "",
     weight: "",
@@ -40,8 +43,9 @@ export const useProductForm = (onProductCreated?: () => void) => {
   });
   
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isSavingDraft, setIsSavingDraft] = useState(false);
+  const [isSavingDraft, setIsSavingDraft] = useState(false); 
   const [isPreviewing, setIsPreviewing] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
 
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -63,45 +67,79 @@ export const useProductForm = (onProductCreated?: () => void) => {
     });
   };
 
-<<<<<<< Updated upstream
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-=======
-  const token = localStorage.getItem('token');
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
->>>>>>> Stashed changes
     const files = e.target.files;
     if (!files) return;
 
-    const newFiles = Array.from(files);
-    const newPreviewUrls = newFiles.map((file) => URL.createObjectURL(file));
-    console.log(newPreviewUrls);
+    setIsUploading(true);
+    let newPreviewUrls: string[] = [];
+    
+    try {
+      const newFiles = Array.from(files);
+      newPreviewUrls = newFiles.map((file) => URL.createObjectURL(file)); 
+      const uploadedUrls: string[] = [];
 
-    setFormData((prev) => ({
-      ...prev,
-      images: [...prev.images, ...newFiles],
-      imagePreviewUrls: [...prev.imagePreviewUrls, ...newPreviewUrls],
-    }));
+      for (let i = 0; i < newFiles.length; i++) {
+        const file = newFiles[i];
+        try {
+          const imageUrl = await uploadImage(file);
+          uploadedUrls.push(imageUrl);
+        } catch (error) {
+          // Clean up any preview URLs created so far
+          newPreviewUrls.forEach(URL.revokeObjectURL);
+          throw error;
+        }
+      }
 
-    toast({
-      title: "Images added",
-      description: `${newFiles.length} image(s) have been added to your product.`,
-    });
+      setFormData((prev) => ({
+        ...prev,
+        images: [...prev.images, ...newFiles],
+        imagePreviewUrls: [...prev.imagePreviewUrls, ...newPreviewUrls],
+        uploadedImageUrls: [...prev.uploadedImageUrls, ...uploadedUrls],
+      }));
+
+      toast({
+        title: "Images uploaded",
+        description: `${newFiles.length} image(s) have been added to your product.`,
+      });
+    } catch (error) {
+      // Clean up any preview URLs
+      newPreviewUrls.forEach(URL.revokeObjectURL);
+
+      toast({
+        title: "Error uploading images",
+        description: error instanceof Error ? error.message : "There was an error uploading your images. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsUploading(false);
+    }
   };
 
   const removeImage = (index: number) => {
     setFormData((prev) => {
       const newImages = [...prev.images];
       const newPreviewUrls = [...prev.imagePreviewUrls];
+      const newUploadedUrls = [...prev.uploadedImageUrls];
+      
       URL.revokeObjectURL(newPreviewUrls[index]);
       newImages.splice(index, 1);
       newPreviewUrls.splice(index, 1);
-      return { ...prev, images: newImages, imagePreviewUrls: newPreviewUrls };
+      newUploadedUrls.splice(index, 1);
+      
+      return { 
+        ...prev, 
+        images: newImages, 
+        imagePreviewUrls: newPreviewUrls,
+        uploadedImageUrls: newUploadedUrls 
+      };
     });
   };
 
   const saveDraft = async () => {
     setIsSavingDraft(true);
     try {
+      // TODO: Implement draft saving functionality
       await new Promise(resolve => setTimeout(resolve, 1000));
       toast({
         title: "Draft saved",
@@ -133,7 +171,7 @@ export const useProductForm = (onProductCreated?: () => void) => {
     data.append('description', formData.description);
     data.append('price', formData.price === '' ? '0' : formData.price);
     data.append('category', formData.category);
-    data.append('quantity', formData.stockQuantity === '' ? '0' : formData.stockQuantity);
+    data.append('quantity', formData.quantity === '' ? '1' : formData.quantity);
     data.append('returnPolicy', formData.returnPolicy);
     formData.images.forEach((file) => {
       data.append('images', file);
@@ -141,21 +179,42 @@ export const useProductForm = (onProductCreated?: () => void) => {
 
     setIsSubmitting(true);
     try {
-      await productApi.create(data);
+      // Validate required fields
+      if (!formData.name || !formData.description || !formData.price || !formData.category) {
+        throw new Error("Please fill in all required fields");
+      }
+
+      // Create product data
+      const productData = {
+        title: formData.name,
+        description: formData.description,
+        price: parseFloat(formData.price),
+        category: formData.category,
+        image_urls: formData.uploadedImageUrls,
+        quantity: parseInt(formData.quantity === '' ? '1' : formData.quantity, 10),
+        return_policy: formData.returnPolicy,
+        // Add other fields as needed
+      };
+
+      // Submit product to backend
+      const product = await productApi.create(productData);
+
       toast({
         title: "Product submitted",
-        description: "Your product has been submitted for verification.",
+        description: "Your product has been submitted successfully.",
       });
+
+      // Reset form
       setFormData({
         name: "",
         description: "",
         price: "",
-        stockQuantity: "",
         category: "",
-        quantity: 1,
+        quantity: "",
         selectedTags: [],
         images: [],
         imagePreviewUrls: [],
+        uploadedImageUrls: [],
         shippingInfo: "",
         dimensions: "",
         weight: "",
@@ -163,11 +222,13 @@ export const useProductForm = (onProductCreated?: () => void) => {
         returnPolicy: "",
       });
       setActiveTab("details");
-      if (onProductCreated) onProductCreated();
+
+      // Navigate to product page or dashboard
+      navigate(`/products/${product.id}`);
     } catch (error) {
       toast({
         title: "Error submitting product",
-        description: "There was an error submitting your product. Please try again.",
+        description: error instanceof Error ? error.message : "There was an error submitting your product. Please try again.",
         variant: "destructive",
       });
     } finally {
@@ -183,6 +244,7 @@ export const useProductForm = (onProductCreated?: () => void) => {
     isSubmitting,
     isSavingDraft,
     isPreviewing,
+    isUploading,
     setIsPreviewing,
     handleInputChange,
     handleSelectChange,

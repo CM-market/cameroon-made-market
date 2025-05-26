@@ -1,8 +1,13 @@
-use axum::{http, middleware, Router};
+use axum::routing::{get, post};
+use axum::{http, middleware, Extension, Router};
+use cameroon_made_market::handlers::user::{login, register};
 use cameroon_made_market::middleware::auth::{auth, generate_token};
 use cameroon_made_market::models::user::UserRole;
 use cameroon_made_market::routes;
 use cameroon_made_market::routes::admin::admin_routes;
+
+use cameroon_made_market::routes::product::list_products;
+use cameroon_made_market::services::image::handle_image_upload;
 use cameroon_made_market::state::setup;
 use tokio::net::TcpListener;
 use tower_http::cors::{Any, CorsLayer};
@@ -18,7 +23,7 @@ async fn main() {
     // Get configuration
     let app_state = setup().await;
     let token = generate_token(
-        "6a7ad2e4-9fda-4ca2-a988-34c702ddb86b",
+        "abaf2b7d-c64e-44c0-ba5c-ab7f541e72d0",
         UserRole::Vendor,
         &app_state.config,
     )
@@ -42,6 +47,13 @@ async fn main() {
         //         auth(axum::extract::State(app_state.clone()), req, next)
         //     }
         // }))
+        .layer(middleware::from_fn({
+            move |req: http::Request<axum::body::Body>, next| auth(req, next)
+        }))
+   
+        .route("/api/users", post(register))
+        .route("/api/users/login", post(login))
+        .route("/products", get(list_products))
         // .merge(routes::order::config())
         // .merge(routes::auth::config())
         // .merge(routes::category::config())
@@ -53,6 +65,7 @@ async fn main() {
         // .merge(routes::shipping::config())
         // .merge(routes::search::config())
         // .merge(routes::admin::config())
+        .layer(Extension(app_state.clone()))
         .layer(cors)
         .layer(TraceLayer::new_for_http())
         .with_state(app_state.clone());
