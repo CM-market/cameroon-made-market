@@ -188,6 +188,8 @@ pub mod tables {
                         .col(ColumnDef::new(Orders::DeliveryAddress).string().not_null())
                         .col(ColumnDef::new(Orders::Status).text().not_null())
                         .col(ColumnDef::new(Orders::Total).decimal_len(10, 2).not_null())
+                        .col(ColumnDef::new(Orders::City).string().not_null())
+                        .col(ColumnDef::new(Orders::Region).string().not_null())
                         .col(
                             ColumnDef::new(Orders::CreatedAt)
                                 .timestamp_with_time_zone()
@@ -369,6 +371,8 @@ pub mod tables {
         Status,
         Total,
         CreatedAt,
+        City,
+        Region,
     }
 
     #[derive(Iden)]
