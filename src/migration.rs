@@ -84,6 +84,7 @@ pub mod tables {
                         .col(ColumnDef::new(Products::Price).double().not_null())
                         .col(ColumnDef::new(Products::Category).string())
                         .col(ColumnDef::new(Products::IsApproved).boolean().not_null())
+                        .col(ColumnDef::new(Products::IsRejected).boolean().not_null())
                         .col(
                             ColumnDef::new(Products::ImageUrls)
                                 .array(ColumnType::String(StringLen::Max))
@@ -339,6 +340,7 @@ pub mod tables {
         Price,
         Category,
         IsApproved,
+        IsRejected,
         ImageUrls,
         CreatedAt,
         UpdatedAt,

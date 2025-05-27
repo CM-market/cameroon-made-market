@@ -396,3 +396,57 @@ pub async fn get_recent_activities(
     activities.truncate(10);
     Ok(Json(activities))
 }
+
+pub async fn get_pending_products(
+    State(state): State<AppState>,
+) -> Result<Json<Vec<crate::models::product::Model>>, StatusCode> {
+    let db = &state.db;
+    let products = Product::find()
+        .filter(product::Column::IsApproved.eq(false))
+        .order_by_desc(product::Column::CreatedAt)
+        .all(&**db)
+        .await
+        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+    Ok(Json(products))
+}
+
+pub async fn reject_product(
+    State(state): State<AppState>,
+    Path(product_id): Path<Uuid>,
+) -> Result<Json<crate::models::product::Model>, StatusCode> {
+    let db = &state.db;
+    let product = Product::find_by_id(product_id)
+        .one(&**db)
+        .await
+        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?
+        .ok_or(StatusCode::NOT_FOUND)?;
+    let mut product: product::ActiveModel = product.into();
+    product.is_approved = Set(false);
+    product.is_rejected = Set(true);
+    let product = product
+        .update(&**db)
+        .await
+        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+    Ok(Json(product))
+}
+
+pub async fn approve_product(
+    State(state): State<AppState>,
+    Path(product_id): Path<Uuid>,
+) -> Result<Json<crate::models::product::Model>, StatusCode> {
+    let db = &state.db;
+    let product = Product::find_by_id(product_id)
+        .one(&**db)
+        .await
+        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?
+        .ok_or(StatusCode::NOT_FOUND)?;
+    let mut product: product::ActiveModel = product.into();
+    product.is_approved = Set(true);
+    product.is_rejected = Set(false);
+    let product = product
+        .update(&**db)
+        .await
+        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+    Ok(Json(product))
+}
+ 

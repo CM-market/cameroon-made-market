@@ -30,6 +30,8 @@ pub struct Model {
     pub is_approved: bool,
     /// Refund policy for the product
     pub return_policy: Option<String>,
+    /// Indicates if the product is rejected
+    pub is_rejected: bool,
     /// Timestamp when the product was created
     pub created_at: DateTime<Utc>,
     /// Timestamp when the product was last updated

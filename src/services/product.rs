@@ -57,6 +57,7 @@ impl ProductService {
             id: Set(Uuid::new_v4()),
             seller_id: Set(product_data.seller_id),
             title: Set(product_data.title),
+            is_rejected: Set(false),
             description: Set(product_data.description),
             price: Set(product_data.price),
             category: Set(product_data.category),
@@ -144,12 +145,22 @@ impl ProductService {
     }
 
     pub async fn list_products(&self) -> Result<Vec<Model>, ServiceError> {
-        let query = product::Entity::find();
+        let query = product::Entity::find()
+            .filter(product::Column::IsApproved.eq(true));
 
         let products = query
             .order_by_desc(product::Column::CreatedAt)
             .all(&*self.db)
             .await?;
+
+        tracing::info!("Found {} approved products", products.len());
+        for product in &products {
+            tracing::info!("Product: id={}, title={}, is_approved={}", 
+                product.id, 
+                product.title, 
+                product.is_approved
+            );
+        }
 
         Ok(products)
     }
@@ -230,9 +241,44 @@ impl ProductService {
 
         Ok(ProductStats { sales, revenue })
     }
+
+    pub async fn approve_product(&self, product_id: Uuid) -> Result<Model, ServiceError> {
+        let product = product::Entity::find_by_id(product_id)
+            .one(&*self.db)
+            .await
+            .map_err(|e| ServiceError::NotFound(e.to_string()))?;
+        if let Some(product) = product {
+            tracing::info!("Approving product: id={}, title={}, current is_approved={}", 
+                product.id, 
+                product.title, 
+                product.is_approved
+            );
+            let mut active_model: product::ActiveModel = product.clone().into();
+            active_model.is_approved = Set(true);
+            active_model.updated_at = Set(chrono::Utc::now());
+            let updated_product = active_model.update(&*self.db).await?;
+            tracing::info!("Product approved successfully: id={}, title={}, new is_approved={}", 
+                updated_product.id, 
+                updated_product.title, 
+                updated_product.is_approved
+            );
+            Ok(updated_product.into())
+        } else {
+            Err(ServiceError::NotFound("Product not found".into()))
+        }
+    }
+
+    pub async fn list_pending_products(&self) -> Result<Vec<Model>, ServiceError> {
+        let products = product::Entity::find()
+            .filter(product::Column::IsApproved.eq(false))
+            .order_by_desc(product::Column::CreatedAt)
+            .all(&*self.db)
+            .await?;
+        Ok(products)
+    }
 }
 
-#[derive(Debug)]
+#[derive(Debug)] 
 struct ProductStats {
     sales: i32,
     revenue: f64,
@@ -254,6 +300,7 @@ mod tests {
                 description: Some("Test Description".to_string()),
                 price: 10.0,
                 category: Some("Test Category".to_string()),
+                is_rejected: false,
                 image_urls: vec!["test.jpg".to_string()],
                 quantity: 1,
                 return_policy: Some("Test Refund Policy".to_string()),
@@ -297,6 +344,7 @@ mod tests {
                 description: Some("Test Description".to_string()),
                 price: 100.0,
                 quantity: 1,
+                is_rejected: false,
                 category: Some("Test Category".to_string()),
                 image_urls: vec!["test.jpg".to_string()],
                 return_policy: Some("Test Refund Policy".to_string()),
@@ -331,7 +379,7 @@ mod tests {
                     price: 1000.0,
                     quantity: 1,
                     category: Some("Test Category".to_string()),
-                    image_urls: vec!["test.jpg".to_string()],
+                    is_rejected: false,                    image_urls: vec!["test.jpg".to_string()],
                     return_policy: Some("Test Refund Policy".to_string()),
                     is_approved: false,
                     created_at: chrono::Utc::now(),
@@ -347,6 +395,7 @@ mod tests {
                     category: Some("Updated Category".to_string()),
                     image_urls: vec!["updated.jpg".to_string()],
                     return_policy: Some("Updated Refund Policy".to_string()),
+                    is_rejected: false,
                     is_approved: false,
                     created_at: chrono::Utc::now(),
                     updated_at: chrono::Utc::now(),
@@ -388,6 +437,7 @@ mod tests {
                     quantity: 1,
                     category: Some("Category A".to_string()),
                     image_urls: vec!["1.jpg".to_string()],
+                    is_rejected: false,
                     return_policy: Some("Refund Policy 1".to_string()),
                     is_approved: false,
                     created_at: chrono::Utc::now(),
@@ -403,6 +453,7 @@ mod tests {
                     category: Some("Category B".to_string()),
                     image_urls: vec!["2.jpg".to_string()],
                     return_policy: Some("Refund Policy 2".to_string()),
+                    is_rejected: false,
                     is_approved: false,
                     created_at: chrono::Utc::now(),
                     updated_at: chrono::Utc::now(),

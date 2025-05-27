@@ -11,22 +11,29 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
+import { Dialog } from "@/components/ui/dialog";
+import { getImageUrl } from "@/services/minioService";
 
 interface Product {
   id: string;
-  name: string;
+  title: string;
   description: string;
   price: number;
   vendor_id: string;
   vendor_name: string;
   is_approved: boolean;
   created_at: string;
+  image_urls: string[];
+  quantity: number;
+  return_policy: string;
 }
 
 export function ProductManagement() {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const [viewProduct, setViewProduct] = useState<Product | null>(null);
+  const [selectedImageIdx, setSelectedImageIdx] = useState(0);
 
   useEffect(() => {
     fetchProducts();
@@ -35,7 +42,7 @@ export function ProductManagement() {
   const fetchProducts = async () => {
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch('/api/admin/products', {
+      const response = await fetch('/api/admin/products/pending', {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',
@@ -61,29 +68,52 @@ export function ProductManagement() {
     }
   };
 
-  const handleApprovalChange = async (productId: string, isApproved: boolean) => {
+  const handleApproval = async (productId: string) => {
     try {
-      const response = await fetch(`/api/admin/products/${productId}`, {
-        method: 'PUT',
+      const token = localStorage.getItem('token');
+      const response = await fetch(`/api/admin/products/${productId}/approve`, {
+        method: 'POST',
         headers: {
+          'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ is_approved: isApproved }),
       });
-
       if (response.ok) {
-        setProducts(products.map(product =>
-          product.id === productId ? { ...product, is_approved: isApproved } : product
-        ));
+        setProducts(products.filter(product => product.id !== productId));
       }
     } catch (error) {
-      console.error('Error updating product approval status:', error);
+      console.error('Error approving product:', error);
     }
   };
 
+  const handleReject = async (productId: string) => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`/api/admin/products/${productId}/reject`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+      if (response.ok) {
+        setProducts(products.filter(product => product.id !== productId));
+      }
+    } catch (error) {
+      console.error('Error rejecting product:', error);
+    }
+  };
+
+  const handleView = (product: Product) => {
+    setViewProduct(product);
+    setSelectedImageIdx(0);
+  };
+
+  const closeModal = () => setViewProduct(null);
+
   const filteredProducts = products.filter(product =>
-    product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    product.vendor_name.toLowerCase().includes(searchTerm.toLowerCase())
+    (product.title || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (product.vendor_name || '').toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   if (loading) {
@@ -119,7 +149,7 @@ export function ProductManagement() {
           <TableBody>
             {filteredProducts.map((product) => (
               <TableRow key={product.id}>
-                <TableCell>{product.name}</TableCell>
+                <TableCell>{product.title}</TableCell>
                 <TableCell>{product.description}</TableCell>
                 <TableCell>${product.price.toFixed(2)}</TableCell>
                 <TableCell>{product.vendor_name}</TableCell>
@@ -130,11 +160,11 @@ export function ProductManagement() {
                 </TableCell>
                 <TableCell>{new Date(product.created_at).toLocaleDateString()}</TableCell>
                 <TableCell>
-                  <div className="flex gap-2">
+                  <div className="flex gap-2" >
                     <Button
-                      variant="outline"
+                      variant="green"
                       size="sm"
-                      onClick={() => handleApprovalChange(product.id, true)}
+                      onClick={() => handleApproval(product.id)}
                       disabled={product.is_approved}
                     >
                       Approve
@@ -142,10 +172,17 @@ export function ProductManagement() {
                     <Button
                       variant="destructive"
                       size="sm"
-                      onClick={() => handleApprovalChange(product.id, false)}
-                      disabled={!product.is_approved}
+                      onClick={() => handleReject(product.id)}
+                      disabled={product.is_approved}
                     >
                       Reject
+                    </Button>
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      onClick={() => handleView(product)}
+                    >
+                      View
                     </Button>
                   </div>
                 </TableCell>
@@ -154,6 +191,59 @@ export function ProductManagement() {
           </TableBody>
         </Table>
       </div>
+
+      {viewProduct && (
+        <Dialog open={!!viewProduct} onOpenChange={closeModal}>
+          <div className="flex flex-col md:flex-row bg-white rounded shadow-lg max-w-3xl mx-auto p-6">
+            {/* Left: Images */}
+            <div className="flex flex-col items-center md:w-1/2">
+              <img
+                src={getImageUrl(viewProduct.image_urls[selectedImageIdx]) || "/placeholder.png"}
+                onError={(e) => { e.currentTarget.src = "/placeholder.png"; }}
+                alt={viewProduct.title}
+                className="w-64 h-64 object-contain rounded mb-4 border"
+              />
+              <div className="flex gap-2">
+                {viewProduct.image_urls.map((url, idx) => (
+                  <img
+                    key={idx}
+                    src={getImageUrl(url)}
+                    onError={(e) => { e.currentTarget.src = "/placeholder.png"; }}
+                    alt={`thumb-${idx}`}
+                    className={`w-16 h-16 object-cover rounded cursor-pointer border ${selectedImageIdx === idx ? "border-blue-500" : "border-gray-300"}`}
+                    onClick={() => setSelectedImageIdx(idx)}
+                  />
+                ))}
+              </div>
+            </div>
+            {/* Right: Details */}
+            <div className="md:ml-8 mt-6 md:mt-0 md:w-1/2">
+              <h2 className="text-2xl font-bold mb-2">{viewProduct.title}</h2>
+              <div className="text-green-700 text-xl font-semibold mb-2">
+                {viewProduct.price.toLocaleString()} FCFA
+              </div>
+              <div className="mb-2 text-gray-500">
+                Stock quantity {viewProduct.quantity > 0 ? viewProduct.quantity : "not set"}
+              </div>
+              <div className="mb-2">
+                <strong>Description</strong>
+                <div>{viewProduct.description || "No description"}</div>
+              </div>
+              <div className="mb-2">
+                <strong>Shipping Information</strong>
+                <div>{viewProduct.vendor_name}</div>
+              </div>
+              <div className="mb-2">
+                <strong>Return Policy</strong>
+                <div>{viewProduct.return_policy || "No refund"}</div>
+              </div>
+              <div className="mt-4 flex justify-end">
+                <Button onClick={closeModal}>Close</Button>
+              </div>
+            </div>
+          </div>
+        </Dialog>
+      )}
     </div>
   );
 } 
