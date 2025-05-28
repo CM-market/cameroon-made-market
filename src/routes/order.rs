@@ -38,6 +38,7 @@ pub struct CreateOrderRequest {
     customer_phone: String,
     delivery_address: String,
     city: String,
+    region: String,
     items: Vec<OrderItemRequest>,
 }
 
@@ -119,6 +120,8 @@ async fn create_order(
         status: "pending".to_string(),
         total,
         items: payload.items,
+        city: payload.city,
+        region: payload.region,
     };
 
     info!("Creating order: {:?}", req);

@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -27,7 +26,7 @@ export const BasicDetails = ({
   return (
     <div className="space-y-4">
       <div className="space-y-2">
-        <Label htmlFor="name">Product Name</Label>
+        <Label htmlFor="name">Product Name</Label> 
         <Input
           id="name"
           name="name"
@@ -65,12 +64,12 @@ export const BasicDetails = ({
           />
         </div>
         <div className="space-y-2">
-          <Label htmlFor="stockQuantity">Stock Quantity</Label>
+          <Label htmlFor="quantiy">Stock Quantity</Label>
           <Input
-            id="stockQuantity"
-            name="stockQuantity"
+            id="quantity"
+            name="quantity"
             type="number"
-            value={formData.stockQuantity}
+            value={formData.quantity}
             onChange={onInputChange}
             placeholder="0"
           />
@@ -88,7 +87,7 @@ export const BasicDetails = ({
           </SelectTrigger>
           <SelectContent>
             {CATEGORIES.map((category) => (
-              <SelectItem key={category.id} value={category.id}>
+              <SelectItem key={category.id} value={category.name}>
                 {category.name}
               </SelectItem>
             ))}

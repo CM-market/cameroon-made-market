@@ -1,11 +1,9 @@
-use crate::{config::Config, models::user::UserRole, state::AppState, utils::shared::ApiResponse};
+use crate::{config::Config, models::user::UserRole, state::AppState};
 use axum::{
-    body::Body,
-    extract::{Request, State},
+    extract::Request,
     http::StatusCode,
     middleware::Next,
-    response::{IntoResponse, Response},
-    Json,
+    response::Response,
 };
 use jsonwebtoken::{decode, encode, DecodingKey, EncodingKey, Header, Validation};
 use serde::{Deserialize, Serialize};
@@ -35,7 +33,6 @@ pub async fn auth(mut req: Request, next: Next) -> Result<Response, StatusCode> 
         .get::<AppState>()
         .cloned()
         .ok_or(StatusCode::INTERNAL_SERVER_ERROR)?;
-    print!("cadcadc");
     let token = req
         .headers()
         .get("Authorization")

@@ -1,15 +1,14 @@
-
 import React from "react";
 import type { ProductFormData } from "@/hooks/useProductForm";
 
 interface ProductDetailsInfoProps {
   materials?: string;
   dimensions?: string;
-  weight?: string;
+  returnPolicy?: string;
 }
 
-export const ProductDetailsInfo = ({ materials, dimensions, weight }: ProductDetailsInfoProps) => {
-  if (!materials && !dimensions && !weight) return null;
+export const ProductDetailsInfo = ({ materials, dimensions, returnPolicy }: ProductDetailsInfoProps) => {
+  if (!materials && !dimensions && !returnPolicy) return null;
   
   return (
     <div className="mb-4">
@@ -21,8 +20,8 @@ export const ProductDetailsInfo = ({ materials, dimensions, weight }: ProductDet
         {dimensions && (
           <li><span className="font-medium">Dimensions:</span> {dimensions}</li>
         )}
-        {weight && (
-          <li><span className="font-medium">Weight:</span> {weight} kg</li>
+        {returnPolicy && (
+          <li><span className="font-medium">Return Policy:</span> {returnPolicy}</li>
         )}
       </ul>
     </div>

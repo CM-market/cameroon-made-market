@@ -38,7 +38,7 @@ async fn list_payments(
         }
     };
 
-    match TransactionApi::get_transactions_by_user_id(&state.payment_service, &user_id.to_string())
+    match TransactionApi::get_transactions_by_user_id(&state.config.payment_service, &user_id.to_string())
         .await
     {
         Ok(payments) => Json(ApiResponse::success(
@@ -75,7 +75,7 @@ async fn get_transation_status(
             }
         };
 
-        match TransactionApi::get_status(&state.payment_service, &transaction_id).await {
+        match TransactionApi::get_status(&state.config.payment_service, &transaction_id).await {
             Ok(status) => Json(ApiResponse::success(
                 status,
                 "Payment status retrieved successfully",
@@ -137,7 +137,7 @@ async fn create_payment(
 
             info!("Initiating payment for order: {:?}", payment_request);
 
-            match PaymentApi::initiate_direct_payment(&state.payment_service, &payment_request)
+            match PaymentApi::initiate_direct_payment(&state.config.payment_service, &payment_request)
                 .await
             {
                 Ok(fapshi_response) => {
@@ -219,7 +219,7 @@ async fn create_indirect_payment(
 
             info!("Initiating payment for order: {:?}", payment_request);
 
-            match PaymentApi::create_payment(&state.payment_service, &payment_request).await {
+            match PaymentApi::create_payment(&state.config.payment_service, &payment_request).await {
                 Ok(fapshi_response) => {
                     let payment = IndirectPayment {
                         id: Uuid::new_v4(),

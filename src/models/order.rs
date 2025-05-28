@@ -1,11 +1,10 @@
-use std::fmt::Display;
-
 use chrono::{DateTime, Utc};
 use sea_orm::entity::prelude::*;
 use serde::{Deserialize, Serialize};
+use std::fmt;
 use uuid::Uuid;
 
-use crate::routes::orders::OrderItemRequest;
+use crate::routes::order::OrderItemRequest;
 
 /// Order model representing customer purchases in the marketplace
 /// This model tracks the entire order lifecycle from creation to completion
@@ -16,7 +15,7 @@ pub struct Model {
     #[sea_orm(primary_key, auto_increment = false)]
     pub id: Uuid,
     /// user identifier for guest checkout orders
-    pub user_id: Uuid,
+    pub user_id: String,
     /// Name of the customer placing the order
     pub customer_name: String,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -26,6 +25,10 @@ pub struct Model {
     pub customer_phone: String,
     /// Delivery address for the order
     pub delivery_address: String,
+    /// region where the order is to be delivered
+    pub region: String,
+    /// City where the order is to be delivered
+    pub city: String,
     /// Current status of the order
     #[sea_orm(column_type = "Text")]
     pub status: String,
@@ -36,45 +39,52 @@ pub struct Model {
 }
 
 /// Order status enum
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Deserialize)]
 pub enum Status {
     /// Order is pending and awaiting payment
     Pending,
     /// Order has been paid and is being processed
-    Paid,
+    Processing,
     /// Order has been shipped to the customer
     Shipped,
     /// Order has been delivered to the customer
     Delivered,
+    /// Order has been cancelled
+    Cancelled,
+}
+
+impl fmt::Display for Status {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Status::Pending => write!(f, "Pending"),
+            Status::Processing => write!(f, "Processing"),
+            Status::Shipped => write!(f, "Shipped"),
+            Status::Delivered => write!(f, "Delivered"),
+            Status::Cancelled => write!(f, "Cancelled"),
+        }
+    }
 }
 
 impl From<Status> for String {
     fn from(status: Status) -> String {
         match status {
             Status::Pending => "pending".to_string(),
-            Status::Paid => "paid".to_string(),
+            Status::Processing => "processing".to_string(),
             Status::Shipped => "shipped".to_string(),
             Status::Delivered => "delivered".to_string(),
+            Status::Cancelled => "cancelled".to_string(),
         }
     }
 }
-impl Display for Status {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            Status::Pending => write!(f, "pending"),
-            Status::Paid => write!(f, "paid"),
-            Status::Shipped => write!(f, "shipped"),
-            Status::Delivered => write!(f, "delivered"),
-        }
-    }
-}
+
 impl From<String> for Status {
     fn from(status: String) -> Status {
         match status.as_str() {
             "pending" => Status::Pending,
-            "paid" => Status::Paid,
+            "processing" => Status::Processing,
             "shipped" => Status::Shipped,
             "delivered" => Status::Delivered,
+            "cancelled" => Status::Cancelled,
             _ => Status::Pending,
         }
     }
@@ -140,9 +150,19 @@ pub struct CreateOrder {
     pub status: String,
     /// Total amount of the order including all items and fees
     pub total: f64,
+    /// region where the order is to be delivered
+    pub region: String,
+    /// City where the order is to be delivered
+    pub city: String,
     /// Timestamp when the order was created
     pub created_at: DateTime<Utc>,
     pub items: Vec<Items>,
+}
+#[derive(Serialize, Deserialize)]
+pub struct Items {
+    pub product_id: Uuid,
+    pub quantity: u32,
+    pub price: f64,
 }
 
 #[derive(Debug)]
@@ -155,12 +175,8 @@ pub struct NewOrder {
     pub status: String,
     pub total: f64,
     pub items: Vec<OrderItemRequest>,
-}
-#[derive(Serialize, Deserialize)]
-pub struct Items {
-    pub product_id: Uuid,
-    pub quantity: u32,
-    pub price: f64,
+    pub city: String,
+    pub region: String
 }
 
 /// Implements default behavior for active model operations

@@ -79,6 +79,7 @@ pub mod tables {
                         .col(ColumnDef::new(Products::Title).string().not_null())
                         .col(ColumnDef::new(Products::Description).string())
                         .col(ColumnDef::new(Products::Quantity).integer().not_null())
+                        .col(ColumnDef::new(Products::ReturnPolicy).string())
                         .col(ColumnDef::new(Products::Price).double().not_null())
                         .col(ColumnDef::new(Products::Category).string())
                         .col(
@@ -180,13 +181,15 @@ pub mod tables {
                         .table(Orders::Table)
                         .if_not_exists()
                         .col(ColumnDef::new(Orders::Id).uuid().not_null().primary_key())
-                        .col(ColumnDef::new(Orders::UserId).uuid().not_null())
+                        .col(ColumnDef::new(Orders::SessionId).uuid().not_null())
                         .col(ColumnDef::new(Orders::CustomerName).string().not_null())
                         .col(ColumnDef::new(Orders::CustomerEmail).string())
                         .col(ColumnDef::new(Orders::CustomerPhone).string().not_null())
                         .col(ColumnDef::new(Orders::DeliveryAddress).string().not_null())
                         .col(ColumnDef::new(Orders::Status).text().not_null())
-                        .col(ColumnDef::new(Orders::Total).double().not_null())
+                        .col(ColumnDef::new(Orders::Total).decimal_len(10, 2).not_null())
+                        .col(ColumnDef::new(Orders::City).string().not_null())
+                        .col(ColumnDef::new(Orders::Region).string().not_null())
                         .col(
                             ColumnDef::new(Orders::CreatedAt)
                                 .timestamp_with_time_zone()
@@ -194,8 +197,8 @@ pub mod tables {
                         )
                         .foreign_key(
                             ForeignKey::create()
-                                .name("fk_orders_user_id")
-                                .from(Orders::Table, Orders::UserId)
+                                .name("fk_orders_session_id")
+                                .from(Orders::Table, Orders::SessionId)
                                 .to(Users::Table, Users::Id)
                                 .on_delete(ForeignKeyAction::SetNull)
                                 .on_update(ForeignKeyAction::NoAction),
@@ -219,6 +222,7 @@ pub mod tables {
                         .col(ColumnDef::new(OrderItems::OrderId).uuid().not_null())
                         .col(ColumnDef::new(OrderItems::ProductId).uuid().not_null())
                         .col(ColumnDef::new(OrderItems::Quantity).integer().not_null())
+                        .col(ColumnDef::new(Products::Price).double().not_null())
                         .foreign_key(
                             ForeignKey::create()
                                 .name("fk_order_items_order_id")
@@ -328,6 +332,7 @@ pub mod tables {
         Id,
         SellerId,
         Quantity,
+        ReturnPolicy,
         Title,
         Description,
         Price,
@@ -358,7 +363,7 @@ pub mod tables {
     enum Orders {
         Table,
         Id,
-        UserId,
+        SessionId,
         CustomerName,
         CustomerEmail,
         CustomerPhone,
@@ -366,6 +371,8 @@ pub mod tables {
         Status,
         Total,
         CreatedAt,
+        City,
+        Region,
     }
 
     #[derive(Iden)]
