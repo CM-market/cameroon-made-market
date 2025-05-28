@@ -5,36 +5,37 @@ FROM rust:1.86-alpine AS builder
 
 WORKDIR /app
 
-# Install required build dependencies, including OpenSSL development files
-RUN apk add --no-cache \
+# Install required build dependencies
+RUN apk update && apk add --no-cache \
     build-base \
     pkgconf \
-    openssl-dev \
     musl-dev \
     ca-certificates \
     postgresql-dev \
-    musl-utils \
-    llvm-libunwind-dev
+    openssl-libs-static \
+    musl-utils && \
+    rm -rf /var/cache/apk/*
 
-# Set environment variables (disable static linking for OpenSSL)
-ENV OPENSSL_STATIC=0
-ENV OPENSSL_DIR=/usr
+# Set environment for static linking
+ENV RUSTFLAGS="-C target-feature=+crt-static"
+ENV PKG_CONFIG_ALL_STATIC=1
+ENV OPENSSL_STATIC=1
+ENV LIBPQ_STATIC=1
 
-# Copy Cargo files separately to optimize caching
+# Copy Cargo files and source
 COPY Cargo.toml Cargo.lock ./
 COPY . .
 
-# Build the project (using the host's default target)
-RUN cargo build --release && \
-    strip target/release/cameroon-made-market
+# Build for musl target
+RUN cargo build --release --target x86_64-unknown-linux-musl
 
-# Stage 2: Runtime using a distroless image
+# Stage 2: Runtime using distroless
 FROM gcr.io/distroless/static-debian12:latest
 
 WORKDIR /app
 
-# Copy the built binary from the builder stage
-COPY --from=builder /app/target/release/cameroon-made-market /usr/local/bin/cameroon-made-market
+# Copy the static binary
+COPY --from=builder /app/target/x86_64-unknown-linux-musl/release/cameroon-made-market /usr/local/bin/cameroon-made-market
 
 # Expose the port
 EXPOSE 8080
