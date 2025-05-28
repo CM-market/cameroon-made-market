@@ -13,12 +13,11 @@ services:
       - marketplace-network
 
   backend:
-    image: cameroon-made-market 
-    # build:
-    #   mem_limit: 512m
-    #   cpus: 1
-    #   context: ./backend
-    #   dockerfile: Dockerfile
+    build:
+      mem_limit: 512m
+      cpus: 1
+      context: ./backend
+      dockerfile: Dockerfile
     ports:
       - "8080:8080"
     environment:
