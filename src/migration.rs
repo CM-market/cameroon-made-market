@@ -39,6 +39,7 @@ pub mod tables {
                         .col(ColumnDef::new(Users::Id).uuid().not_null().primary_key())
                         .col(ColumnDef::new(Users::Email).string())
                         .col(ColumnDef::new(Users::PasswordHash).string().not_null())
+                        .col(ColumnDef::new(Users::IsActive).boolean().not_null())
                         .col(
                             ColumnDef::new(Users::Role)
                                 .enumeration(
@@ -82,6 +83,8 @@ pub mod tables {
                         .col(ColumnDef::new(Products::ReturnPolicy).string())
                         .col(ColumnDef::new(Products::Price).double().not_null())
                         .col(ColumnDef::new(Products::Category).string())
+                        .col(ColumnDef::new(Products::IsApproved).boolean().not_null())
+                        .col(ColumnDef::new(Products::IsRejected).boolean().not_null())
                         .col(
                             ColumnDef::new(Products::ImageUrls)
                                 .array(ColumnType::String(StringLen::Max))
@@ -181,7 +184,7 @@ pub mod tables {
                         .table(Orders::Table)
                         .if_not_exists()
                         .col(ColumnDef::new(Orders::Id).uuid().not_null().primary_key())
-                        .col(ColumnDef::new(Orders::SessionId).uuid().not_null())
+                        .col(ColumnDef::new(Orders::UserId).uuid().not_null())
                         .col(ColumnDef::new(Orders::CustomerName).string().not_null())
                         .col(ColumnDef::new(Orders::CustomerEmail).string())
                         .col(ColumnDef::new(Orders::CustomerPhone).string().not_null())
@@ -198,7 +201,7 @@ pub mod tables {
                         .foreign_key(
                             ForeignKey::create()
                                 .name("fk_orders_session_id")
-                                .from(Orders::Table, Orders::SessionId)
+                                .from(Orders::Table, Orders::UserId)
                                 .to(Users::Table, Users::Id)
                                 .on_delete(ForeignKeyAction::SetNull)
                                 .on_update(ForeignKeyAction::NoAction),
@@ -319,6 +322,7 @@ pub mod tables {
         Id,
         Email,
         PasswordHash,
+        IsActive,
         Role,
         FullName,
         Phone,
@@ -337,6 +341,8 @@ pub mod tables {
         Description,
         Price,
         Category,
+        IsApproved,
+        IsRejected,
         ImageUrls,
         CreatedAt,
         UpdatedAt,
@@ -363,7 +369,7 @@ pub mod tables {
     enum Orders {
         Table,
         Id,
-        SessionId,
+        UserId,
         CustomerName,
         CustomerEmail,
         CustomerPhone,

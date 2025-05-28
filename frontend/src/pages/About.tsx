@@ -10,7 +10,7 @@ const About = () => {
         <div className="max-w-4xl mx-auto space-y-12">
           {/* Hero Section */}
           <div className="text-center space-y-4">
-            <h1 className="text-4xl font-bold text-primary">Made in Cameroon</h1>
+            <h1 className="text-4xl font-bold text-primary">Transac</h1>
             <p className="text-xl text-muted-foreground">
               Empowering Cameroonian Artisans and Businesses
             </p>
