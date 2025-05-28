@@ -15,6 +15,8 @@ pub struct Model {
     pub order_id: Uuid,
     /// Reference to the product being ordered
     pub product_id: Uuid,
+    /// Price of the product at the time of order
+    pub price: f64,
     /// Quantity of the product ordered
     pub quantity: i32,
 }

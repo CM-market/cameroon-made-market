@@ -22,8 +22,8 @@ async fn main() {
     // Get configuration
     let app_state = setup().await;
     let token = generate_token(
-        "2d47cd42-e2fc-4dfa-b559-eb8a1896a7c0",
-        UserRole::Vendor,
+        "ed9bac6c-1714-4002-939d-0e328af7a2b8",
+        UserRole::Buyer,
         &app_state.config,
     )
     .unwrap();
@@ -39,18 +39,9 @@ async fn main() {
         .merge(routes::user::config())
         .merge(routes::product::config())
         .merge(routes::cart::config())
-<<<<<<< HEAD
         .merge(routes::order::config())
         .merge(routes::payment::config())
-=======
         .merge(admin_routes())
-        // .layer(middleware::from_fn({
-        //     let app_state = app_state.clone();
-        //     move |req: http::Request<axum::body::Body>, next| {
-        //         auth(axum::extract::State(app_state.clone()), req, next)
-        //     }
-        // }))
->>>>>>> 85da9186a2214ef877f597f7214b2324ba0b2e3a
         .layer(middleware::from_fn({
             move |req: http::Request<axum::body::Body>, next| auth(req, next)
         }))

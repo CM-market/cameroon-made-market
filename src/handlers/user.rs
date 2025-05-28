@@ -81,7 +81,9 @@ pub async fn login(
 
             Json(response)
         }
-        Err(e) => Json(ApiResponse::error(&e.to_string())),
+        Err(e) => {
+            tracing::warn!("Login failed: {}", e);
+            Json(ApiResponse::error("Login failed:"))},
     }
 }
 

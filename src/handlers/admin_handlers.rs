@@ -272,10 +272,9 @@ pub async fn get_buyer_conversion(
         let mut buyers_with_orders = std::collections::HashSet::new();
         for order in &orders {
             if order.created_at.year() == current_year && order.created_at.month0() as usize == i {
-                if let Ok(order_user_id) = Uuid::parse_str(&order.user_id) {
-                    if buyers_this_month.contains(&order_user_id) {
-                        buyers_with_orders.insert(order_user_id);
-                    }
+                let order_user_id = &order.user_id;
+                if buyers_this_month.contains(order_user_id) {
+                    buyers_with_orders.insert(*order_user_id);
                 }
             }
         }
