@@ -4,6 +4,8 @@ use serde::{Deserialize, Serialize};
 use std::fmt;
 use uuid::Uuid;
 
+use crate::routes::order::OrderItemRequest;
+
 /// Order model representing customer purchases in the marketplace
 /// This model tracks the entire order lifecycle from creation to completion
 #[derive(Clone, Debug, PartialEq, DeriveEntityModel, Serialize, Deserialize)]
@@ -23,6 +25,10 @@ pub struct Model {
     pub customer_phone: String,
     /// Delivery address for the order
     pub delivery_address: String,
+    /// region where the order is to be delivered
+    pub region: String,
+    /// City where the order is to be delivered
+    pub city: String,
     /// Current status of the order
     #[sea_orm(column_type = "Text")]
     pub status: String,
@@ -33,7 +39,7 @@ pub struct Model {
 }
 
 /// Order status enum
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Deserialize)]
 pub enum Status {
     /// Order is pending and awaiting payment
     Pending,
@@ -144,6 +150,10 @@ pub struct CreateOrder {
     pub status: String,
     /// Total amount of the order including all items and fees
     pub total: f64,
+    /// region where the order is to be delivered
+    pub region: String,
+    /// City where the order is to be delivered
+    pub city: String,
     /// Timestamp when the order was created
     pub created_at: DateTime<Utc>,
     pub items: Vec<Items>,
@@ -153,6 +163,20 @@ pub struct Items {
     pub product_id: Uuid,
     pub quantity: u32,
     pub price: f64,
+}
+
+#[derive(Debug)]
+pub struct NewOrder {
+    pub user_id: Uuid,
+    pub customer_name: String,
+    pub customer_email: Option<String>,
+    pub customer_phone: String,
+    pub delivery_address: String,
+    pub status: String,
+    pub total: f64,
+    pub items: Vec<OrderItemRequest>,
+    pub city: String,
+    pub region: String
 }
 
 /// Implements default behavior for active model operations

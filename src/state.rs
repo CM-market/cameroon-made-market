@@ -1,7 +1,7 @@
 use crate::{
     config::{self, Config},
     migration::Migrator,
-    services::{cart::CartService, product::ProductService},
+    services::{cart::CartService, order::OrderService, product::ProductService},
 };
 
 use sea_orm::{Database, DatabaseConnection};
@@ -15,6 +15,8 @@ pub struct AppState {
     pub config: Arc<Config>,
     pub product_service: Arc<ProductService>,
     pub cart_service: Arc<CartService>,
+
+    pub order_service: Arc<OrderService>,
 }
 
 impl AppState {
@@ -22,11 +24,13 @@ impl AppState {
         let db = Arc::new(db);
         let product_service = Arc::new(ProductService::new(db.clone()));
         let cart_service = Arc::new(CartService::new(db.clone()));
+        let order_service = Arc::new(OrderService::new(db.clone()));
         Self {
             db,
             config: Arc::new(config),
-            product_service,
             cart_service,
+            order_service,
+            product_service,
         }
     }
 }

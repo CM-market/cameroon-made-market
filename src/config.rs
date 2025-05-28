@@ -1,10 +1,11 @@
 use std::{env, str::FromStr};
 
+use fapshi_rs::client::FapshiClient;
 use minio::s3::{creds::StaticProvider, http::BaseUrl, Client};
 
 use crate::services::image::ImageService;
 
-#[derive(Debug, Clone, Default)]
+#[derive(Clone, Debug)]
 pub struct Config {
     pub database_url: String,
     pub jwt_secret: String,
@@ -13,6 +14,7 @@ pub struct Config {
     pub server_host: String,
     pub cors_origins: Vec<String>,
     pub image_service: ImageService,
+    pub payment_service: FapshiClient,
 }
 
 impl Config {
@@ -25,12 +27,15 @@ impl Config {
         let access_key = env::var("MINIO_ACCESS_KEY").unwrap();
         let secret_key = env::var("MINIO_SECRET_KEY").unwrap();
         let bucket = env::var("MINIO_BUCKET_NAME").unwrap_or_else(|_| "product-images".to_string());
+        let fapshi_api_user = env::var("FAPSHI_API_USER").expect("FAPSHI_API_USER must be set");
+        let fapshi_api_key = env::var("FAPSHI_API_KEY").expect("FAPSHI_API_KEY must be set");
 
         let base_url = BaseUrl::from_str("http://localhost:9000").unwrap();
         let credentials = Box::new(StaticProvider::new(&access_key, &secret_key, None));
         let client = Client::new(base_url, Some(credentials), None, None).unwrap();
         let image_service = ImageService { client, bucket };
-
+        let payment_service = FapshiClient::new(&fapshi_api_user, &fapshi_api_key, true)
+            .expect("Failed to create FapshiClient");
         Self {
             database_url: env::var("DATABASE_URL").expect("DATABASE_URL must be set"),
             jwt_secret: env::var("JWT_SECRET").expect("JWT_SECRET must be set"),
@@ -49,6 +54,7 @@ impl Config {
                 .map(|s| s.trim().to_string())
                 .collect(),
             image_service,
+            payment_service,
         }
     }
 }

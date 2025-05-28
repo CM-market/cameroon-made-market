@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import MainNavbar from "@/components/MainNavbar";
 import { Button } from "@/components/ui/button";
@@ -9,33 +8,87 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useNavigate } from "react-router-dom";
+import { Badge } from "@/components/ui/badge";
+import { Banknote, CreditCard, Smartphone } from "lucide-react";
+import { orderApi } from "@/lib/api";
 
 const Checkout: React.FC = () => {
   const [paymentMethod, setPaymentMethod] = useState("mobileMoney");
+  const [mobileMoneyDetails, setMobileMoneyDetails] = useState({
+    provider: "MTN",
+    phoneNumber: "",
+  });
+
+  const cartItemsString = localStorage.getItem("cartItems");
+  const cartItems = cartItemsString ? JSON.parse(cartItemsString) : [];
+  const orderItems = cartItems.map(item => ({
+    product_id: item.id,
+    quantity: item.quantity,
+    price: item.price,
+  }));
+  const [form, setFormData] = useState({
+    customer_name: "",
+    customer_phone: "",
+    delivery_address: "",
+    city: "",
+    region: "",
+    mobileMoneyNumber: "",
+
+  });
   const navigate = useNavigate();
-  
-  const handleSubmit = (e: React.FormEvent) => {
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { id, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [id]: value
+    }));
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // In a real app, this would process payment and create order
-    // For demo, just navigate to success page
+    const data = {
+      customer_name: form.customer_name,
+      customer_phone: form.customer_phone,
+      delivery_address: form.delivery_address,
+      city: form.city,
+      region: form.region,
+      paymentMethod,
+      items: orderItems,
+      total: orderSummary.total,
+      // Include mobile money details for direct payments
+      mobileMoney: paymentMethod === "mobileMoney" ? {
+        provider: mobileMoneyDetails.provider,
+        phone: mobileMoneyDetails.phoneNumber,
+      } : null,
+    };
+
+    try {
+      const order = await orderApi.create(data);
+      localStorage.setItem("currentOrder", JSON.stringify(order));
+      navigate("/payment");
+    } catch (error) {
+      console.error("Failed to place order", error);
+      alert("There was an issue placing your order. Please try again.");
+    }
     navigate("/payment");
   };
 
-  // Sample order summary data
+  // Compute order summary dynamically
   const orderSummary = {
-    subtotal: 62500,
-    shipping: 2500,
-    total: 65000,
-    items: 4
+    subtotal: cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0),
+    shipping: "free", // Example: fixed shipping cost
+    total: cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0),
+    items: cartItems.length,
   };
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
       <MainNavbar />
-      
+
       <div className="container mx-auto px-4 py-8">
         <h1 className="text-3xl font-bold mb-6">Checkout</h1>
-        
+
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           <div className="lg:col-span-2">
             <form onSubmit={handleSubmit}>
@@ -49,28 +102,54 @@ const Checkout: React.FC = () => {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div className="space-y-2">
                         <Label htmlFor="fullName">Full Name</Label>
-                        <Input id="fullName" required />
+                        <Input
+                          id="fullName"
+                          required
+                          value={form.customer_name}
+                          onChange={handleInputChange}
+                        />
                       </div>
                       <div className="space-y-2">
                         <Label htmlFor="phone">Phone Number</Label>
-                        <Input id="phone" type="tel" required />
+                        <Input
+                          id="phone"
+                          type="tel"
+                          required
+                          value={form.customer_phone}
+                          onChange={handleInputChange}
+                        />
                       </div>
                       <div className="space-y-2 md:col-span-2">
                         <Label htmlFor="address">Street Address</Label>
-                        <Input id="address" required />
+                        <Input
+                          id="address"
+                          required
+                          value={form.delivery_address}
+                          onChange={handleInputChange}
+                        />
                       </div>
                       <div className="space-y-2">
                         <Label htmlFor="city">City</Label>
-                        <Input id="city" required />
+                        <Input
+                          id="city"
+                          required
+                          value={form.city}
+                          onChange={handleInputChange}
+                        />
                       </div>
                       <div className="space-y-2">
                         <Label htmlFor="region">Region</Label>
-                        <Input id="region" required />
+                        <Input
+                          id="region"
+                          required
+                          value={form.region}
+                          onChange={handleInputChange}
+                        />
                       </div>
                     </div>
                   </CardContent>
                 </Card>
-                
+
                 {/* Payment Method */}
                 <Card>
                   <CardHeader>
@@ -89,57 +168,47 @@ const Checkout: React.FC = () => {
                           <p className="text-sm text-muted-foreground">MTN Mobile Money, Orange Money</p>
                         </Label>
                         <div className="flex gap-2">
-                          <div className="w-10 h-6 bg-gray-200 rounded"></div>
-                          <div className="w-10 h-6 bg-gray-200 rounded"></div>
+                          <img src="/mtn-money-logo.png" alt="MTN Money" className="h-10 w-auto" />
+                          <img src="/orange-money-logo.png" alt="Orange Money" className="h-10 w-auto" />
                         </div>
                       </div>
-                      
-                      <div className="flex items-center space-x-2 border rounded-md p-4">
-                        <RadioGroupItem value="card" id="card" />
-                        <Label htmlFor="card" className="flex-1 cursor-pointer">
-                          Credit/Debit Card
+
+                      <div className="flex items-center space-x-2 border rounded-md p-4 relative">
+                        <RadioGroupItem value="card" id="card" disabled />
+                        <Label htmlFor="card" className="flex-1 cursor-not-allowed">
+                          <div className="flex items-center gap-2">
+                            <span>Credit/Debit Card</span>
+                            <Badge variant="destructive">Not Available</Badge>
+                          </div>
                           <p className="text-sm text-muted-foreground">Visa, MasterCard</p>
                         </Label>
                         <div className="flex gap-2">
-                          <div className="w-10 h-6 bg-gray-200 rounded"></div>
-                          <div className="w-10 h-6 bg-gray-200 rounded"></div>
+                          <CreditCard className="h-6 w-6 text-muted-foreground" />
                         </div>
                       </div>
-                      
+
                       <div className="flex items-center space-x-2 border rounded-md p-4">
                         <RadioGroupItem value="cash" id="cash" />
                         <Label htmlFor="cash" className="flex-1 cursor-pointer">
                           Cash on Delivery
                           <p className="text-sm text-muted-foreground">Pay when you receive the products</p>
                         </Label>
+                        <Banknote className="h-6 w-6 text-muted-foreground" />
                       </div>
                     </RadioGroup>
-                    
-                    {paymentMethod === "card" && (
-                      <div className="mt-4 space-y-4">
-                        <div className="space-y-2">
-                          <Label htmlFor="cardNumber">Card Number</Label>
-                          <Input id="cardNumber" placeholder="1234 5678 9012 3456" />
-                        </div>
-                        <div className="grid grid-cols-2 gap-4">
-                          <div className="space-y-2">
-                            <Label htmlFor="expiry">Expiry Date</Label>
-                            <Input id="expiry" placeholder="MM/YY" />
-                          </div>
-                          <div className="space-y-2">
-                            <Label htmlFor="cvv">CVV</Label>
-                            <Input id="cvv" placeholder="123" />
-                          </div>
-                        </div>
-                      </div>
-                    )}
-                    
+
                     {paymentMethod === "mobileMoney" && (
                       <div className="mt-4">
                         <Tabs defaultValue="mtn">
                           <TabsList className="grid w-full grid-cols-2">
-                            <TabsTrigger value="mtn">MTN Mobile Money</TabsTrigger>
-                            <TabsTrigger value="orange">Orange Money</TabsTrigger>
+                            <TabsTrigger value="mtn" className="flex items-center gap-2">
+                              <img src="/mtn-money-logo.png" alt="MTN" className="h-8 w-auto" />
+                              MTN Mobile Money
+                            </TabsTrigger>
+                            <TabsTrigger value="orange" className="flex items-center gap-2">
+                              <img src="/orange-money-logo.png" alt="Orange" className="h-8 w-auto" />
+                              Orange Money
+                            </TabsTrigger>
                           </TabsList>
                           <TabsContent value="mtn" className="space-y-4 mt-4">
                             <div className="space-y-2">
@@ -158,9 +227,9 @@ const Checkout: React.FC = () => {
                     )}
                   </CardContent>
                 </Card>
-                
-                <Button 
-                  type="submit" 
+
+                <Button
+                  type="submit"
                   className="w-full bg-cm-green hover:bg-cm-forest"
                 >
                   Place Order
@@ -168,7 +237,7 @@ const Checkout: React.FC = () => {
               </div>
             </form>
           </div>
-          
+
           <div>
             <Card>
               <CardHeader>
@@ -180,25 +249,25 @@ const Checkout: React.FC = () => {
                     <span>Items ({orderSummary.items})</span>
                     <span>{orderSummary.subtotal.toLocaleString()} FCFA</span>
                   </div>
-                  
+
                   <div className="flex justify-between">
                     <span>Shipping</span>
                     <span>{orderSummary.shipping.toLocaleString()} FCFA</span>
                   </div>
-                  
+
                   <Separator />
-                  
+
                   <div className="flex justify-between font-bold">
                     <span>Total</span>
-                    <span>{orderSummary.total.toLocaleString()} FCFA</span>
+                    <span className="text bold">Free</span>
                   </div>
                 </div>
-                
+
                 <div className="mt-4">
                   <div className="bg-muted rounded-md p-4">
                     <h3 className="font-medium mb-1">Estimated Delivery</h3>
                     <p className="text-sm text-muted-foreground">
-                      3-5 business days after payment confirmation
+                      1-3 business days after payment confirmation
                     </p>
                   </div>
                 </div>

@@ -33,7 +33,6 @@ pub async fn auth(mut req: Request, next: Next) -> Result<Response, StatusCode> 
         .get::<AppState>()
         .cloned()
         .ok_or(StatusCode::INTERNAL_SERVER_ERROR)?;
-
     let token = req
         .headers()
         .get("Authorization")
