@@ -46,9 +46,9 @@ export const ProductPreview = ({ formData }: ProductPreviewProps) => {
         )}
         
         <div className="text-sm mb-6">
-          {formData.stockQuantity ? (
+          {formData.quantity? (
             <span className="text-cm-green">
-              In stock: {formData.stockQuantity} available
+              In stock: {formData.quantity} available
             </span>
           ) : (
             <span className="text-muted-foreground">Stock quantity not set</span>
@@ -65,7 +65,7 @@ export const ProductPreview = ({ formData }: ProductPreviewProps) => {
         <ProductDetailsInfo
           materials={formData.materials}
           dimensions={formData.dimensions}
-          weight={formData.weight}
+          returnPolicy={formData.returnPolicy}
         />
 
         <ProductShippingInfo

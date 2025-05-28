@@ -187,7 +187,7 @@ pub mod tables {
                         .col(ColumnDef::new(Orders::CustomerPhone).string().not_null())
                         .col(ColumnDef::new(Orders::DeliveryAddress).string().not_null())
                         .col(ColumnDef::new(Orders::Status).text().not_null())
-                        .col(ColumnDef::new(Orders::Total).decimal_len(10, 2).not_null())
+                        .col(ColumnDef::new(Orders::Total).double().not_null())
                         .col(ColumnDef::new(Orders::City).string().not_null())
                         .col(ColumnDef::new(Orders::Region).string().not_null())
                         .col(
@@ -253,7 +253,7 @@ pub mod tables {
                         .col(ColumnDef::new(Payments::OrderId).uuid().not_null())
                         .col(
                             ColumnDef::new(Payments::Amount)
-                                .decimal_len(10, 2)
+                                .double()
                                 .not_null(),
                         )
                         .col(ColumnDef::new(Payments::Status).string().not_null())

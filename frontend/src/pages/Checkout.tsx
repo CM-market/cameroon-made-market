@@ -103,7 +103,7 @@ const Checkout: React.FC = () => {
                       <div className="space-y-2">
                         <Label htmlFor="fullName">Full Name</Label>
                         <Input
-                          id="fullName"
+                          id="customer_name"
                           required
                           value={form.customer_name}
                           onChange={handleInputChange}
@@ -112,8 +112,8 @@ const Checkout: React.FC = () => {
                       <div className="space-y-2">
                         <Label htmlFor="phone">Phone Number</Label>
                         <Input
-                          id="phone"
-                          type="tel"
+                          id="customer_phone"
+                          type="number"
                           required
                           value={form.customer_phone}
                           onChange={handleInputChange}
@@ -122,7 +122,7 @@ const Checkout: React.FC = () => {
                       <div className="space-y-2 md:col-span-2">
                         <Label htmlFor="address">Street Address</Label>
                         <Input
-                          id="address"
+                          id="delivery_address"
                           required
                           value={form.delivery_address}
                           onChange={handleInputChange}
