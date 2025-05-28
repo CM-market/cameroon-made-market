@@ -14,8 +14,6 @@ services:
 
   backend:
     build:
-      mem_limit: 512m
-      cpus: 1
       context: ./backend
       dockerfile: Dockerfile
     ports:
