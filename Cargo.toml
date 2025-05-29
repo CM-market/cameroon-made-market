@@ -34,7 +34,7 @@ thiserror = "1.0"
 validator = { version = "0.16", features = ["derive"] }
 futures = "0.3"
 rust_decimal = "1.32"
-fapshi-rs = "0.1.0"
+
 
 # Testing
 mockall = "0.12"
@@ -47,6 +47,7 @@ sea-orm-migration = "1.1.11"
 # MinIO
 minio = "0.2"
 async-trait = "0.1"
+fapshi-rs = { version = "0.2.1", features = ["async"] }
 
 [dev-dependencies]
 tokio-test = "0.4"
