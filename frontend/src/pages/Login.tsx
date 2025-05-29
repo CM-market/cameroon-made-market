@@ -87,6 +87,8 @@ const Login: React.FC = () => {
                 <Label htmlFor="role">Login as</Label>
                 <select
                   id="role"
+                  name="role"
+                  aria-label="Login as"
                   value={role}
                   onChange={handleRoleChange}
                   className="w-full border rounded px-2 py-1"

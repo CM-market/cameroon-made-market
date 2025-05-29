@@ -278,7 +278,7 @@ impl ProductService {
     }
 }
 
-#[derive(Debug)] 
+#[derive(Debug)]
 struct ProductStats {
     sales: i32,
     revenue: f64,
