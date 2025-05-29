@@ -44,7 +44,7 @@ pub mod tables {
                             ColumnDef::new(Users::Role)
                                 .enumeration(
                                     Alias::new("user_role"),
-                                    vec!["Admin", "Vendor", "User"],
+                                    vec!["Admin", "Vendor", "Buyer"],
                                 )
                                 .not_null(),
                         )
