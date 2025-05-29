@@ -234,8 +234,8 @@ const ProductList: React.FC = () => {
                         <SelectItem value="west">West</SelectItem>
                         <SelectItem value="center">Center</SelectItem>
                         <SelectItem value="littoral">Littoral</SelectItem>
-                        <SelectItem value="north">North</SelectItem>
-                        <SelectItem value="south">South</SelectItem>
+                        <SelectItem value="north">North West</SelectItem>
+                        <SelectItem value="south">South West</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>

@@ -58,31 +58,33 @@ export function OrderManagement() {
           setOrders(data);
         } else if (data.data) {
           setOrders(data.data);
-        } else {
-          console.error('Error in response format:', data);
         }
-      } catch (jsonError) {
-        console.error('Non-JSON response:', text);
+      } catch (parseError) {
+        throw new Error(`Failed to parse response: ${parseError.message}`);
       }
-    } catch (error) {
-      console.error('Error fetching orders:', error);
-    } finally {
+    }
+
+    finally {
       setLoading(false);
     }
   };
 
-  const getStatusBadgeVariant = (status: string) => {
+  const getStatusBadgeVariant = (status: string): "secondary" | "default" | "destructive" | "outline" => {
     switch (status.toLowerCase()) {
       case 'pending':
-        return 'default';
+        return 'secondary';
       case 'paid':
         return 'default';
       case 'delivered':
         return 'default';
       case 'cancelled':
         return 'destructive';
+      case 'refund':
+        return 'destructive';
+      case 'failed':
+        return 'destructive';
       default:
-        return 'default';
+        return 'secondary';
     }
   };
 

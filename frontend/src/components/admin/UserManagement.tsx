@@ -46,14 +46,12 @@ export function UserManagement() {
           setUsers(data);
         } else if (data.data) {
           setUsers(data.data);
-        } else {
-          console.error('Error in response format:', data);
         }
       } catch (jsonError) {
-        console.error('Non-JSON response:', text);
+        throw new Error('Failed to parse JSON response: ' + jsonError.message);
       }
     } catch (error) {
-      console.error('Network error:', error);
+      throw new Error('Failed to fetch users: ' + error.message);
     } finally {
       setLoading(false);
     }
