@@ -68,7 +68,6 @@ const Checkout: React.FC = () => {
       localStorage.setItem("currentOrder", JSON.stringify(order));
       navigate("/payment");
     } catch (error) {
-      console.error("Failed to place order", error);
       alert("There was an issue placing your order. Please try again.");
     }
     navigate("/payment");
@@ -77,7 +76,7 @@ const Checkout: React.FC = () => {
   // Compute order summary dynamically
   const orderSummary = {
     subtotal: cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0),
-    shipping: "free", // Example: fixed shipping cost
+    shipping: "Free", // Example: fixed shipping cost
     total: cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0),
     items: cartItems.length,
   };
@@ -103,7 +102,7 @@ const Checkout: React.FC = () => {
                       <div className="space-y-2">
                         <Label htmlFor="fullName">Full Name</Label>
                         <Input
-                          id="fullName"
+                          id="customer_name"
                           required
                           value={form.customer_name}
                           onChange={handleInputChange}
@@ -112,8 +111,8 @@ const Checkout: React.FC = () => {
                       <div className="space-y-2">
                         <Label htmlFor="phone">Phone Number</Label>
                         <Input
-                          id="phone"
-                          type="tel"
+                          id="customer_phone"
+                          type="number"
                           required
                           value={form.customer_phone}
                           onChange={handleInputChange}
@@ -122,7 +121,7 @@ const Checkout: React.FC = () => {
                       <div className="space-y-2 md:col-span-2">
                         <Label htmlFor="address">Street Address</Label>
                         <Input
-                          id="address"
+                          id="delivery_address"
                           required
                           value={form.delivery_address}
                           onChange={handleInputChange}
@@ -252,14 +251,17 @@ const Checkout: React.FC = () => {
 
                   <div className="flex justify-between">
                     <span>Shipping</span>
-                    <span>{orderSummary.shipping.toLocaleString()} FCFA</span>
+                    <span className="bg-green-100 text-green-600 font-bold px-2 py-1 rounded-full text-sm">
+                      Free
+                    </span>
+
                   </div>
 
                   <Separator />
 
                   <div className="flex justify-between font-bold">
                     <span>Total</span>
-                    <span className="text bold">Free</span>
+                    <span className="text bold">{orderSummary.total}</span>
                   </div>
                 </div>
 

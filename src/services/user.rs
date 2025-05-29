@@ -94,7 +94,7 @@ impl UserService {
             .filter(user::Column::Phone.eq(phone))
             .one(&*self.db)
             .await
-            .map_err(|e| ServiceError::InternalServerError)?;
+            .map_err(|_| ServiceError::InternalServerError)?;
         if let Some(user) = user {
             if let Some(role) = expected_role {
                 if user.role != role {
@@ -105,7 +105,7 @@ impl UserService {
                 return Err(ServiceError::InvalidPassword)?;
             }
             let token = generate_token(&user.id.to_string(), user.role.clone(), &config)
-                .map_err(|e| ServiceError::InternalServerError)?;
+                .map_err(|_| ServiceError::InternalServerError)?;
             Ok((user, token))
         } else {
             Err(ServiceError::UserNotFound("User not found".to_string()))

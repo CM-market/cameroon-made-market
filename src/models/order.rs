@@ -15,7 +15,7 @@ pub struct Model {
     #[sea_orm(primary_key, auto_increment = false)]
     pub id: Uuid,
     /// user identifier for guest checkout orders
-    pub user_id: String,
+    pub user_id: Uuid,
     /// Name of the customer placing the order
     pub customer_name: String,
     #[serde(skip_serializing_if = "Option::is_none")]

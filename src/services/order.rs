@@ -24,7 +24,7 @@ impl OrderService {
     pub async fn create_order(&self, order_data: NewOrder) -> Result<order::Model, ServiceError> {
         let order = order::ActiveModel {
             id: Set(Uuid::new_v4()),
-            user_id: Set(order_data.user_id.to_string()),
+            user_id: Set(order_data.user_id),
             customer_name: Set(order_data.customer_name),
             customer_email: Set(order_data.customer_email),
             customer_phone: Set(order_data.customer_phone),
@@ -46,6 +46,7 @@ impl OrderService {
                 product_id: Set(Uuid::parse_str(&item.product_id)
                     .map_err(|_| ServiceError::Validation("malformed body".to_string()))?),
                 quantity: Set(item.quantity as i32),
+                price: Set(item.price),
             }
             .insert(&*self.db)
             .await?;
@@ -148,7 +149,7 @@ mod tests {
         let db = MockDatabase::new(sea_orm::DatabaseBackend::Postgres)
             .append_query_results(vec![vec![order::Model {
                 id: Uuid::new_v4(),
-                user_id: "test_session".to_string(),
+                user_id: Uuid::new_v4(),
                 customer_name: "Test Customer".to_string(),
                 customer_email: Some("test@example.com".to_string()),
                 customer_phone: "1234567890".to_string(),
@@ -163,6 +164,7 @@ mod tests {
                 id: Uuid::new_v4(),
                 order_id: Uuid::new_v4(),
                 product_id: Uuid::new_v4(),
+                price: 50.0, // 50.00
                 quantity: 2,
             }]])
             .into_connection();
@@ -195,7 +197,7 @@ mod tests {
         let db = MockDatabase::new(sea_orm::DatabaseBackend::Postgres)
             .append_query_results(vec![vec![order::Model {
                 id: order_id,
-                user_id: "test_session".to_string(),
+                user_id: Uuid::new_v4(),
                 customer_name: "Test Customer".to_string(),
                 customer_email: Some("test@example.com".to_string()),
                 customer_phone: "1234567890".to_string(),
@@ -225,7 +227,7 @@ mod tests {
         let db = MockDatabase::new(sea_orm::DatabaseBackend::Postgres)
             .append_query_results(vec![vec![order::Model {
                 id: order_id,
-                user_id: "test_session".to_string(),
+                user_id: Uuid::new_v4(),
                 customer_name: "Test Customer".to_string(),
                 customer_email: Some("test@example.com".to_string()),
                 customer_phone: "1234567890".to_string(),
@@ -238,7 +240,7 @@ mod tests {
             }]])
             .append_query_results(vec![vec![order::Model {
                 id: order_id,
-                user_id: "test_session".to_string(),
+               user_id: Uuid::new_v4(),
                 customer_name: "Test Customer".to_string(),
                 customer_email: Some("test@example.com".to_string()),
                 customer_phone: "1234567890".to_string(),
@@ -269,7 +271,7 @@ mod tests {
             .append_query_results(vec![vec![
                 order::Model {
                     id: Uuid::new_v4(),
-                    user_id: "session1".to_string(),
+                    user_id: user_id,
                     customer_name: "Customer 1".to_string(),
                     customer_email: Some("customer1@example.com".to_string()),
                     customer_phone: "1234567890".to_string(),
@@ -282,7 +284,7 @@ mod tests {
                 },
                 order::Model {
                     id: Uuid::new_v4(),
-                    user_id: "session2".to_string(),
+                    user_id: user_id,
                     customer_name: "Customer 2".to_string(),
                     customer_email: Some("customer2@example.com".to_string()),
                     customer_phone: "0987654321".to_string(),
@@ -316,12 +318,14 @@ mod tests {
                     id: Uuid::new_v4(),
                     order_id,
                     product_id: Uuid::new_v4(),
+                    price: 50.0,
                     quantity: 2,
                 },
                 order_item::Model {
                     id: Uuid::new_v4(),
                     order_id,
                     product_id: Uuid::new_v4(),
+                    price: 30.0,
                     quantity: 1,
                 },
             ]])

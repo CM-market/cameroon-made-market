@@ -151,11 +151,9 @@ export const userApi = {
     role?: "Vendor" | "Buyer";
   }) => {
     const response = await axios.post(`${API_URL}/api/users/login`, data,{
-      headers: {
-        Authorization: `Bearer ${localStorage.getItem('token')}`,
-      },
   });
     return response.data;
   },
   // ...other user API methods
 }; 
+

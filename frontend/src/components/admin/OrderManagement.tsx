@@ -20,11 +20,14 @@ import {
 
 interface Order {
   id: string;
-  buyer_id: string;
-  buyer_name: string;
-  vendor_id: string;
-  vendor_name: string;
-  total_amount: number;
+  user_id: string;
+  customer_name: string;
+  customer_email: string;
+  customer_phone: string;
+  delivery_address: string;
+  region: string;
+  city: string;
+  total: number;
   status: string;
   created_at: string;
 }
@@ -55,41 +58,43 @@ export function OrderManagement() {
           setOrders(data);
         } else if (data.data) {
           setOrders(data.data);
-        } else {
-          console.error('Error in response format:', data);
         }
-      } catch (jsonError) {
-        console.error('Non-JSON response:', text);
+      } catch (parseError) {
+        throw new Error(`Failed to parse response: ${parseError.message}`);
       }
-    } catch (error) {
-      console.error('Error fetching orders:', error);
-    } finally {
+    }
+
+    finally {
       setLoading(false);
     }
   };
 
-  const getStatusBadgeVariant = (status: string) => {
+  const getStatusBadgeVariant = (status: string): "secondary" | "default" | "destructive" | "outline" => {
     switch (status.toLowerCase()) {
       case 'pending':
-        return 'default';
+        return 'secondary';
       case 'paid':
         return 'default';
       case 'delivered':
         return 'default';
       case 'cancelled':
         return 'destructive';
+      case 'refund':
+        return 'destructive';
+      case 'failed':
+        return 'destructive';
       default:
-        return 'default';
+        return 'secondary';
     }
   };
 
   const filteredOrders = orders.filter(order => {
-    const matchesSearch = 
-      order.buyer_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      order.vendor_name.toLowerCase().includes(searchTerm.toLowerCase());
-    
+    const matchesSearch =
+      order.customer_name.toLowerCase().includes(searchTerm.toLowerCase())
+
+
     const matchesStatus = statusFilter === 'all' || order.status.toLowerCase() === statusFilter.toLowerCase();
-    
+
     return matchesSearch && matchesStatus;
   });
 
@@ -130,7 +135,6 @@ export function OrderManagement() {
             <TableRow>
               <TableHead>Order ID</TableHead>
               <TableHead>Buyer</TableHead>
-              <TableHead>Vendor</TableHead>
               <TableHead>Amount</TableHead>
               <TableHead>Status</TableHead>
               <TableHead>Date</TableHead>
@@ -141,9 +145,8 @@ export function OrderManagement() {
             {filteredOrders.map((order) => (
               <TableRow key={order.id}>
                 <TableCell>{order.id}</TableCell>
-                <TableCell>{order.buyer_name}</TableCell>
-                <TableCell>{order.vendor_name}</TableCell>
-                <TableCell>${order.total_amount.toFixed(2)}</TableCell>
+                <TableCell>{order.customer_name}</TableCell>
+                <TableCell>${order.total.toFixed(2)}</TableCell>
                 <TableCell>
                   <Badge variant={getStatusBadgeVariant(order.status)}>
                     {order.status}

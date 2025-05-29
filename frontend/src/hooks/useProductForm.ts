@@ -191,7 +191,7 @@ export const useProductForm = (onProductCreated?: () => void) => {
         price: parseFloat(formData.price),
         category: formData.category,
         image_urls: formData.uploadedImageUrls,
-        quantity: parseInt(formData.quantity === '' ? '1' : formData.quantity, 10),
+        quantity: Number(formData.quantity),
         return_policy: formData.returnPolicy,
         // Add other fields as needed
       };

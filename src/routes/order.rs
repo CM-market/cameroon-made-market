@@ -15,6 +15,8 @@ use serde::Deserialize;
 use tracing::{error, info};
 use uuid::Uuid;
 
+use super::error::ErrorResponse;
+
 pub fn config() -> Router<AppState> {
     Router::new()
         .route("/orders", get(list_orders))
@@ -110,9 +112,20 @@ async fn create_order(
         .iter()
         .map(|item| item.quantity as f64 * item.price)
         .sum();
-    info!("total for this order is: {}", total);
+
+    let id = match Uuid::parse_str(&auth.id) {
+        Ok(uuid) => uuid,
+        Err(e) => {
+            return ErrorResponse::ConversionFailed(format!(
+                "Invalid UUID in auth.id: {} - Error: {}",
+                auth.id, e
+            ))
+            .into_response();
+        }
+    };
+
     let req = NewOrder {
-        user_id: Uuid::parse_str(&auth.id).expect("Invalid UUID in auth.id"),
+        user_id: id,
         customer_name: payload.customer_name,
         customer_email: payload.customer_email,
         customer_phone: payload.customer_phone,
@@ -124,7 +137,6 @@ async fn create_order(
         region: payload.region,
     };
 
-    info!("Creating order: {:?}", req);
     match state.order_service.create_order(req).await {
         Ok(order) => (
             StatusCode::CREATED,
