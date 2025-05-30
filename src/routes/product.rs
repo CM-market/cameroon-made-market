@@ -6,6 +6,7 @@ use crate::{
     },
     state::AppState,
     utils::shared::ApiResponse,
+    models::user::UserRole,
 };
 use axum::{
     extract::{Path, State},
@@ -31,6 +32,12 @@ pub fn config() -> Router<AppState> {
         .nest(
             "/vendor",
             Router::new().route("/products", get(list_products_by)),
+        )
+        .nest(
+            "/admin",
+            Router::new()
+                .route("/products/:id/approve", post(approve_product))
+                .route("/products/pending", get(list_pending_products)),
         )
 }
 pub async fn list_products_by(
@@ -257,6 +264,59 @@ async fn delete_product(
         Ok(None) => (
             StatusCode::NOT_FOUND,
             Json(ApiResponse::<()>::error("Product not found")),
+        )
+            .into_response(),
+        Err(e) => (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(ApiResponse::<()>::error(&e.to_string())),
+        )
+            .into_response(),
+    }
+}
+
+async fn approve_product(
+    State(state): State<AppState>,
+    Path(product_id): Path<Uuid>,
+    Extension(auth_user): Extension<AuthUser>,
+) -> impl IntoResponse {
+    // Check if user is admin
+    if auth_user.role != UserRole::Admin {
+        return (
+            StatusCode::FORBIDDEN,
+            Json(ApiResponse::<()>::error("Only admins can approve products")),
+        )
+            .into_response();
+    }
+    match state.product_service.approve_product(product_id).await {
+        Ok(product) => (
+            StatusCode::OK,
+            Json(ApiResponse::success(product, "Product approved successfully")),
+        )
+            .into_response(),
+        Err(e) => (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(ApiResponse::<()>::error(&e.to_string())),
+        )
+            .into_response(),
+    }
+}
+
+async fn list_pending_products(
+    State(state): State<AppState>,
+    Extension(auth_user): Extension<AuthUser>,
+) -> impl IntoResponse {
+    // Check if user is admin
+    if auth_user.role != UserRole::Admin {
+        return (
+            StatusCode::FORBIDDEN,
+            Json(ApiResponse::<()>::error("Only admins can view pending products")),
+        )
+            .into_response();
+    }
+    match state.product_service.list_pending_products().await {
+        Ok(products) => (
+            StatusCode::OK,
+            Json(ApiResponse::success(products, "Pending products retrieved successfully")),
         )
             .into_response(),
         Err(e) => (

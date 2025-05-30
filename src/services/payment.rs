@@ -1,3 +1,4 @@
+use fapshi_rs::client::FapshiClient;
 use sea_orm::{ActiveModelTrait, ColumnTrait, DatabaseConnection, EntityTrait, QueryFilter, Set};
 use uuid::Uuid;
 
@@ -8,8 +9,10 @@ use crate::models::{
 
 use super::errors::ServiceError;
 
+
 pub struct PaymentService {
-    db: DatabaseConnection,
+    pub db: DatabaseConnection,
+    pub client: FapshiClient,
 }
 pub struct CreatePayment {
     pub order_id: Uuid,
@@ -17,9 +20,10 @@ pub struct CreatePayment {
     pub payment_method: String,
     pub payment_details: Option<serde_json::Value>,
 }
+
 impl PaymentService {
-    pub fn new(db: DatabaseConnection) -> Self {
-        Self { db }
+    pub fn new(db: DatabaseConnection, client: FapshiClient) -> Self {
+        Self { db, client }
     }
 
     pub async fn create_payment(
@@ -135,8 +139,9 @@ mod tests {
                 updated_at: chrono::Utc::now(),
             }]])
             .into_connection();
+        let client = FapshiClient::new("https://api.fapshi.com", "test_api_key", true).unwrap();
 
-        let service = PaymentService::new(db);
+        let service = PaymentService::new(db, client);
 
         let payment_data = CreatePayment {
             order_id,
@@ -177,7 +182,9 @@ mod tests {
             }]])
             .into_connection();
 
-        let service = PaymentService::new(db);
+            let client = FapshiClient::new("https://api.fapshi.com", "test_api_key", true).unwrap();
+
+            let service = PaymentService::new(db, client);
 
         let result = service.get_payment_by_id(payment_id).await;
         assert!(result.is_ok());
@@ -223,7 +230,9 @@ mod tests {
             ])
             .into_connection();
 
-        let service = PaymentService::new(db);
+            let client = FapshiClient::new("https://api.fapshi.com", "test_api_key", true).unwrap();
+
+            let service = PaymentService::new(db, client);
 
         let result = service
             .update_payment_status(payment_id, "completed".to_string())

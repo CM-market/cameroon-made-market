@@ -53,7 +53,7 @@ const Login: React.FC = () => {
       if (role === "Vendor") {
         navigate("/vendor/dashboard");
       } else {
-        navigate("/"); // Or a buyer dashboard if you have one
+        navigate("/products"); // Or a buyer dashboard if you have one
       }
     } catch (error) {
       toast({
@@ -87,6 +87,8 @@ const Login: React.FC = () => {
                 <Label htmlFor="role">Login as</Label>
                 <select
                   id="role"
+                  name="role"
+                  aria-label="Login as"
                   value={role}
                   onChange={handleRoleChange}
                   className="w-full border rounded px-2 py-1"

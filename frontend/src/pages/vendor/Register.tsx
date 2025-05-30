@@ -55,7 +55,7 @@ const VendorRegister: React.FC = () => {
       });
       toast({
         title: "Registration successful",
-        description: "Welcome to Made in Cameroon! Please log in to continue."
+        description: "Transac! Please log in to continue."
       });
       navigate("/login?type=producer");
     } catch (error) {

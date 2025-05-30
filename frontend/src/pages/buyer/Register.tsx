@@ -68,7 +68,7 @@ const BuyerRegister: React.FC = () => {
           <CardHeader className="text-center">
             <CardTitle className="text-2xl">Start Buying</CardTitle>
             <CardDescription>
-              Create your account to start shopping on Made in Cameroon
+              Create your account to start shopping on Transac
             </CardDescription>
           </CardHeader>
           <form onSubmit={handleSubmit}>

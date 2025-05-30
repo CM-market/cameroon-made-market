@@ -133,9 +133,9 @@ const VendorProducts: React.FC = () => {
       title: product.title,
       description: product.description || '',
       price: Number(product.price),
+      quantity: Number(product.quantity),
       category: product.category || '',
-      image_urls: product.image_urls,
-      quantity: Number(product.quantity)
+      image_urls: product.image_urls
     });
     setIsEditDialogOpen(true);
   };

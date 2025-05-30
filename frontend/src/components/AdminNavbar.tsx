@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Link } from "react-router-dom";
 import { User, LayoutDashboard, Package, ShoppingCart, UserCheck, CheckSquare, Settings } from "lucide-react";
@@ -12,10 +11,10 @@ const AdminNavbar: React.FC = () => {
           <Link to="/" className="font-bold text-xl flex items-center">
             <img
               src="/placeholder.svg"
-              alt="Made in Cameroon"
+              alt="Transac"
               className="h-8 w-8 mr-2"
             />
-            <span>Made in Cameroon <span className="text-sm font-normal">Admin</span></span>
+            <span>Transac <span className="text-sm font-normal">Admin</span></span>
           </Link>
         </div>
         <div className="flex items-center space-x-4">

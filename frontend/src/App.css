@@ -4,6 +4,14 @@
   padding: 2rem;
   text-align: center;
 }
+.shipping-free-badge {
+  background-color: #ffe5e5;
+  color: red;
+  font-weight: bold;
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 12px;
+}
 
 .logo {
   height: 6em;

@@ -68,6 +68,7 @@ impl UserService {
             email: Set(user_data.email),
             phone: Set(user_data.phone),
             password_hash: Set(password_hash),
+            is_active: Set(true),
             role: Set(user_data.role.into()),
             created_at: Set(Utc::now()),
             updated_at: Set(Utc::now()),
@@ -93,7 +94,7 @@ impl UserService {
             .filter(user::Column::Phone.eq(phone))
             .one(&*self.db)
             .await
-            .map_err(|e| ServiceError::InternalServerError)?;
+            .map_err(|_| ServiceError::InternalServerError)?;
         if let Some(user) = user {
             if let Some(role) = expected_role {
                 if user.role != role {
@@ -104,7 +105,7 @@ impl UserService {
                 return Err(ServiceError::InvalidPassword)?;
             }
             let token = generate_token(&user.id.to_string(), user.role.clone(), &config)
-                .map_err(|e| ServiceError::InternalServerError)?;
+                .map_err(|_| ServiceError::InternalServerError)?;
             Ok((user, token))
         } else {
             Err(ServiceError::UserNotFound("User not found".to_string()))
@@ -172,6 +173,7 @@ mod tests {
                 email: Some("test@example.com".to_string()),
                 phone: 654988322,
                 password_hash: "hashed_password".to_string(),
+                is_active: true,
                 role: UserRole::Vendor.into(),
                 created_at: Utc::now(),
                 updated_at: Utc::now(),
@@ -208,6 +210,7 @@ mod tests {
                 email: Some("test@example.com".to_string()),
                 phone: 1234567890,
                 password_hash: hash_password("password123").unwrap(),
+                is_active: true,
                 role: UserRole::Admin.into(),
                 created_at: Utc::now(),
                 updated_at: Utc::now(),
@@ -236,6 +239,7 @@ mod tests {
                 email: Some("test@example.com".to_string()),
                 phone: 1234567890,
                 password_hash: hash_password("password123").unwrap(),
+                is_active: true,
                 role: UserRole::Buyer.into(),
                 created_at: Utc::now(),
                 updated_at: Utc::now(),
@@ -265,6 +269,7 @@ mod tests {
                 email: Some("test@example.com".to_string()),
                 phone: 123,
                 password_hash: "hashed_password".to_string(),
+                is_active: true,
                 role: UserRole::Vendor.into(),
                 created_at: Utc::now(),
                 updated_at: Utc::now(),
@@ -294,6 +299,7 @@ mod tests {
                     email: Some("test@example.com".to_string()),
                     phone: 123,
                     password_hash: "hashed_password".to_string(),
+                    is_active: true,
                     role: UserRole::Admin.into(),
                     created_at: Utc::now(),
                     updated_at: Utc::now(),
@@ -304,6 +310,7 @@ mod tests {
                     email: Some("test@example.com".to_string()),
                     phone: 98,
                     password_hash: "hashed_password".to_string(),
+                    is_active: true,
                     role: UserRole::Admin.into(),
                     created_at: Utc::now(),
                     updated_at: Utc::now(),
@@ -337,6 +344,7 @@ mod tests {
                     id: Uuid::new_v4(),
                     full_name: "User 1".to_string(),
                     email: Some("user1@example.com".to_string()),
+                    is_active: true,
                     phone: 123,
                     password_hash: "hashed_password".to_string(),
                     role: UserRole::Buyer.into(),
@@ -347,6 +355,7 @@ mod tests {
                     id: Uuid::new_v4(),
                     full_name: "User 2".to_string(),
                     email: Some("user2@example.com".to_string()),
+                    is_active: true,
                     phone: 98,
                     password_hash: "hashed_password".to_string(),
                     role: UserRole::Vendor.into(),
