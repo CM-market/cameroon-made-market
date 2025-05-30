@@ -10,8 +10,8 @@ const Footer: React.FC = () => {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           <div>
             <Link to="/" className="font-bold text-xl flex items-center mb-4">
-              <img src="/placeholder.svg" alt="Made in Cameroon" className="h-8 w-8 mr-2" />
-              <span>Made in Cameroon</span>
+              <img src="/logo.png" alt="Transac" className="h-12 w-auto mr-2 custom-bg" />
+              <span>Transac</span>
             </Link>
             <p className="text-gray-600 mb-4">
               Connecting Cameroonian artisans and producers with customers around the world.
@@ -65,7 +65,7 @@ const Footer: React.FC = () => {
         
         <div className="border-t mt-8 pt-8">
           <p className="text-center text-gray-600">
-            © {currentYear} Made in Cameroon. All rights reserved.
+            © {currentYear} Transac. All rights reserved.
           </p>
         </div>
       </div>

@@ -9,22 +9,22 @@ const VendorNavbar: React.FC = () => {
   const isActive = (path: string) => location.pathname === path;
   
   return (
-    <nav className="bg-cm-green text-white px-4 py-3 shadow-md">
+    <nav className="text-green px-4 py-3 shadow-md">
       <div className="container mx-auto flex justify-between items-center">
         <div className="flex items-center space-x-2">
           <Link to="/" className="font-bold text-xl flex items-center">
             <img
-              src="/placeholder.svg"
-              alt="Made in Cameroon"
-              className="h-8 w-8 mr-2"
+              src="/logo.png"
+              alt="Transac"
+              className="h-12 w-auto mr-2"
             />
-            <span className="hidden sm:inline">Made in Cameroon</span>
+            <span className="hidden sm:inline">Transac</span>
           </Link>
         </div>
         <div className="flex items-center space-x-2 sm:space-x-4 overflow-x-auto">
           <Button 
             variant="ghost" 
-            className={`text-white ${isActive("/vendor/dashboard") ? "bg-cm-forest" : "hover:text-cm-yellow"}`}
+            className={`text-white ${isActive("/vendor/dashboard") ? "bg-cm-green" : "hover:text-cm-yellow"}`}
             asChild
           >
             <Link to="/vendor/dashboard">
@@ -34,7 +34,7 @@ const VendorNavbar: React.FC = () => {
           </Button>
           <Button 
             variant="ghost" 
-            className={`text-white ${isActive("/vendor/products") ? "bg-cm-forest" : "hover:text-cm-yellow"}`}
+            className={`text-green ${isActive("/vendor/products") ? "bg-cm-green" : "hover:text-cm-yellow"}`}
             asChild
           >
             <Link to="/vendor/products">
@@ -44,7 +44,7 @@ const VendorNavbar: React.FC = () => {
           </Button>
           <Button 
             variant="ghost" 
-            className={`text-white ${isActive("/vendor/orders") ? "bg-cm-forest" : "hover:text-cm-yellow"}`}
+            className={`text-green ${isActive("/vendor/orders") ? "bg-cm-green" : "hover:text-cm-yellow"}`}
             asChild
           >
             <Link to="/vendor/orders">
@@ -57,7 +57,7 @@ const VendorNavbar: React.FC = () => {
             asChild
           >
             <Link to="/vendor/account">
-              <User size={18} className="mr-1 sm:mr-2" />
+              <User size={18} className="mr-1 sm:mr-2 " />
               <span className="hidden sm:inline">Account</span>
             </Link>
           </Button>

@@ -113,6 +113,7 @@ const ProductForm: React.FC<ProductFormProps> = ({ onProductCreated }) => {
                 formData={formData}
                 onImageUpload={handleImageUpload}
                 onRemoveImage={removeImage}
+                isUploading={formData.isUploading ?? false}
               />
               
               <div className="grid grid-cols-2 gap-4">

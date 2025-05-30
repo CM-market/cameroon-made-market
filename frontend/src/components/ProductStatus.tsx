@@ -37,7 +37,7 @@ const ProductStatus: React.FC<ProductStatusProps> = ({
     approved: {
       icon: Check,
       title: "Verified & Approved",
-      description: "Your product has been verified as Made in Cameroon.",
+      description: "Your product has been verified as Transac.",
       bgColor: "bg-cm-green bg-opacity-10",
       borderColor: "border-cm-green",
       textColor: "text-cm-green",
@@ -45,7 +45,7 @@ const ProductStatus: React.FC<ProductStatusProps> = ({
     rejected: {
       icon: AlertTriangle,
       title: "Verification Failed",
-      description: "Your product does not meet our Made in Cameroon criteria.",
+      description: "Your product does not meet our Transac criteria.",
       bgColor: "bg-cm-red bg-opacity-10",
       borderColor: "border-cm-red",
       textColor: "text-cm-red",
