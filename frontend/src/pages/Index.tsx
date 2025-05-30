@@ -17,7 +17,7 @@ const Index: React.FC = () => {
           <div>
             <h1 className="text-3xl font-bold text-gray-800">Add New Product</h1>
             <p className="text-gray-600">
-              List your product on the Made in Cameroon Marketplace
+              List your product on the Transac Marketplace
             </p>
           </div>
           <div>
@@ -59,7 +59,7 @@ const Index: React.FC = () => {
                     <div>
                       <h3 className="font-medium">Submit for Verification</h3>
                       <p className="text-sm text-gray-600">
-                        Our team verifies that your product meets our Made in Cameroon criteria.
+                        Our team verifies that your product meets our Transac criteria.
                       </p>
                     </div>
                   </div>
@@ -149,7 +149,7 @@ const Index: React.FC = () => {
             <ProductStatus
               status="pending"
               submittedAt="April 26, 2025 • 10:23 AM"
-              message="Your product is being reviewed by our team for Made in Cameroon verification."
+              message="Your product is being reviewed by our team for Transac verification."
             />
           </div>
         </div>
@@ -158,7 +158,7 @@ const Index: React.FC = () => {
       <footer className="mt-auto py-6 bg-gray-100 border-t">
         <div className="container mx-auto px-4">
           <div className="text-center text-gray-600 text-sm">
-            <p>&copy; 2025 Made in Cameroon Marketplace. All rights reserved.</p>
+            <p>&copy; 2025 Transac Marketplace. All rights reserved.</p>
           </div>
         </div>
       </footer>

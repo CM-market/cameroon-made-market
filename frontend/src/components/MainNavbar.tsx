@@ -182,9 +182,9 @@ const MainNavbar: React.FC = () => {
         {/* Logo */}
         <Link to="/" className="font-bold text-xl flex items-center">
           <img
-            src="/placeholder.svg"
-            alt="Made in Cameroon"
-            className="h-8 w-8 mr-2"
+            src="/logo.png"
+            alt="Transac"
+            className="h-12 w-auto mr-2"
           />
           <span className="hidden sm:inline">{t('welcome')}</span>
         </Link>

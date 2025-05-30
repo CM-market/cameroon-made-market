@@ -45,7 +45,6 @@ const VendorDashboard: React.FC = () => {
 
       // Calculate statistics
       const totalProducts = productsResponse.data.length;
-      // TODO: Replace with actual API calls for sales and revenue
       const totalSales = productsResponse.data.reduce((sum, product) => sum + (product.sales || 0), 0);
       const totalRevenue = productsResponse.data.reduce((sum, product) => sum + (product.revenue || 0), 0);
       const averageOrderValue = totalSales > 0 ? totalRevenue / totalSales : 0;
