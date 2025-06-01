@@ -25,7 +25,6 @@ pub struct AuthUser {
 }
 
 /// Middleware to validate JWT token
-// #[axum::debug_handler]
 pub async fn auth(mut req: Request, next: Next) -> Result<Response, StatusCode> {
     // Get state from request extensions
     let state = req
@@ -72,7 +71,7 @@ pub fn generate_token(
 
     let claims = Claims {
         sub: user_id.to_string(),
-        exp: now + (24 * 60 * 60), // 24 hours
+        exp: now + config.jwt_expires_in as usize,
         role,
     };
 

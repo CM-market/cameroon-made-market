@@ -87,7 +87,7 @@ export const useProductForm = (onProductCreated?: () => void) => {
         } catch (error) {
           // Clean up any preview URLs created so far
           newPreviewUrls.forEach(URL.revokeObjectURL);
-          throw error;
+          throw new Error(`An error occurred when uploading the image`);
         }
       }
 
