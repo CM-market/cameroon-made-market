@@ -24,8 +24,10 @@ impl Config {
         let bucket = env::var("MINIO_BUCKET_NAME").unwrap_or_else(|_| "product-images".to_string());
         let fapshi_api_user = env::var("FAPSHI_API_USER").expect("FAPSHI_API_USER must be set");
         let fapshi_api_key = env::var("FAPSHI_API_KEY").expect("FAPSHI_API_KEY must be set");
+        let minio_endpoint =
+            env::var("MINIO_ENDPOINT").unwrap_or_else(|_| "http://0.0.0:9000".to_string());
 
-        let base_url = BaseUrl::from_str("http://0.0.0.0:9000").unwrap();
+        let base_url = BaseUrl::from_str(&minio_endpoint).unwrap();
         let credentials = Box::new(StaticProvider::new(&access_key, &secret_key, None));
         let client = Client::new(base_url, Some(credentials), None, None).unwrap();
         let image_service = ImageService { client, bucket };
