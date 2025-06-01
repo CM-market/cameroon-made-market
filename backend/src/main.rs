@@ -30,7 +30,14 @@ async fn main() {
     println!("{}", token);
     // Configure CORS
     let cors = CorsLayer::new()
-        .allow_origin(Any)
+        .allow_origin(
+            app_state
+                .config
+                .cors_origins
+                .iter()
+                .filter_map(|origin| http::HeaderValue::from_str(origin).ok())
+                .collect::<Vec<http::HeaderValue>>(),
+        )
         .allow_methods(Any)
         .allow_headers(Any);
 
