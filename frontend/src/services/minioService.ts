@@ -1,3 +1,4 @@
+import { API_URL, ImageUploadApi } from '@/lib/api';
 import { v4 as uuidv4 } from 'uuid';
 
 interface MinioConfig {
@@ -8,12 +9,11 @@ interface MinioConfig {
   secretKey: string;
   bucketName: string;
 }
-const API_URL = "http://localhost:8080"
 
 const config: MinioConfig = {
   endpoint: import.meta.env.VITE_MINIO_ENDPOINT || 'localhost',
   port: parseInt(import.meta.env.VITE_MINIO_PORT || '9000'),
-  useSSL: import.meta.env.VITE_MINIO_USE_SSL === 'true',
+  useSSL: import.meta.env.VITE_MINIO_USE_SSL === 'false',
   accessKey: import.meta.env.VITE_MINIO_ACCESS_KEY || '',
   secretKey: import.meta.env.VITE_MINIO_SECRET_KEY || '',
   bucketName: import.meta.env.VITE_MINIO_BUCKET_NAME || 'product-images'
@@ -36,24 +36,15 @@ export const uploadImage = async (file: File): Promise<string> => {
 
     const formData = new FormData();
     formData.append('file', file);
-    
-    const response = await fetch(`${API_URL}/products/upload-image`, {
-      method: 'POST',
-      body: formData,
-      headers: {
-        'Authorization': `Bearer ${token}`
-      }
-    });
+    const response = await ImageUploadApi.upload(file);
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(errorText || 'Failed to upload image');
+    if (response.status < 200 || response.status >= 300) {
+      throw new Error('Failed to upload image');
     }
 
-    const imageUrl = await response.text();
+    const imageUrl = response.data;
     return imageUrl;
   } catch (error) {
-    console.error('Error uploading image:', error);
     throw error;
   }
 };
@@ -63,10 +54,10 @@ export const getImageUrl = (objectName: string): string => {
   if (objectName.startsWith('http://') || objectName.startsWith('https://')) {
     return objectName;
   }
-  
+
   // Remove any /browser/ prefix if present
   const cleanObjectName = objectName.replace('/browser/', '');
-  
+
   // Construct the URL using the MinIO configuration
   const baseUrl = import.meta.env.VITE_MINIO_PUBLIC_URL || `http://${config.endpoint}:${config.port}`;
   console.log("baseUrl: " + baseUrl);

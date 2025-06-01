@@ -19,18 +19,13 @@ pub struct Config {
 
 impl Config {
     pub fn from_env() -> Self {
-        let endpoint = env::var("MINIO_ENDPOINT").unwrap_or_else(|_| "localhost".to_string());
-        let port = env::var("MINIO_PORT")
-            .unwrap_or_else(|_| "9000".to_string())
-            .parse::<u16>()
-            .unwrap();
-        let access_key = env::var("MINIO_ACCESS_KEY").unwrap();
-        let secret_key = env::var("MINIO_SECRET_KEY").unwrap();
+        let access_key = env::var("MINIO_ROOT_USER").unwrap();
+        let secret_key = env::var("MINIO_ROOT_PASSWORD").unwrap();
         let bucket = env::var("MINIO_BUCKET_NAME").unwrap_or_else(|_| "product-images".to_string());
         let fapshi_api_user = env::var("FAPSHI_API_USER").expect("FAPSHI_API_USER must be set");
         let fapshi_api_key = env::var("FAPSHI_API_KEY").expect("FAPSHI_API_KEY must be set");
 
-        let base_url = BaseUrl::from_str("http://localhost:9000").unwrap();
+        let base_url = BaseUrl::from_str("http://0.0.0.0:9000").unwrap();
         let credentials = Box::new(StaticProvider::new(&access_key, &secret_key, None));
         let client = Client::new(base_url, Some(credentials), None, None).unwrap();
         let image_service = ImageService { client, bucket };
@@ -47,7 +42,7 @@ impl Config {
                 .unwrap_or_else(|_| "8080".to_string())
                 .parse()
                 .expect("SERVER_PORT must be a number"),
-            server_host: env::var("SERVER_HOST").unwrap_or_else(|_| "127.0.0.1".to_string()),
+            server_host: env::var("SERVER_HOST").unwrap_or_else(|_| "0.0.0.0".to_string()),
             cors_origins: env::var("CORS_ORIGINS")
                 .unwrap_or_else(|_| "http://192.168.2.236:8081".to_string())
                 .split(',')
