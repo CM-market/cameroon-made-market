@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Link } from "react-router-dom";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
@@ -42,31 +41,44 @@ const featuredProducts = [
 
 const FeaturedProducts = () => {
   return (
-    <section>
-      <div className="flex justify-between items-center mb-8">
-        <h2 className="text-3xl font-bold">Featured Products</h2>
-        <Link to="/products" className="text-cm-green hover:text-cm-forest">
+    <section className="w-full">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6 sm:mb-8">
+        <h2 className="text-2xl sm:text-3xl font-bold">Featured Products</h2>
+        <Link 
+          to="/products" 
+          className="text-cm-green hover:text-cm-forest text-base sm:text-lg font-medium"
+        >
           View All →
         </Link>
       </div>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
         {featuredProducts.map((product) => (
-          <Card key={product.id} className="hover:shadow-lg transition-shadow">
-            <Link to={`/product/${product.id}`}>
-              <img
-                src={product.image}
-                alt={product.name}
-                className="w-full h-48 object-cover rounded-t-lg"
-              />
-              <CardContent className="p-4">
-                <Badge variant="outline" className="mb-2">
+          <Card 
+            key={product.id} 
+            className="hover:shadow-lg transition-shadow duration-200 h-full flex flex-col"
+          >
+            <Link to={`/product/${product.id}`} className="flex flex-col h-full">
+              <div className="relative aspect-square w-full overflow-hidden">
+                <img
+                  src={product.image}
+                  alt={product.name}
+                  className="w-full h-full object-cover"
+                  loading="lazy"
+                />
+              </div>
+              <CardContent className="p-4 flex-grow">
+                <Badge variant="outline" className="mb-2 text-xs sm:text-sm">
                   {product.category}
                 </Badge>
-                <h3 className="font-semibold mb-1">{product.name}</h3>
-                <p className="text-gray-600 text-sm">{product.vendor}</p>
+                <h3 className="font-semibold text-base sm:text-lg mb-1 line-clamp-2">
+                  {product.name}
+                </h3>
+                <p className="text-gray-600 text-sm sm:text-base line-clamp-1">
+                  {product.vendor}
+                </p>
               </CardContent>
-              <CardFooter className="p-4 pt-0">
-                <p className="text-cm-green font-semibold">
+              <CardFooter className="p-4 pt-0 mt-auto">
+                <p className="text-cm-green font-semibold text-base sm:text-lg">
                   {product.price} FCFA
                 </p>
               </CardFooter>

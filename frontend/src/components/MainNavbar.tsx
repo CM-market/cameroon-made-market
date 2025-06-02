@@ -58,6 +58,10 @@ const MainNavbar: React.FC = () => {
           setCartCount(itemCount);
         } catch (e) {
           console.error('Error parsing cart data', e);
+          // If parsing fails, it's safer to assume no items or keep previous state
+          // For now, we'll just log the error and not change the count
+          // If you want to reset the count on error, uncomment the line below:
+          // setCartCount(0);
         }
       } else {
         setCartCount(0);
@@ -178,19 +182,42 @@ const MainNavbar: React.FC = () => {
 
   return (
     <header className="border-b bg-background sticky top-0 z-50">
-      <div className="container mx-auto flex items-center justify-between h-16 px-4">
+      <div className="container mx-auto flex items-center justify-between md:justify-start h-16 px-4">
         {/* Logo */}
-        <Link to="/" className="font-bold text-xl flex items-center">
+        <Link to="/" className="font-bold text-xl flex items-center justify-center w-full md:w-auto md:justify-start">
           <img
             src="/logo.png"
             alt="Transac"
-            className="h-12 w-auto mr-2"
+            className="h-10 sm:h-12 w-auto mr-2"
           />
           <span className="hidden sm:inline">{t('welcome')}</span>
         </Link>
 
-        {/* Main Navigation */}
-        <NavigationMenu className="hidden md:flex">
+        {/* Mobile Menu Button */}
+        <button 
+          className="md:hidden p-2 rounded-lg hover:bg-accent absolute right-4"
+          onClick={() => setDropdownOpen(!dropdownOpen)}
+          aria-label="Toggle menu"
+        >
+          <svg
+            className="h-6 w-6"
+            fill="none"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth="2"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            {dropdownOpen ? (
+              <path d="M6 18L18 6M6 6l12 12" />
+            ) : (
+              <path d="M4 6h16M4 12h16M4 18h16" />
+            )}
+          </svg>
+        </button>
+
+        {/* Main Navigation - Desktop */}
+        <NavigationMenu className="hidden md:flex md:ml-6">
           <NavigationMenuList>
             <NavigationMenuItem>
               <Link to="/">
@@ -232,17 +259,17 @@ const MainNavbar: React.FC = () => {
         </NavigationMenu>
 
         {/* Right-side actions */}
-        <div className="flex items-center gap-2">
+        <div className="hidden md:flex items-center gap-2 ml-auto">
           <Link to="/search">
-            <Button variant="ghost" size="icon">
+            <Button variant="ghost" size="icon" className="h-10 w-10 sm:h-12 sm:w-12">
               <Search className="h-5 w-5" />
             </Button>
           </Link>
           <Link to="/cart">
-            <Button variant="ghost" size="icon" className="relative">
+            <Button variant="ghost" size="icon" className="relative h-10 w-10 sm:h-12 sm:w-12">
               <ShoppingCart className="h-5 w-5" />
               {cartCount > 0 && (
-                <span className="absolute top-0 right-0 bg-cm-green text-white rounded-full text-xs w-4 h-4 flex items-center justify-center">
+                <span className="absolute -top-1 -right-1 bg-cm-green text-white rounded-full text-xs w-5 h-5 flex items-center justify-center">
                   {cartCount}
                 </span>
               )}
@@ -330,22 +357,68 @@ const MainNavbar: React.FC = () => {
               )}
             </div>
           ) : (
-            <>
+            <div className="hidden md:flex items-center gap-2">
               <Link to="/login">
-                <Button variant="outline" size="sm" className="ml-2">
+                <Button variant="outline" size="sm">
                   <User className="h-4 w-4 mr-2" />
                   {t('login')}
                 </Button>
               </Link>
               <Link to="/buyer/register">
-                <Button variant="default" size="sm" className="ml-2 bg-cm-green text-white hover:bg-cm-forest">
+                <Button variant="default" size="sm" className="bg-cm-green text-white hover:bg-cm-forest">
                   {t('signUp')}
                 </Button>
               </Link>
-            </>
+            </div>
           )}
         </div>
       </div>
+
+      {/* Mobile Navigation Menu */}
+      {dropdownOpen && (
+        <div className="md:hidden border-t bg-background">
+          <nav className="container mx-auto px-4 py-2">
+            <ul className="space-y-2">
+              <li>
+                <Link
+                  to="/"
+                  className={cn(
+                    "block px-4 py-3 rounded-lg text-lg font-medium",
+                    isActive("/") ? "bg-accent text-accent-foreground" : "hover:bg-accent/50"
+                  )}
+                  onClick={() => setDropdownOpen(false)}
+                >
+                  Home
+                </Link>
+              </li>
+              <li>
+                <Link
+                  to="/products"
+                  className={cn(
+                    "block px-4 py-3 rounded-lg text-lg font-medium",
+                    isActive("/products") ? "bg-accent text-accent-foreground" : "hover:bg-accent/50"
+                  )}
+                  onClick={() => setDropdownOpen(false)}
+                >
+                  Products
+                </Link>
+              </li>
+              <li>
+                <Link
+                  to="/about"
+                  className={cn(
+                    "block px-4 py-3 rounded-lg text-lg font-medium",
+                    isActive("/about") ? "bg-accent text-accent-foreground" : "hover:bg-accent/50"
+                  )}
+                  onClick={() => setDropdownOpen(false)}
+                >
+                  About
+                </Link>
+              </li>
+            </ul>
+          </nav>
+        </div>
+      )}
     </header>
   );
 };
