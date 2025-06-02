@@ -64,7 +64,7 @@ services:
       - marketplace-network
 
   minio:
-    image: minio:minio:latest
+    image: minio/minio:latest
     env_file:
       - .env
     environment:
