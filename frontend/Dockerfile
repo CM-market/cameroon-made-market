@@ -25,6 +25,7 @@ FROM nginx:alpine
 COPY --from=builder /app/dist /usr/share/nginx/html
 
 COPY nginx.conf /etc/nginx/conf.d/default.conf
+COPY proxy_headers.conf /etc/nginx/conf.d/proxy_headers.conf
 
 EXPOSE 80 443
 
