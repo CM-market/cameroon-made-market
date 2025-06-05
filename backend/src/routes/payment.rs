@@ -16,10 +16,10 @@ use uuid::Uuid;
 
 pub fn config() -> Router<AppState> {
     Router::new()
-        .route("/payments", get(list_payments))
-        .route("/payments", post(create_payment))
-        .route("/indirect_payment", post(create_indirect_payment))
-        .route("/payments/:id", get(get_transation_status))
+        .route("/api/payments", get(list_payments))
+        .route("/api/payments", post(create_payment))
+        .route("/api/indirect_payment", post(create_indirect_payment))
+        .route("/api/payments/:id", get(get_transation_status))
 }
 
 #[axum::debug_handler]
