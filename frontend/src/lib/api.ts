@@ -16,6 +16,7 @@ export interface Product {
   returnPolicy?: string;
   sales?: number;
   revenue?: number;
+  is_approved?: boolean;
 }
 
 export interface CreateProductData {
@@ -36,6 +37,7 @@ export interface UpdateProductData {
   category?: string;
   image_urls?: string[];
 }
+
 export interface CreateOrderData {
   customer_name: string;
   customer_phone: string;
@@ -52,6 +54,13 @@ export interface Order {
   total: number;
   status: string;
   created_at: string;
+  customer_name: string;
+}
+
+export interface OrderItem {
+  product_id: string;
+  quantity: number;
+  price: number;
 }
 
 export const orderApi = {
@@ -65,6 +74,24 @@ export const orderApi = {
       }
     );
     return res.data;
+  },
+
+  list: async (userId?: string, status?: string) => {
+    const params = new URLSearchParams();
+    if (userId) params.append('user_id', userId);
+    if (status) params.append('status', status);
+
+    const token = localStorage.getItem('token');
+    const response = await axios.get<{ success: boolean; message: string; data: Order[] }>(
+      `${API_URL}/orders`, 
+      {
+        params: params,
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      }
+    );
+    return response.data;
   }
 };
 

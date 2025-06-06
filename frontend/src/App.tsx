@@ -2,7 +2,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, Outlet } from "react-router-dom";
 import Index from "./pages/Index";
 import Home from "./pages/Home";
 import About from "./pages/About";
@@ -13,6 +13,7 @@ import VendorProducts from "./pages/vendor/Products";
 import VendorOrders from "./pages/vendor/Orders";
 import VendorAccount from "./pages/vendor/Account";
 import VendorRegister from "./pages/vendor/Register";
+import VendorProductDetails from "./pages/vendor/VendorProductDetails";
 import Login from "./pages/Login";
 import AdminLogin from "./pages/admin/Login";
 import ProductList from "./pages/ProductList";
@@ -32,6 +33,7 @@ import { UserManagement } from './components/admin/UserManagement';
 import { ProductManagement } from './components/admin/ProductManagement';
 import { OrderManagement } from './components/admin/OrderManagement';
 import { ProtectedRoute } from './components/ProtectedRoute';
+import VendorOrderDetails from "./pages/vendor/VendorOrderDetails";
 
 const queryClient = new QueryClient();
 
@@ -66,53 +68,21 @@ const App = () => (
           <Route path="/vendor/register" element={<VendorRegister />} />
           <Route path="/vendor/dashboard" element={<VendorDashboard />} />
           <Route path="/vendor/products" element={<VendorProducts />} />
+          <Route path="/vendor/products/:id" element={<VendorProductDetails />} />
           <Route path="/vendor/orders" element={<VendorOrders />} />
+          <Route path="/vendor/orders/:id" element={<VendorOrderDetails />} />
           <Route path="/vendor/account" element={<VendorAccount />} />
           
           {/* Admin routes */}
           <Route path="/admin/login" element={<AdminLogin />} />
-          <Route
-            path="/admin"
-            element={
-              <ProtectedRoute requireAdmin>
-                <AdminLayout>
-                  <AdminDashboard />
-                </AdminLayout>
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/admin/users"
-            element={
-              <ProtectedRoute requireAdmin>
-                <AdminLayout>
-                  <UserManagement />
-                </AdminLayout>
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/admin/products"
-            element={
-              <ProtectedRoute requireAdmin>
-                <AdminLayout>
-                  <ProductManagement />
-                </AdminLayout>
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/admin/orders"
-            element={
-              <ProtectedRoute requireAdmin>
-                <AdminLayout>
-                  <OrderManagement />
-                </AdminLayout>
-              </ProtectedRoute>
-            }
-          />
+          <Route path="/admin" element={<ProtectedRoute requireAdmin><AdminLayout><Outlet /></AdminLayout></ProtectedRoute>}>
+            <Route index element={<AdminDashboard />} />
+            <Route path="users" element={<UserManagement />} />
+            <Route path="products" element={<ProductManagement />} />
+            <Route path="orders" element={<OrderManagement />} />
+          </Route>
           
-          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+          {/* 404 route */}
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>

@@ -223,8 +223,8 @@ export const useProductForm = (onProductCreated?: () => void) => {
       });
       setActiveTab("details");
 
-      // Navigate to product page or dashboard
-      navigate(`/products/${product.id}`);
+      // Navigate to vendor dashboard
+      navigate('/vendor/dashboard');
     } catch (error) {
       toast({
         title: "Error submitting product",
