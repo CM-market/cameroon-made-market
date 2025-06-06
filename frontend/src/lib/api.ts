@@ -1,6 +1,7 @@
 import axios from 'axios';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080';
+export const API_URL = import.meta.env.VITE_API_URL + '/api'; ;
+
 
 export interface Product {
   id: string;
@@ -67,6 +68,20 @@ export const orderApi = {
     return res.data;
   }
 };
+
+export const ImageUploadApi = {
+  upload: async (file: File) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    const res = await axios.post(`${API_URL}/products/upload-image`, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+        Authorization: `Bearer ${token}`
+      }
+    });
+    return res;
+  }
+}
 
 export const paymentApi = {
   create: async (data: { order_id: string; name: string; redirect_url: string; phone: string }) => {
@@ -171,10 +186,10 @@ export const userApi = {
     password: string;
     role?: "Vendor" | "Buyer";
   }) => {
-    const response = await axios.post(`${API_URL}/api/users/login`, data,{
-  });
+    const response = await axios.post(`${API_URL}/api/users/login`, data, {
+    });
     return response.data;
   },
   // ...other user API methods
-}; 
+};
 

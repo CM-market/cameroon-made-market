@@ -87,7 +87,7 @@ export const useProductForm = (onProductCreated?: () => void) => {
         } catch (error) {
           // Clean up any preview URLs created so far
           newPreviewUrls.forEach(URL.revokeObjectURL);
-          throw error;
+          throw new Error(`An error occurred when uploading the image`);
         }
       }
 
@@ -224,7 +224,7 @@ export const useProductForm = (onProductCreated?: () => void) => {
       setActiveTab("details");
 
       // Navigate to product page or dashboard
-      navigate(`/products/${product.id}`);
+      navigate(`/vendor/dashboard`);
     } catch (error) {
       toast({
         title: "Error submitting product",
