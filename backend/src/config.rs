@@ -46,7 +46,7 @@ impl Config {
                 .expect("SERVER_PORT must be a number"),
             server_host: env::var("SERVER_HOST").unwrap_or_else(|_| "0.0.0.0".to_string()),
             cors_origins: env::var("CORS_ORIGINS")
-                .unwrap_or_else(|_| "http://192.168.2.236:8081".to_string())
+                .unwrap_or_else(|_| "http://192.168.2.115:8081".to_string())
                 .split(',')
                 .map(|s| s.trim().to_string())
                 .collect(),

@@ -46,16 +46,15 @@ pub async fn register(
 }
 
 /// Login a user
-#[axum::debug_handler]
 pub async fn login(
     State(state): State<AppState>,
     Json(login_data): Json<LoginRequest>,
 ) -> Json<ApiResponse<LoginResponse>> {
     let user_service = UserService::new(state.db);
     let config = state.config.as_ref();
-    let expected_role = login_data.role;
+    let role = login_data.role;
     match user_service
-        .login(login_data.phone, login_data.password, config, expected_role)
+        .login(login_data.phone, login_data.password, config, role)
         .await
     {
         Ok((user, token)) => {

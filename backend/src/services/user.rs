@@ -82,7 +82,7 @@ impl UserService {
         phone: i32,
         password: String,
         config: &Config,
-        expected_role: Option<UserRole>,
+        role: Option<UserRole>,
     ) -> Result<(Model, String), ServiceError> {
         let user = user::Entity::find()
             .filter(user::Column::Phone.eq(phone))
@@ -90,7 +90,7 @@ impl UserService {
             .await
             .map_err(|_| ServiceError::InternalServerError)?;
         if let Some(user) = user {
-            if let Some(role) = expected_role {
+            if let Some(role) = role {
                 if user.role != role {
                     return Err(ServiceError::InvalidPassword)?;
                 }

@@ -137,7 +137,7 @@ export const productApi = {
     return response.data.data;
   },
 
-  create: async (data: CreateProductData) => {
+    create: async (data: CreateProductData) => {
     const token = localStorage.getItem('token');
     const response = await axios.post<Product>(`${API_URL}/products`, data,
       {

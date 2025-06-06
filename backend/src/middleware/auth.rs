@@ -52,6 +52,7 @@ pub async fn auth(mut req: Request, next: Next) -> Result<Response, StatusCode> 
             Ok(next.run(req).await)
         }
         Err(e) => {
+            println!("{}", token);
             tracing::error!("error decoding token: {}", e.to_string());
             Err(StatusCode::UNAUTHORIZED)
         }

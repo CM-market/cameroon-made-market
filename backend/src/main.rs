@@ -1,8 +1,7 @@
 use axum::routing::{get, post};
 use axum::{http, middleware, Extension, Router};
 use cameroon_made_market::handlers::user::{login, register};
-use cameroon_made_market::middleware::auth::{auth, generate_token};
-use cameroon_made_market::models::user::UserRole;
+use cameroon_made_market::middleware::auth::auth;
 use cameroon_made_market::routes;
 use cameroon_made_market::routes::admin::admin_routes;
 
@@ -21,13 +20,6 @@ async fn main() {
 
     // Get configuration
     let app_state = setup().await;
-    let token = generate_token(
-        "ed9bac6c-1714-4002-939d-0e328af7a2b8",
-        UserRole::Buyer,
-        &app_state.config,
-    )
-    .unwrap();
-    println!("{}", token);
     // Configure CORS
     let cors = CorsLayer::new()
         .allow_origin(
