@@ -345,27 +345,38 @@ const ProductList: React.FC = () => {
                 {filteredProducts.map((product) => (
                   <Card key={product.id} className={viewMode === 'list' ? 'flex' : ''}>
                     <div className={viewMode === 'list' ? 'w-48' : 'w-full'}>
-                      <img
-                        src={getImageUrl(product.image_urls[0])}
-                        alt={product.title}
-                        className="w-full h-48 object-cover"
-                        onError={(e) => {
-                          console.log('Image load failed:', product.image_urls[0]);
-                          (e.target as HTMLImageElement).src = '/placeholder.svg';
-                        }}
-                      />
+                      <div className="relative aspect-square w-full bg-gray-100">
+                        <img
+                          src={getImageUrl(product.image_urls[0])}
+                          alt={product.title}
+                          className="w-full h-full object-contain p-2"
+                          onError={(e) => {
+                            console.log('Image load failed:', product.image_urls[0]);
+                            (e.target as HTMLImageElement).src = '/placeholder.svg';
+                          }}
+                        />
+                      </div>
                     </div>
                     <CardContent className={viewMode === 'list' ? 'flex-grow p-6' : 'p-6'}>
                       <h3 className="text-lg font-semibold mb-2">{product.title}</h3>
                       <p className="text-gray-500 mb-4 line-clamp-2">{product.description}</p>
-                      <div className="flex justify-between items-center">
+                      <div className="flex flex-col gap-2">
                         <span className="text-lg font-bold">{Number(product.price).toLocaleString()} FCFA</span>
-                        <Button
-                          className="bg-cm-green hover:bg-cm-forest"
-                          onClick={() => handleAddToCart(product)}
-                        >
-                          Add to Cart
-                        </Button>
+                        <div className="flex gap-2">
+                          <Button
+                            variant="outline"
+                            className="flex-1"
+                            onClick={() => navigate(`/products/${product.id}`)}
+                          >
+                            View Details
+                          </Button>
+                          <Button
+                            className="flex-1 bg-cm-green hover:bg-cm-forest"
+                            onClick={() => handleAddToCart(product)}
+                          >
+                            Add to Cart
+                          </Button>
+                        </div>
                       </div>
                     </CardContent>
                   </Card>

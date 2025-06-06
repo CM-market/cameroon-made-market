@@ -1,14 +1,16 @@
-
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import MainNavbar from "@/components/MainNavbar";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { ArrowLeft, Check, ShoppingCart, Star, Plus, Minus } from "lucide-react";
+import { ArrowLeft, Check, ShoppingCart, Star, Plus, Minus, ChevronLeft, ChevronRight } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { toast } from "@/hooks/use-toast";
+import { productApi, Product } from "@/lib/api";
+import { getImageUrl } from "@/services/minioService";
+import axios from "axios";
 
 // Type definition for cart items
 interface CartItem {
@@ -18,36 +20,103 @@ interface CartItem {
   quantity: number;
   category: string;
   image: string;
+  returnPolicy: string;
 }
 
+// Add this new component at the top of the file, before ProductDetails
+const ZoomableImage: React.FC<{
+  src: string;
+  alt: string;
+  className?: string;
+}> = ({ src, alt, className }) => {
+  const [isZoomed, setIsZoomed] = useState(false);
+  const [position, setPosition] = useState({ x: 0, y: 0 });
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (!containerRef.current) return;
+
+    const { left, top, width, height } = containerRef.current.getBoundingClientRect();
+    const x = ((e.clientX - left) / width) * 100;
+    const y = ((e.clientY - top) / height) * 100;
+    setPosition({ x, y });
+  };
+
+  return (
+    <div
+      ref={containerRef}
+      className={`relative overflow-hidden ${className}`}
+      onMouseEnter={() => setIsZoomed(true)}
+      onMouseLeave={() => setIsZoomed(false)}
+      onMouseMove={handleMouseMove}
+    >
+      <img
+        src={src}
+        alt={alt}
+        className={`w-full h-full transition-transform duration-300 ease-out ${
+          isZoomed ? 'scale-150' : 'scale-100'
+        }`}
+        style={{
+          transformOrigin: `${position.x}% ${position.y}%`
+        }}
+      />
+      {isZoomed && (
+        <div className="absolute inset-0 pointer-events-none">
+          <div
+            className={`absolute w-24 h-24 border-2 border-cm-green rounded-full -translate-x-1/2 -translate-y-1/2`}
+            style={{
+              left: `${position.x}%`,
+              top: `${position.y}%`
+            }}
+          />
+        </div>
+      )}
+    </div>
+  );
+};
+
 const ProductDetails: React.FC = () => {
-  const { productId } = useParams();
+  const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const [product, setProduct] = useState<Product | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [quantity, setQuantity] = useState(1);
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   
-  // In a real app, this would fetch product data from API based on productId
-  // For demo purposes, we'll use mock data
-  const product = {
-    id: productId || "1",
-    name: "Hand-woven Bamboo Basket",
-    price: 15000,
-    description: "Traditional bamboo basket handcrafted by skilled artisans in the West Region of Cameroon. Each basket is unique with intricate patterns that showcase generations of craftsmanship.",
-    category: "Handcrafts",
-    tags: ["Handmade", "Traditional", "Sustainable"],
-    images: ["/placeholder.svg", "/placeholder.svg", "/placeholder.svg", "/placeholder.svg"],
-    rating: 4.8,
-    reviews: 24,
-    vendor: "Bamenda Artisans Collective",
-    materials: "Locally sourced bamboo, natural dyes",
-    dimensions: "30cm x 30cm x 15cm",
-    weight: "0.8kg",
-    inStock: 25,
-    shippingInfo: "Ships within 3-5 business days",
-    returnPolicy: "Returns accepted within 14 days of delivery",
-  };
-  
-  // Load cart from localStorage on initial render
+  useEffect(() => {
+    const fetchProduct = async () => {
+      if (!id) return;
+      
+      try {
+        setLoading(true);
+        console.log('Fetching product with ID:', id);
+        console.log('API URL:', import.meta.env.VITE_API_URL);
+        const response = await productApi.get(id);
+        console.log('Product response:', response);
+        setProduct(response);
+        setError(null);
+      } catch (err) {
+        console.error('Detailed error:', err);
+        if (axios.isAxiosError(err)) {
+          console.error('API Error:', {
+            status: err.response?.status,
+            data: err.response?.data,
+            message: err.message
+          });
+          setError(`Failed to fetch product details: ${err.response?.data?.message || err.message}`);
+        } else {
+          setError('Failed to fetch product details');
+        }
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProduct();
+  }, [id]);
+
   useEffect(() => {
     const storedCart = localStorage.getItem('cartItems');
     if (storedCart) {
@@ -57,7 +126,7 @@ const ProductDetails: React.FC = () => {
           setCartItems(parsedCart);
           
           // Check if this product is already in cart and set quantity
-          const existingItem = parsedCart.find(item => item.id === productId);
+          const existingItem = parsedCart.find(item => item.id === id);
           if (existingItem) {
             setQuantity(existingItem.quantity);
           }
@@ -66,9 +135,8 @@ const ProductDetails: React.FC = () => {
         console.error('Error parsing cart data', e);
       }
     }
-  }, [productId]);
+  }, [id]);
   
-  // Update localStorage whenever cart changes
   useEffect(() => {
     localStorage.setItem('cartItems', JSON.stringify(cartItems));
   }, [cartItems]);
@@ -78,34 +146,33 @@ const ProductDetails: React.FC = () => {
   };
   
   const handleAddToCart = () => {
-    const existingItemIndex = cartItems.findIndex(item => item.id === product.id);
-    
-    if (existingItemIndex !== -1) {
-      // If item exists, update its quantity
-      const updatedItems = [...cartItems];
-      updatedItems[existingItemIndex] = {
-        ...updatedItems[existingItemIndex],
-        quantity: quantity
-      };
-      setCartItems(updatedItems);
+    if (!product) return;
+
+    const existingCart = localStorage.getItem('cartItems');
+    let cartItems = existingCart ? JSON.parse(existingCart) : [];
+
+    const existingItem = cartItems.find((item: any) => item.id === product.id);
+
+    if (existingItem) {
+      cartItems = cartItems.map((item: any) =>
+        item.id === product.id ? { ...item, quantity: item.quantity + 1 } : item
+      );
     } else {
-      // If item doesn't exist, add new item
-      setCartItems([
-        ...cartItems,
-        {
-          id: product.id,
-          name: product.name,
-          price: product.price,
-          quantity: quantity,
-          category: product.category,
-          image: product.images[0]
-        }
-      ]);
+      cartItems.push({
+        id: product.id,
+        name: product.title,
+        price: Number(product.price),
+        quantity: 1,
+        category: product.category || 'Uncategorized',
+        image: product.image_urls[0] || '/placeholder.svg',
+        returnPolicy: product.returnPolicy || 'No return policy specified'
+      });
     }
-    
+
+    localStorage.setItem('cartItems', JSON.stringify(cartItems));
     toast({
       title: "Added to Cart",
-      description: `${product.name} has been added to your cart.`
+      description: `${product.title} has been added to your cart.`
     });
   };
   
@@ -113,6 +180,55 @@ const ProductDetails: React.FC = () => {
     handleAddToCart();
     navigate('/cart');
   };
+
+  const nextImage = () => {
+    if (!product) return;
+    setSelectedImageIndex((prev) => 
+      prev === product.image_urls.length - 1 ? 0 : prev + 1
+    );
+  };
+
+  const previousImage = () => {
+    if (!product) return;
+    setSelectedImageIndex((prev) => 
+      prev === 0 ? product.image_urls.length - 1 : prev - 1
+    );
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background flex flex-col">
+        <MainNavbar />
+        <div className="container mx-auto px-4 py-8 flex-grow flex items-center justify-center">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-cm-green mx-auto"></div>
+            <p className="mt-4 text-lg">Loading product details...</p>
+          </div>
+        </div>
+        <Footer />
+      </div>
+    );
+  }
+
+  if (error || !product) {
+    return (
+      <div className="min-h-screen bg-background flex flex-col">
+        <MainNavbar />
+        <div className="container mx-auto px-4 py-8 flex-grow flex items-center justify-center">
+          <div className="text-center">
+            <p className="text-red-500 text-lg">{error || 'Product not found'}</p>
+            <Button
+              className="mt-4 bg-cm-green hover:bg-cm-forest"
+              onClick={() => navigate('/products')}
+            >
+              Back to Products
+            </Button>
+          </div>
+        </div>
+        <Footer />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -128,30 +244,59 @@ const ProductDetails: React.FC = () => {
         </Button>
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          {/* Product Images */}
-          <div>
-            <div className="aspect-square bg-gray-100 rounded-lg overflow-hidden mb-4">
-              <img
-                src={product.images[0]}
-                alt={product.name}
-                className="w-full h-full object-cover"
+          {/* Image Gallery */}
+          <div className="space-y-4">
+            <div className="relative aspect-square w-full bg-gray-100 rounded-lg overflow-hidden">
+              <ZoomableImage
+                src={getImageUrl(product.image_urls[selectedImageIndex])}
+                alt={product.title}
+                className="w-auto h-auto"
               />
+              {product.image_urls.length > 1 && (
+                <>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="absolute left-2 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white"
+                    onClick={previousImage}
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="absolute right-2 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white"
+                    onClick={nextImage}
+                  >
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
+                </>
+              )}
             </div>
-            
-            <div className="grid grid-cols-4 gap-2">
-              {product.images.slice(1).map((image, index) => (
-                <div
-                  key={index}
-                  className="aspect-square bg-gray-100 rounded-lg overflow-hidden"
-                >
-                  <img
-                    src={image}
-                    alt={`${product.name} ${index + 2}`}
-                    className="w-full h-full object-cover"
-                  />
-                </div>
-              ))}
-            </div>
+
+            {/* Thumbnail Gallery */}
+            {product.image_urls.length > 1 && (
+              <div className="grid grid-cols-4 gap-2">
+                {product.image_urls.map((image, index) => (
+                  <button
+                    key={index}
+                    className={`relative aspect-square rounded-lg overflow-hidden border-2 ${
+                      selectedImageIndex === index ? 'border-cm-green' : 'border-transparent'
+                    }`}
+                    onClick={() => setSelectedImageIndex(index)}
+                  >
+                    <img
+                      src={getImageUrl(image)}
+                      alt={`${product.title} - Image ${index + 1}`}
+                      className="w-auto h-auto object-cover"
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).src = '/placeholder.svg';
+                      }}
+                    />
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
           
           {/* Product Details */}
@@ -160,31 +305,21 @@ const ProductDetails: React.FC = () => {
               <Badge className="bg-cm-sand text-black">{product.category}</Badge>
             </div>
             
-            <h1 className="text-3xl font-bold mb-2">{product.name}</h1>
-            
-            <div className="flex items-center gap-2 mb-4">
-              <div className="flex items-center">
-                {[...Array(5)].map((_, i) => (
-                  <Star
-                    key={i}
-                    size={16}
-                    className={i < Math.floor(product.rating) ? "fill-yellow-400 text-yellow-400" : "text-gray-300"}
-                  />
-                ))}
-              </div>
-              <span className="text-sm">{product.rating} ({product.reviews} reviews)</span>
+            <div>
+              <h1 className="text-3xl font-bold mb-2">{product.title}</h1>
+              <p className="text-2xl font-bold text-cm-green">
+                {Number(product.price).toLocaleString()} FCFA
+              </p>
             </div>
-            
-            <div className="text-3xl font-bold text-cm-green mb-4">
-              {product.price.toLocaleString()} FCFA
-            </div>
+
+            <Separator />
             
             <p className="mb-6 text-gray-700">{product.description}</p>
             
             <div className="mb-6 flex items-center">
               <div className="flex items-center gap-2 text-cm-green">
                 <Check size={18} className="text-cm-green" />
-                <span className="font-medium">In Stock: {product.inStock} available</span>
+                <span className="font-medium">In Stock: {product.quantity} available</span>
               </div>
             </div>
             
@@ -205,7 +340,7 @@ const ProductDetails: React.FC = () => {
                   variant="outline" 
                   size="icon"
                   onClick={() => handleQuantityChange(1)}
-                  disabled={quantity >= product.inStock}
+                  disabled={quantity >= product.quantity}
                 >
                   <Plus size={16} />
                 </Button>
@@ -232,36 +367,20 @@ const ProductDetails: React.FC = () => {
             
             <Separator className="my-6" />
             
-            <div className="mb-6">
-              <h2 className="font-semibold text-lg mb-4">Product Details</h2>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="flex flex-col">
-                  <span className="font-medium text-gray-500">Vendor</span>
-                  <span>{product.vendor}</span>
-                </div>
-                <div className="flex flex-col">
-                  <span className="font-medium text-gray-500">Materials</span>
-                  <span>{product.materials}</span>
-                </div>
-                <div className="flex flex-col">
-                  <span className="font-medium text-gray-500">Dimensions</span>
-                  <span>{product.dimensions}</span>
-                </div>
-                <div className="flex flex-col">
-                  <span className="font-medium text-gray-500">Weight</span>
-                  <span>{product.weight}</span>
-                </div>
-              </div>
-            </div>
-            
-            <div className="space-y-4">
-              <div>
-                <h3 className="font-medium text-gray-500">Shipping</h3>
-                <p>{product.shippingInfo}</p>
-              </div>
-              <div>
-                <h3 className="font-medium text-gray-500">Return Policy</h3>
-                <p>{product.returnPolicy}</p>
+            <div>
+              <h2 className="text-xl font-semibold mb-2">Details</h2>
+              <div className="space-y-2">
+                <p><span className="font-medium">Category:</span> {product.category || 'Uncategorized'}</p>
+                <p><span className="font-medium">Available Quantity:</span> {product.quantity}</p>
+                {product.returnPolicy && (
+                  <p><span className="font-medium">Return Policy:</span> {product.returnPolicy}</p>
+                )}
+                {product.sales !== undefined && (
+                  <p><span className="font-medium">Total Sales:</span> {product.sales}</p>
+                )}
+                {product.revenue !== undefined && (
+                  <p><span className="font-medium">Total Revenue:</span> {product.revenue.toLocaleString()} FCFA</p>
+                )}
               </div>
             </div>
           </div>
@@ -285,7 +404,7 @@ const ProductDetails: React.FC = () => {
                   <img
                     src="/placeholder.svg"
                     alt="Related Product"
-                    className="w-full h-full object-cover"
+                    className="w-auto h-auto object-cover"
                   />
                 </div>
                 <div className="p-4">

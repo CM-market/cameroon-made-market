@@ -56,6 +56,7 @@ export interface Order {
 
 export const orderApi = {
   create: async (data: CreateOrderData): Promise<Order> => {
+    const token = localStorage.getItem('token');
     const res = await axios.post(`${API_URL}/orders`, data,
       {
         headers: {
@@ -69,6 +70,7 @@ export const orderApi = {
 
 export const paymentApi = {
   create: async (data: { order_id: string; name: string; redirect_url: string; phone: string }) => {
+    const token = localStorage.getItem('token');
     const res = await axios.post(`${API_URL}/indirect_payment`, data, {
       headers: {
         Authorization: `Bearer ${token}`
@@ -78,6 +80,7 @@ export const paymentApi = {
   },
 
   verify: async (transactionId: string) => {
+    const token = localStorage.getItem('token');
     const res = await axios.get(`${API_URL}/verify_payment/${transactionId}`, {
       headers: {
         Authorization: `Bearer ${token}`
@@ -87,14 +90,13 @@ export const paymentApi = {
   }
 };
 
-const token = localStorage.getItem('token');
 export const productApi = {
   list: async (category?: string, seller_id?: string) => {
     const params = new URLSearchParams();
     if (category) params.append('category', category);
     if (seller_id) params.append('seller_id', seller_id);
 
-
+    const token = localStorage.getItem('token');
     const response = await axios.get<{ success: boolean; message: string; data: Product[] }>(
       `${API_URL}/products`,
       {
@@ -108,11 +110,20 @@ export const productApi = {
   },
 
   get: async (id: string) => {
-    const response = await axios.get<Product>(`${API_URL}/products/${id}`);
-    return response.data;
+    const token = localStorage.getItem('token');
+    const response = await axios.get<{ success: boolean; message: string; data: Product }>(
+      `${API_URL}/products/${id}`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      }
+    );
+    return response.data.data;
   },
 
   create: async (data: CreateProductData) => {
+    const token = localStorage.getItem('token');
     const response = await axios.post<Product>(`${API_URL}/products`, data,
       {
         headers: {
@@ -124,12 +135,22 @@ export const productApi = {
   },
 
   update: async (id: string, data: UpdateProductData) => {
-    const response = await axios.put<Product>(`${API_URL}/products/${id}`, data);
+    const token = localStorage.getItem('token');
+    const response = await axios.put<Product>(`${API_URL}/products/${id}`, data, {
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    });
     return response.data;
   },
 
   delete: async (id: string) => {
-    await axios.delete(`${API_URL}/products/${id}`);
+    const token = localStorage.getItem('token');
+    await axios.delete(`${API_URL}/products/${id}`, {
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    });
   },
 };
 
