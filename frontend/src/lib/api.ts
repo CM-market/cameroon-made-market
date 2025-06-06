@@ -1,5 +1,6 @@
 import axios from 'axios';
 
+const token = localStorage.getItem('token');
 export const API_URL = import.meta.env.VITE_API_URL + '/api'; ;
 
 
@@ -57,7 +58,6 @@ export interface Order {
 
 export const orderApi = {
   create: async (data: CreateOrderData): Promise<Order> => {
-    const token = localStorage.getItem('token');
     const res = await axios.post(`${API_URL}/orders`, data,
       {
         headers: {
