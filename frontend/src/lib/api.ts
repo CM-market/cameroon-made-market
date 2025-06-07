@@ -113,7 +113,7 @@ export const productApi = {
 
     const token = localStorage.getItem('token');
     const response = await axios.get<{ success: boolean; message: string; data: Product[] }>(
-      `${API_URL}/products`,
+      `${API_URL}/product`,
       {
         headers: {
           Authorization: `Bearer ${token}`
