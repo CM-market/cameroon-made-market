@@ -5,6 +5,7 @@ use axum::{
     response::{IntoResponse, Response},
 };
 
+use log::warn;
 use minio::s3::{builders::ObjectContent, client::Client, types::S3Api};
 use uuid::Uuid;
 
@@ -98,6 +99,7 @@ pub async fn handle_image_upload(
     State(state): State<AppState>,
     mut multipart: Multipart,
 ) -> Result<Response, (StatusCode, String)> {
+    warn!("Handling image upload");
     let image_service = state.config.image_service.clone();
 
     while let Some(field) = multipart.next_field().await.map_err(|e| {
