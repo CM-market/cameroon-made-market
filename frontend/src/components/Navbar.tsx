@@ -2,11 +2,13 @@ import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { LanguageSwitcher } from './LanguageSwitcher';
 import { Button } from './ui/button';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuth } from '@/contexts/AuthContext';
+
 
 export function Navbar() {
-  const { t } = useTranslation();
+  const { t } = useTranslation('navigation');
   const { user, logout } = useAuth();
+
 
   return (
     <nav className="border-b">
@@ -14,10 +16,10 @@ export function Navbar() {
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-4">
             <Link to="/" className="text-xl font-bold">
-              {t('navigation.home')}
+              {t('home')}
             </Link>
             <Link to="/products" className="hover:text-primary">
-              {t('navigation.products')}
+              {t('products')}
             </Link>
             <Link to="/categories" className="hover:text-primary">
               {t('navigation.categories')}

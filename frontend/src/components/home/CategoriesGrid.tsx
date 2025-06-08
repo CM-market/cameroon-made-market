@@ -4,10 +4,11 @@ import { Link } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ChevronDown, Headphones, Sofa, Home, ShoppingBag } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 const categories = [
   { id: 1, name: "Handcrafts", icon: "🎨" },
-  { id: 2, name: "Food & Drinks", icon: "🍲" },
+  { id: 2, name: "Toys and Games", icon: "🧸" },
   { id: 3, name: "Clothing & Fashion", icon: "👗" },
   { id: 4, name: "Home & Decor", icon: "🏡" },
   { id: 5, name: "Art & Collectibles", icon: "🎭" },
@@ -17,10 +18,11 @@ const categories = [
 ];
 
 const CategoriesGrid = () => {
+  const { t } = useTranslation('home');
   return (
     <section>
       <div className="flex justify-between items-center mb-8">
-        <h2 className="text-3xl font-bold">Browse Categories</h2>
+        <h2 className="text-3xl font-bold">{t('browseProducts')}</h2>
       </div>
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
         {categories.map((category) => (
@@ -41,7 +43,7 @@ const CategoriesGrid = () => {
       <div className="mt-6 flex justify-center">
         <Button asChild variant="outline" className="flex items-center gap-1">
           <Link to="/products">
-            More Categories <ChevronDown size={16} />
+            {t('moreCategories')}<ChevronDown size={16} />
           </Link>
         </Button>
       </div>

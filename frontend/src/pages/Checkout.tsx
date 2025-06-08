@@ -11,6 +11,7 @@ import { useNavigate } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
 import { Banknote, CreditCard, Smartphone } from "lucide-react";
 import { orderApi } from "@/lib/api";
+import { useTranslation } from "react-i18next";
 
 const Checkout: React.FC = () => {
   const [paymentMethod, setPaymentMethod] = useState("mobileMoney");
@@ -45,6 +46,7 @@ const Checkout: React.FC = () => {
     }));
   };
 
+  const { t } = useTranslation('checkout');
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const data = {
@@ -68,7 +70,7 @@ const Checkout: React.FC = () => {
       localStorage.setItem("currentOrder", JSON.stringify(order));
       navigate("/payment");
     } catch (error) {
-      alert("There was an issue placing your order. Please try again.");
+      throw new Error(t('ordererror'));
     }
     navigate("/payment");
   };
@@ -76,7 +78,7 @@ const Checkout: React.FC = () => {
   // Compute order summary dynamically
   const orderSummary = {
     subtotal: cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0),
-    shipping: "Free", // Example: fixed shipping cost
+    shipping: t('free'), // Example: fixed shipping cost
     total: cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0),
     items: cartItems.length,
   };
@@ -86,7 +88,7 @@ const Checkout: React.FC = () => {
       <MainNavbar />
 
       <div className="container mx-auto px-4 py-8">
-        <h1 className="text-3xl font-bold mb-6">Checkout</h1>
+        <h1 className="text-3xl font-bold mb-6">{t('title')}</h1>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           <div className="lg:col-span-2">
@@ -95,12 +97,12 @@ const Checkout: React.FC = () => {
                 {/* Delivery Address */}
                 <Card>
                   <CardHeader>
-                    <CardTitle>Delivery Address</CardTitle>
+                    <CardTitle>{t('da')}</CardTitle>
                   </CardHeader>
                   <CardContent>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div className="space-y-2">
-                        <Label htmlFor="fullName">Full Name</Label>
+                        <Label htmlFor="fullName">{t('fn')}</Label>
                         <Input
                           id="customer_name"
                           required
@@ -109,7 +111,7 @@ const Checkout: React.FC = () => {
                         />
                       </div>
                       <div className="space-y-2">
-                        <Label htmlFor="phone">Phone Number</Label>
+                        <Label htmlFor="phone">{t('phone')}</Label>
                         <Input
                           id="customer_phone"
                           type="number"
@@ -119,7 +121,7 @@ const Checkout: React.FC = () => {
                         />
                       </div>
                       <div className="space-y-2 md:col-span-2">
-                        <Label htmlFor="address">Street Address</Label>
+                        <Label htmlFor="address">{t('q')}</Label>
                         <Input
                           id="delivery_address"
                           required
@@ -128,7 +130,7 @@ const Checkout: React.FC = () => {
                         />
                       </div>
                       <div className="space-y-2">
-                        <Label htmlFor="city">City</Label>
+                        <Label htmlFor="city">{t('city')}</Label>
                         <Input
                           id="city"
                           required
@@ -137,7 +139,7 @@ const Checkout: React.FC = () => {
                         />
                       </div>
                       <div className="space-y-2">
-                        <Label htmlFor="region">Region</Label>
+                        <Label htmlFor="region">{t('region')}</Label>
                         <Input
                           id="region"
                           required
@@ -152,7 +154,7 @@ const Checkout: React.FC = () => {
                 {/* Payment Method */}
                 <Card>
                   <CardHeader>
-                    <CardTitle>Payment Method</CardTitle>
+                    <CardTitle>{t('pm')}</CardTitle>
                   </CardHeader>
                   <CardContent>
                     <RadioGroup
@@ -177,7 +179,7 @@ const Checkout: React.FC = () => {
                         <Label htmlFor="card" className="flex-1 cursor-not-allowed">
                           <div className="flex items-center gap-2">
                             <span>Credit/Debit Card</span>
-                            <Badge variant="destructive">Not Available</Badge>
+                            <Badge variant="destructive">{t('notAvailable')}</Badge>
                           </div>
                           <p className="text-sm text-muted-foreground">Visa, MasterCard</p>
                         </Label>
@@ -189,8 +191,8 @@ const Checkout: React.FC = () => {
                       <div className="flex items-center space-x-2 border rounded-md p-4">
                         <RadioGroupItem value="cash" id="cash" />
                         <Label htmlFor="cash" className="flex-1 cursor-pointer">
-                          Cash on Delivery
-                          <p className="text-sm text-muted-foreground">Pay when you receive the products</p>
+                          {t('cashonDelivery')}
+                          <p className="text-sm text-muted-foreground">{t('paywhendelivered')}</p>
                         </Label>
                         <Banknote className="h-6 w-6 text-muted-foreground" />
                       </div>
@@ -231,7 +233,7 @@ const Checkout: React.FC = () => {
                   type="submit"
                   className="w-full bg-cm-green hover:bg-cm-forest"
                 >
-                  Place Order
+                  {t('placeOrder')}
                 </Button>
               </div>
             </form>
@@ -240,19 +242,19 @@ const Checkout: React.FC = () => {
           <div>
             <Card>
               <CardHeader>
-                <CardTitle>Order Summary</CardTitle>
+                <CardTitle>{t('orderSummary')}</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
                   <div className="flex justify-between">
-                    <span>Items ({orderSummary.items})</span>
+                    <span>{t('items')} ({orderSummary.items})</span>
                     <span>{orderSummary.subtotal.toLocaleString()} FCFA</span>
                   </div>
 
                   <div className="flex justify-between">
-                    <span>Shipping</span>
+                    <span>{t('shipping')}</span>
                     <span className="bg-green-100 text-green-600 font-bold px-2 py-1 rounded-full text-sm">
-                      Free
+                      {t('free')}
                     </span>
 
                   </div>
@@ -267,9 +269,9 @@ const Checkout: React.FC = () => {
 
                 <div className="mt-4">
                   <div className="bg-muted rounded-md p-4">
-                    <h3 className="font-medium mb-1">Estimated Delivery</h3>
+                    <h3 className="font-medium mb-1">{t('estimatedDelivery')}</h3>
                     <p className="text-sm text-muted-foreground">
-                      1-3 business days after payment confirmation
+                      {t('estimatedDeliveryDescription')}
                     </p>
                   </div>
                 </div>

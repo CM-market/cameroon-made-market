@@ -1,6 +1,7 @@
 
 import React from "react";
 import { Card, CardContent } from "@/components/ui/card";
+import { useTranslation } from "react-i18next";
 
 const stats = [
   {
@@ -10,26 +11,27 @@ const stats = [
   },
   {
     label: "Products Listed",
-    value: "2,000+",
+    value: "200+",
     description: "Authentic Cameroonian items",
   },
   {
     label: "Happy Customers",
-    value: "10,000+",
+    value: "1000+",
     description: "Satisfied shoppers nationwide",
   },
   {
     label: "Local Communities",
-    value: "50+",
+    value: "5+",
     description: "Regions represented",
   },
 ];
 
 const MarketplaceStats = () => {
+  const { t } = useTranslation('home');
   return (
     <section className="py-12">
       <h2 className="text-3xl font-bold mb-8 text-center">
-        Growing Together
+        {t('growingTogether')}
       </h2>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {stats.map((stat) => (

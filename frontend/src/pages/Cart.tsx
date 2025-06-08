@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Trash2, Plus, Minus } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "@/hooks/use-toast";
+import { useTranslation } from "react-i18next";
 
 // Sample cart data - in a real app this would come from a cart state/context
 const initialCartItems = [
@@ -36,6 +37,7 @@ const initialCartItems = [
 ];
 
 const Cart: React.FC = () => {
+  const {t } = useTranslation('cart');
   const [cartItems, setCartItems] = useState(initialCartItems);
   const navigate = useNavigate();
   
@@ -82,10 +84,10 @@ const Cart: React.FC = () => {
       
       <div className="container mx-auto px-4 py-8 flex-grow">
         <div className="flex justify-between items-center mb-6">
-          <h1 className="text-3xl font-bold">Your Shopping Cart</h1>
+          <h1 className="text-3xl font-bold">{t('title')}</h1>
           {cartItems.length > 0 && (
             <Button variant="outline" className="text-red-500" onClick={clearCart}>
-              Clear Cart
+              {t('clearCart')}
             </Button>
           )}
         </div>
@@ -155,7 +157,7 @@ const Cart: React.FC = () => {
                               onClick={() => removeItem(item.id)}
                             >
                               <Trash2 className="h-4 w-4 mr-1" />
-                              Remove
+                              {t('removeItem')}
                             </Button>
                           </div>
                         </div>
@@ -167,9 +169,9 @@ const Cart: React.FC = () => {
             ) : (
               <Card>
                 <CardContent className="p-8 text-center">
-                  <p className="text-muted-foreground mb-4">Your cart is empty</p>
+                  <p className="text-muted-foreground mb-4">{t('empty')}</p>
                   <Button onClick={() => navigate("/products")}>
-                    Continue Shopping
+                  {t('continueShopping')}
                   </Button>
                 </CardContent>
               </Card>
@@ -179,25 +181,25 @@ const Cart: React.FC = () => {
           <div>
             <Card>
               <CardHeader>
-                <CardTitle>Order Summary</CardTitle>
+                <CardTitle>{t('ordersummary')}</CardTitle>
               </CardHeader>
               
               <CardContent>
                 <div className="space-y-4">
                   <div className="flex justify-between">
-                    <span>Subtotal</span>
+                    <span>{t('subtotal')}</span>
                     <span>{subtotal.toLocaleString()} FCFA</span>
                   </div>
                   
                   <div className="flex justify-between">
-                    <span>Shipping</span>
+                    <span>{t('shipping')}</span>
                     <span>{shipping.toLocaleString()} FCFA</span>
                   </div>
                   
                   <Separator />
                   
                   <div className="flex justify-between font-bold">
-                    <span>Total</span>
+                    <span>{t('total')}</span>
                     <span>{total.toLocaleString()} FCFA</span>
                   </div>
                 </div>
@@ -209,7 +211,7 @@ const Cart: React.FC = () => {
                   onClick={() => navigate("/checkout")}
                   disabled={cartItems.length === 0}
                 >
-                  Proceed to Checkout
+                 {t('checkout')}
                 </Button>
               </CardFooter>
             </Card>
@@ -218,10 +220,10 @@ const Cart: React.FC = () => {
               <CardContent className="p-4">
                 <div className="flex items-center">
                   <Input 
-                    placeholder="Enter promo code" 
+                    placeholder="promo code" 
                     className="rounded-r-none" 
                   />
-                  <Button className="rounded-l-none">Apply</Button>
+                  <Button className="rounded-l-none">{t('apply')}</Button>
                 </div>
               </CardContent>
             </Card>

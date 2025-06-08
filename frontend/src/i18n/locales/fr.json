@@ -1,6 +1,12 @@
 {
   "common": {
     "language": "Langue",
+    "welcome": "Bienvenue dans notre boutique",
+    "startSelling": "Commencez à vendre aujourd'hui",
+    "shopLG": "Achetez local et mondial",
+    "growBusiness": "Développez votre entreprise, achetez dans le monde entier",
+    "growBusinessDescription": "Les artisans camerounais et les petites entreprises peuvent facilement créer leurs propres boutiques et vendre à l'échelle nationale. Les acheteurs peuvent acheter des biens locaux et importés à des prix abordables, avec une expédition sans tracas gérée pour vous.",
+    "Grow Your Business, Shop the World": "Développez votre entreprise, achetez dans le monde entier",
     "english": "Anglais",
     "french": "Français",
     "search": "Rechercher",
@@ -11,12 +17,29 @@
     "profile": "Profil",
     "settings": "Paramètres"
   },
+  "home": {
+    "browseProducts": "Parcourir les produits",
+    "moreCategories": "Plus de catégories",
+    "featureProducts": "Produits en vedette",
+    "empowering": "Autonomiser le local, acheter mondial",
+    "empoweringDescription": "Lancez votre entreprise camerounaise à l'échelle nationale avec votre propre boutique. Achetez des artisanats locaux uniques et des biens mondiaux abordables, livrés facilement.",
+    "createYourStore": "Créez votre boutique",
+    "growingTogether": "Grandissons ensemble",
+    "ExploreLocal": "Explorer le local et le mondial"
+  },
   "navigation": {
     "home": "Accueil",
+    "logo": "Transac",
     "products": "Produits",
+    "signup": "S'inscrire",
     "categories": "Catégories",
+    "login": "Connexion",
+    "logout": "Déconnexion",
+    "profile": "Profil",
+    "settings": "Paramètres",
     "about": "À propos",
     "contact": "Contact"
+  
   },
   "product": {
     "addToCart": "Ajouter au panier",
@@ -32,9 +55,45 @@
     "title": "Panier d'achat",
     "empty": "Votre panier est vide",
     "subtotal": "Sous-total",
+    "addedToCart": "Article ajouté au panier",
+    "removedFromCart": "Article retiré du panier",
+    "updateQuantity": "Mettre à jour la quantité",
+    "orderSummary": "Résumé de la commande",
+    "clearCart": "Vider le panier",
+    "shipping": "Expédition",
+    "removeItem": "Retirer l'article",
     "total": "Total",
+    "apply": "Appliquer",
     "checkout": "Passer à la caisse",
     "continueShopping": "Continuer les achats"
+  },
+  "checkout": {
+    "title": "Passer à la caisse",
+    "free": "Gratuit",
+    "cashOnDelivery": "Paiement à la livraison",
+    "estimatedDelivery": "Livraison estimée",
+    "estimatedDeliveryDescription": "Votre commande sera livrée dans un délai de 1 à 3 jours ouvrables.",
+    "shipping": "Expédition",
+    "items": "Articles",
+    "pm": "Méthode de paiement",
+    "paywhendelivered": "Payer à la réception des produits",
+    "notAvailable": "Non disponible",
+    "cashonDelivery": "Paiement à la livraison",
+    "da": "Adresse de livraison",
+    "orderError": "Une erreur s'est produite lors du traitement de votre commande. Veuillez réessayer.",
+    "billingDetails": "Détails de facturation",
+    "shippingDetails": "Détails de livraison",
+    "fn": "Nom complet",
+    "q": "Quartier",
+    "city": "Ville",
+    "region": "Région",
+    "phone": "Numéro de téléphone",
+    "deliveryAddress": "Adresse de livraison",
+    "paymentMethod": "Méthode de paiement",
+    "orderSummary": "Résumé de la commande",
+    "placeOrder": "Passer la commande",
+    "thankYou": "Merci pour votre commande !",
+    "orderNumber": "Votre numéro de commande est"
   },
   "auth": {
     "login": "Connexion",
@@ -45,10 +104,47 @@
     "forgotPassword": "Mot de passe oublié ?",
     "rememberMe": "Se souvenir de moi"
   },
+  "homeHero": {
+    "title": "Votre passerelle vers le commerce camerounais et les produits mondiaux",
+    "subtitle": "Achetez local, vendez à l'échelle nationale, accédez aux produits internationaux",
+    "shopNow": "Achetez maintenant",
+    "startSelling": "Commencez à vendre"
+  },
+  "about": {
+    "title": "Votre passerelle vers le commerce camerounais et les produits mondiaux",
+    "description": "Nous transformons le commerce au Cameroun en permettant aux entreprises locales et aux petits entrepreneurs d'atteindre des clients dans tout le pays sans la complexité de la création de leurs propres sites web. Notre plateforme connecte également les Camerounais avec des produits internationaux de qualité grâce à notre service d'importation simplifié, éliminant les tracas d'expédition et rendant le commerce mondial accessible à tous.",
+    "column1r1": "boutique en ligne prêts à l'emploi",
+    "column1r1Description": "Évitez la complexité technique. Créez votre boutique en ligne professionnelle en quelques minutes et commencez à vendre dans tout le Cameroun sans créer de site web.",
+    "column2r1": "Importation simplifiée",
+    "column2r1Description": "Vous voulez des produits internationaux ? Nous gérons l'importation, l'expédition et la logistique pour que vous puissiez accéder aux biens mondiaux sans stress.",
+    "column1r2": "Vendez facilement",
+    "column1r2Description": "Créez votre boutique en ligne en quelques clics et commencez à vendre vos produits à des clients dans tout le Cameroun.",
+    "column2r2": "Livraison dans tout le pays",
+    "column2r2Description": "Nous nous occupons de la logistique pour que vous puissiez vous concentrer sur la vente. Vos produits livrés rapidement et en toute sécurité.",
+    "column1r3": "Accès à des produits internationaux",
+    "column1r3Description": "Grâce à notre service d'importation, accédez facilement à des produits de qualité du monde entier sans les tracas de l'expédition.",
+    "column2r3": "Support aux entreprises locales",
+    "column2r3Description": "Nous soutenons les artisans, les agriculteurs et les petites entreprises pour qu'ils se développent au-delà de leurs marchés locaux et construisent des entreprises durables en ligne.",
+    "sellers": "Vendeurs",
+    "sellersDescription1": "• Aucune création de site Web requise",
+    "sellersDescription2": "• Atteindre les clients à l'échelle nationale",
+    "sellersDescription3": "• Créez votre boutique en ligne en quelques clics",
+    "sellersDescription4": "• Traitement des paiements intégré",
+    "sellersDescription5": "• Accès à des outils de marketing et de gestion",
+    "buyers": "Acheteurs",
+    "buyersDescription1": "• Accès à des produits camerounais et internationaux",
+    "buyersDescription2": "• Expérience d'achat fluide et sécurisée",
+    "buyersDescription3": "• Livraison rapide et fiable",
+    "buyersDescription4": "• Soutenez les entreprises locales camerounaises",
+    "buyersDescription5": "• Assurance qualité et support client",
+    "footertitle": "Prêt à transformer votre entreprise ?",
+    "footerDescription": "Rejoignez-nous pour révolutionner le commerce au Cameroun. Que vous soyez un vendeur cherchant à étendre votre portée ou un acheteur à la recherche de produits de qualité, nous avons ce qu'il vous faut. Inscrivez-vous dès aujourd'hui et faites partie de la nouvelle ère du commerce camerounais."
+  },
   "errors": {
     "required": "Ce champ est obligatoire",
     "invalidEmail": "Adresse e-mail invalide",
     "passwordMismatch": "Les mots de passe ne correspondent pas",
-    "generic": "Une erreur s'est produite. Veuillez réessayer."
+    "generic": "Une erreur s'est produite. Veuillez réessayer.",
+    "productFetchError": "Erreur lors de la récupération du produit. Veuillez réessayer."
   }
-} 
+}

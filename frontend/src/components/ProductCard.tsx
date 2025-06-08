@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { getImageUrl } from '@/services/minioService';
-import { Product } from '@/types/product';
+import { Product } from '@/lib/api';
+
 
 interface ProductCardProps {
   product: Product;

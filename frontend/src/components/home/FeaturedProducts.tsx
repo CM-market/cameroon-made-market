@@ -4,11 +4,13 @@ import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { productApi, Product } from "@/lib/api";
 import { getImageUrl } from "@/services/minioService";
+import { useTranslation } from "react-i18next";
 
 const FeaturedProducts = () => {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { t } = useTranslation('home');
 
   useEffect(() => {
     const fetchRecentProducts = async () => {
@@ -22,7 +24,6 @@ const FeaturedProducts = () => {
         setProducts(recentProducts);
         setError(null);
       } catch (err) {
-        console.error('Error fetching recent products:', err);
         setError('Failed to load featured products');
       } finally {
         setLoading(false);
@@ -36,7 +37,7 @@ const FeaturedProducts = () => {
     return (
       <section className="w-full">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6 sm:mb-8">
-          <h2 className="text-2xl sm:text-3xl font-bold">Featured Products</h2>
+          <h2 className="text-2xl sm:text-3xl font-bold">{t('featureProducts')}</h2>
           <Link 
             to="/products" 
             className="text-cm-green hover:text-cm-forest text-base sm:text-lg font-medium"
@@ -67,7 +68,7 @@ const FeaturedProducts = () => {
     return (
       <section className="w-full">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6 sm:mb-8">
-          <h2 className="text-2xl sm:text-3xl font-bold">Featured Products</h2>
+          <h2 className="text-2xl sm:text-3xl font-bold">{t('featureProducts')}</h2>
           <Link 
             to="/products" 
             className="text-cm-green hover:text-cm-forest text-base sm:text-lg font-medium"
@@ -85,7 +86,7 @@ const FeaturedProducts = () => {
   return (
     <section className="w-full">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6 sm:mb-8">
-        <h2 className="text-2xl sm:text-3xl font-bold">Featured Products</h2>
+        <h2 className="text-2xl sm:text-3xl font-bold">{t('featureProducts')}</h2>
         <Link 
           to="/products" 
           className="text-cm-green hover:text-cm-forest text-base sm:text-lg font-medium"

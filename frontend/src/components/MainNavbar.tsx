@@ -42,8 +42,6 @@ const MainNavbar: React.FC = () => {
   const [selectedLang, setSelectedLang] = useState(() => localStorage.getItem('lang') || 'en');
   const langButtonRef = useRef<HTMLButtonElement>(null);
   
-  const { t } = useTranslation();
-  
   useEffect(() => {
     // Check localStorage for cart items on initial load and when it changes
     const storedCart = localStorage.getItem('cartItems');
@@ -124,6 +122,7 @@ const MainNavbar: React.FC = () => {
   const userName = localStorage.getItem('userName');
   const token = localStorage.getItem('token');
   const isBuyerLoggedIn = userRole === 'Buyer' && !!token;
+  const {t} = useTranslation('navigation');
 
   const handleLogout = () => {
     setShowLogoutConfirm(true);
@@ -191,7 +190,7 @@ const MainNavbar: React.FC = () => {
             alt="Transac"
             className="h-10 sm:h-12 w-auto mr-2"
           />
-          <span className="hidden sm:inline">{t('welcome')}</span>
+          <span className="hidden sm:inline">{t('logo')}</span>
         </Link>
         
         {/* Mobile Action Buttons - Always visible on mobile */}
@@ -250,7 +249,7 @@ const MainNavbar: React.FC = () => {
                       isActive("/") && "bg-accent text-accent-foreground"
                     )}
                   >
-                    Home
+                    {t('home')}
                   </NavigationMenuLink>
                 </Link>
               </NavigationMenuItem>
@@ -262,7 +261,7 @@ const MainNavbar: React.FC = () => {
                       isActive("/products") && "bg-accent text-accent-foreground"
                     )}
                   >
-                    Products
+                    {t('products')}
                   </NavigationMenuLink>
                 </Link>
               </NavigationMenuItem>
@@ -274,7 +273,7 @@ const MainNavbar: React.FC = () => {
                       isActive("/about") && "bg-accent text-accent-foreground"
                     )}
                   >
-                    About
+                    {t('about')}
                   </NavigationMenuLink>
                 </Link>
               </NavigationMenuItem>
@@ -398,7 +397,7 @@ const MainNavbar: React.FC = () => {
               </Link>
               <Link to="/buyer/register">
                 <Button variant="default" size="sm" className="bg-cm-green text-white hover:bg-cm-forest">
-                  {t('signUp')}
+                  {t('signup')}
                 </Button>
               </Link>
             </div>
