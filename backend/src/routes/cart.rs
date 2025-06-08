@@ -15,9 +15,9 @@ use uuid::Uuid;
 
 pub fn config() -> Router<AppState> {
     Router::new()
-        .route("/api/cart", get(get_cart))
-        .route("/api/cart", post(add_to_cart))
-        .route("/api/cart/:product_id", delete(remove_from_cart))
+        .route("/cart", get(get_cart))
+        .route("/cart", post(add_to_cart))
+        .route("/cart/:product_id", delete(remove_from_cart))
 }
 
 #[axum::debug_handler]

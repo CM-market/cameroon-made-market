@@ -19,12 +19,12 @@ use super::error::ErrorResponse;
 
 pub fn config() -> Router<AppState> {
     Router::new()
-        .route("/api/orders", get(list_orders))
-        .route("/api/orders", post(create_order))
+        .route("/orders", get(list_orders))
+        .route("/orders", post(create_order))
         .route("/api/orders/:id", get(get_order))
-        .route("/api/orders/:id/status", put(update_order_status))
-        .route("/api/orders/:id/items", get(get_order_items))
-        .route("/api/orders/:id", delete(delete_order))
+        .route("/orders/:id/status", put(update_order_status))
+        .route("/orders/:id/items", get(get_order_items))
+        .route("/orders/:id", delete(delete_order))
 }
 
 #[derive(Deserialize)]

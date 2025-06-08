@@ -47,8 +47,8 @@ async fn main() {
    
         .route("/api/users", post(register))
         .route("/api/users/login", post(login))
-        .route("/api/product", get(list_products))
-        .route("/api", get(welcome))
+        .route("/products", get(list_products))
+        .route("/", get(welcome))
         // .merge(routes::category::config())
         // .merge(routes::address::config())
         // .merge(routes::notification::config())

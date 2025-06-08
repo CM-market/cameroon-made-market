@@ -30,7 +30,7 @@ pub fn config() -> Router<AppState> {
                 .route("/:id", delete(delete_product)),
         )
         .nest(
-            "/api/vendor",
+            "/vendor",
             Router::new().route("/products", get(list_products_by)),
         )
         .nest(
