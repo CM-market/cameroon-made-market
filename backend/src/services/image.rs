@@ -25,13 +25,14 @@ impl ImageService {
         if !self.client.bucket_exists(&self.bucket).send().await?.exists {
             self.client.create_bucket(&self.bucket).send().await?;
             // Set bucket policy for public read access
-            let policy = r#"
+              let policy = r#"
             {
                 "Version": "2012-10-17",
                 "Statement": [
                     {
                         "Action": ["s3:GetObject", "s3:ListBucket", "s3:putObject"],
                         "Effect": "Allow",
+                        "Principal": "*",
                         "Resource": ["arn:aws:s3:::{{bucket_name}}/*"]
                     }
                 ]
