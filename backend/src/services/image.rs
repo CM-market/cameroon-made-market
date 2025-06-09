@@ -11,8 +11,8 @@ use uuid::Uuid;
 
 use crate::state::AppState;
 
-const ALLOWED_MIME_TYPES: [&str; 4] = ["image/jpeg", "image/png", "image/gif", "image/webp"];
-const MAX_FILE_SIZE: usize = 2 * 1024 * 1024; // 2MB
+const ALLOWED_MIME_TYPES: [&str; 5] = ["image/jpeg", "image/png", "image/gif", "image/webp", "image/avif"];
+const MAX_FILE_SIZE: usize = 3 * 1024 * 1024; // 3MB
 
 #[derive(Debug, Clone, Default)]
 pub struct ImageService {
@@ -62,14 +62,14 @@ impl ImageService {
         // Validate file type
         if !ALLOWED_MIME_TYPES.contains(&content_type) {
             return Err(anyhow::anyhow!(
-                "Invalid file type. Only JPEG, PNG, GIF, and WebP images are allowed."
+                "Invalid file type. Only JPEG, PNG, GIF, avif and WebP images are allowed."
             ));
         }
 
         // Validate file size
         if file.len() > MAX_FILE_SIZE {
             return Err(anyhow::anyhow!(
-                "File size exceeds the maximum limit of 2MB."
+                "File size exceeds the maximum limit of 3MB."
             ));
         }
 
@@ -78,6 +78,7 @@ impl ImageService {
             "image/png" => "png",
             "image/gif" => "gif",
             "image/webp" => "webp",
+            "image/avif" => "avif",
             _ => return Err(anyhow::anyhow!("Unsupported image format")),
         };
 

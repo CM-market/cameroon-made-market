@@ -23,15 +23,15 @@ const token = localStorage.getItem('token');
 export const uploadImage = async (file: File): Promise<string> => {
   try {
     // Validate file type
-    const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/avif'];
     if (!allowedTypes.includes(file.type)) {
       throw new Error(`Invalid file type. Allowed types: ${allowedTypes.join(', ')}`);
     }
 
-    // Validate file size (2MB)
-    const maxSize = 2 * 1024 * 1024; // 2MB in bytes
+    // Validate file size (3MB)
+    const maxSize = 3 * 1024 * 1024; // 3MB in bytes
     if (file.size > maxSize) {
-      throw new Error(`File size exceeds the maximum limit of 2MB`);
+      throw new Error(`File size exceeds the maximum limit of 3MB`);
     }
 
     const formData = new FormData();
