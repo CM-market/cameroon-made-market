@@ -60,7 +60,7 @@ export const getImageUrl = (objectName: string): string => {
     console.log("cleanObjectName: " + cleanObjectName);
 
   // Construct the URL using the MinIO configuration
-  const baseUrl = import.meta.env.VITE_MINIO_PUBLIC_URL || `http://${config.endpoint}:${config.port}`;
+  const baseUrl = import.meta.env.VITE_MINIO_PUBLIC_URL || `${config.endpoint}:${config.port}`;
   console.log("baseUrl: " + baseUrl);
   console.log("endpoint" + `${baseUrl}/${config.bucketName}/${cleanObjectName}`);
   return `${baseUrl}/${config.bucketName}/${cleanObjectName}`;
