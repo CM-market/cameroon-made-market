@@ -4,8 +4,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/components/ui/use-toast";
+import { API_URL } from '@/lib/api';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080';
 
 export default function AdminLogin() {
   const [phone, setPhone] = useState('');

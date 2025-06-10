@@ -35,12 +35,7 @@ pub async fn register(
         }
     }
 
-    print!("Registering user: {:?}", user_data);
-    let user_service = UserService::new(
-        state.db,
-        state.config.jwt_secret.clone(),
-        state.config.jwt_expires_in,
-    );
+    let user_service = UserService::new(state.db);
     match user_service.create_user(user_data).await {
         Ok(user) => {
             info!("User Successfully created");
@@ -56,13 +51,8 @@ pub async fn login(
     State(state): State<AppState>,
     Json(login_data): Json<LoginRequest>,
 ) -> Json<ApiResponse<LoginResponse>> {
-    let user_service = UserService::new(
-        state.db,
-        state.config.jwt_secret.clone(),
-        state.config.jwt_expires_in,
-    );
+    let user_service = UserService::new(state.db);
     let config = state.config.as_ref();
-    // Accept role from frontend (optional)
     let expected_role = login_data.role;
     match user_service
         .login(login_data.phone, login_data.password, config, expected_role)
@@ -83,7 +73,8 @@ pub async fn login(
         }
         Err(e) => {
             tracing::warn!("Login failed: {}", e);
-            Json(ApiResponse::error("Login failed:"))},
+            Json(ApiResponse::error("Login failed:"))
+        }
     }
 }
 
@@ -100,11 +91,7 @@ pub async fn get_me(
     ) {
         return Json(ApiResponse::error(msg));
     }
-    let user_service = UserService::new(
-        state.db,
-        state.config.jwt_secret.clone(),
-        state.config.jwt_expires_in,
-    );
+    let user_service = UserService::new(state.db);
 
     // Handle UUID parsing
     let uuid = match Uuid::parse_str(&auth_user.id) {
@@ -138,11 +125,7 @@ pub async fn get_all_users(
     if let Err((_status, msg)) = require_role(&auth_user, &[UserRole::Admin]) {
         return Json(ApiResponse::error(msg));
     }
-    let user_service = UserService::new(
-        state.db,
-        state.config.jwt_secret.clone(),
-        state.config.jwt_expires_in,
-    );
+    let user_service = UserService::new(state.db);
     match user_service.list_users().await {
         Ok(users) => Json(ApiResponse::success(
             users,

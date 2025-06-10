@@ -21,7 +21,7 @@ use uuid::Uuid;
 pub fn config() -> Router<AppState> {
     Router::new()
         .nest(
-            "/products",
+            "/api/products",
             Router::new()
                 .route("/", post(create_product))
                 .route("/upload-image", post(handle_image_upload))
@@ -30,11 +30,11 @@ pub fn config() -> Router<AppState> {
                 .route("/:id", delete(delete_product)),
         )
         .nest(
-            "/vendor",
+            "/api/vendor",
             Router::new().route("/products", get(list_products_by)),
         )
         .nest(
-            "/admin",
+            "/api/admin",
             Router::new()
                 .route("/products/:id/approve", post(approve_product))
                 .route("/products/pending", get(list_pending_products)),

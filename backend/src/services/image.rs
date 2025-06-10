@@ -6,13 +6,11 @@ use axum::{
 };
 
 use minio::s3::{builders::ObjectContent, client::Client, types::S3Api};
-
 use uuid::Uuid;
 
 use crate::state::AppState;
 
 const ALLOWED_MIME_TYPES: [&str; 4] = ["image/jpeg", "image/png", "image/gif", "image/webp"];
-
 const MAX_FILE_SIZE: usize = 2 * 1024 * 1024; // 2MB
 
 #[derive(Debug, Clone, Default)]
@@ -22,7 +20,36 @@ pub struct ImageService {
 }
 
 impl ImageService {
+    pub async fn ensure_bucket_exists(&self) -> Result<()> {
+        if !self.client.bucket_exists(&self.bucket).send().await?.exists {
+            self.client.create_bucket(&self.bucket).send().await?;
+            // Set bucket policy for public read access
+            let policy = r#"
+            {
+                "Version": "2012-10-17",
+                "Statement": [
+                    {
+                        "Action": ["s3:GetObject", "s3:ListBucket", "s3:putObject"],
+                        "Effect": "Allow",
+                        "Resource": ["arn:aws:s3:::{{bucket_name}}/*"]
+                    }
+                ]
+            }
+            "#
+            .replace("{{bucket_name}}", &self.bucket);
+            self.client
+                .put_bucket_policy(&self.bucket)
+                .config(policy)
+                .send()
+                .await?;
+        }
+        Ok(())
+    }
+
     pub async fn upload_image(&self, file: Vec<u8>, content_type: &str) -> Result<String> {
+        // Ensure bucket exists before uploading
+        self.ensure_bucket_exists().await?;
+
         // Validate file type
         if !ALLOWED_MIME_TYPES.contains(&content_type) {
             return Err(anyhow::anyhow!(
@@ -71,7 +98,7 @@ pub async fn handle_image_upload(
     State(state): State<AppState>,
     mut multipart: Multipart,
 ) -> Result<Response, (StatusCode, String)> {
-    let image_service = state.config.image_service.clone(); 
+    let image_service = state.config.image_service.clone();
 
     while let Some(field) = multipart.next_field().await.map_err(|e| {
         (
