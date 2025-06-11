@@ -342,45 +342,49 @@ const ProductList: React.FC = () => {
               </div>
             ) : (
               <div className={viewMode === 'grid' ? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6' : 'space-y-6'}>
-                {filteredProducts.map((product) => (
-                  <Card key={product.id} className={viewMode === 'list' ? 'flex' : ''}>
-                    <div className={viewMode === 'list' ? 'w-48' : 'w-full'}>
-                      <div className="relative aspect-square w-full bg-gray-100">
-                        <img
-                          src={getImageUrl(product.image_urls[0])}
-                          alt={product.title}
-                          className="w-full h-full object-contain p-2"
-                          onError={(e) => {
-                            console.log('Image load failed:', product.image_urls[0]);
-                            (e.target as HTMLImageElement).src = '/placeholder.svg';
-                          }}
-                        />
-                      </div>
-                    </div>
-                    <CardContent className={viewMode === 'list' ? 'flex-grow p-6' : 'p-6'}>
-                      <h3 className="text-lg font-semibold mb-2">{product.title}</h3>
-                      <p className="text-gray-500 mb-4 line-clamp-2">{product.description}</p>
-                      <div className="flex flex-col gap-2">
-                        <span className="text-lg font-bold">{Number(product.price).toLocaleString()} FCFA</span>
-                        <div className="flex gap-2">
-                          <Button
-                            variant="outline"
-                            className="flex-1"
-                            onClick={() => navigate(`/products/${product.id}`)}
-                          >
-                            View Details
-                          </Button>
-                          <Button
-                            className="flex-1 bg-cm-green hover:bg-cm-forest"
-                            onClick={() => handleAddToCart(product)}
-                          >
-                            Add to Cart
-                          </Button>
+                {filteredProducts.map((product) => {
+                  console.log('Rendering product:', product.image_urls); // Debug log
+                  console.log(getImageUrl(product.image_urls[0])); // Debug log
+                  return (
+                    <Card key={product.id} className={viewMode === 'list' ? 'flex' : ''}>
+                      <div className={viewMode === 'list' ? 'w-48' : 'w-full'}>
+                        <div className="relative aspect-square w-full bg-gray-100">
+                          <img
+                            src={getImageUrl(product.image_urls[0])}
+                            alt={product.title}
+                            className="w-full h-full object-contain p-2"
+                            onError={(e) => {
+                              console.log('Image load failed:', product.image_urls[0]);
+                              (e.target as HTMLImageElement).src = '/placeholder.svg';
+                            }}
+                          />
                         </div>
                       </div>
-                    </CardContent>
-                  </Card>
-                ))}
+                      <CardContent className={viewMode === 'list' ? 'flex-grow p-6' : 'p-6'}>
+                        <h3 className="text-lg font-semibold mb-2">{product.title}</h3>
+                        <p className="text-gray-500 mb-4 line-clamp-2">{product.description}</p>
+                        <div className="flex flex-col gap-2">
+                          <span className="text-lg font-bold">{Number(product.price).toLocaleString()} FCFA</span>
+                          <div className="flex gap-2">
+                            <Button
+                              variant="outline"
+                              className="flex-1"
+                              onClick={() => navigate(`/products/${product.id}`)}
+                            >
+                              View Details
+                            </Button>
+                            <Button
+                              className="flex-1 bg-cm-green hover:bg-cm-forest"
+                              onClick={() => handleAddToCart(product)}
+                            >
+                              Add to Cart
+                            </Button>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  );
+                })}
               </div>
             )}
           </div>
