@@ -42,7 +42,7 @@ export function ProductManagement() {
   const fetchProducts = async () => {
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch('/api/admin/products/pending', {
+      const response = await fetch('/api/admins/products/pending', {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',
@@ -71,7 +71,7 @@ export function ProductManagement() {
   const handleApproval = async (productId: string) => {
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`/api/admin/products/${productId}/approve`, {
+      const response = await fetch(`/api/admins/products/${productId}/approve`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -89,7 +89,7 @@ export function ProductManagement() {
   const handleReject = async (productId: string) => {
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`/api/admin/products/${productId}/reject`, {
+      const response = await fetch(`/api/admins/products/${productId}/reject`, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${token}`,

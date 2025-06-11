@@ -30,7 +30,14 @@ async fn main() {
     println!("{}", token);
     // Configure CORS
     let cors = CorsLayer::new()
-        .allow_origin(Any)
+        .allow_origin(
+            app_state
+                .config
+                .cors_origins
+                .iter()
+                .filter_map(|origin| http::HeaderValue::from_str(origin).ok())
+                .collect::<Vec<http::HeaderValue>>(),
+        )
         .allow_methods(Any)
         .allow_headers(Any);
 
@@ -49,7 +56,7 @@ async fn main() {
         .route("/api/users", post(register))
         .route("/api/users/login", post(login))
         .route("/products", get(list_products))
-        // .merge(routes::auth::config())
+        .route("/api", get(welcome))
         // .merge(routes::category::config())
         // .merge(routes::address::config())
         // .merge(routes::notification::config())
@@ -72,6 +79,10 @@ async fn main() {
     axum::serve(TcpListener::bind(addr).await.unwrap(), app)
         .await
         .unwrap();
+}
+
+async fn welcome() -> &'static str {
+    "Welcome to Cameroon Made Market API!"
 }
 
 fn config_tracing() {

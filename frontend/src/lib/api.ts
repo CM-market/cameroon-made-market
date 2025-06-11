@@ -1,6 +1,8 @@
 import axios from 'axios';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080';
+const token = localStorage.getItem('token');
+export const API_URL = import.meta.env.VITE_API_URL + '/api'; ;
+
 
 export interface Product {
   id: string;
@@ -65,7 +67,6 @@ export interface OrderItem {
 
 export const orderApi = {
   create: async (data: CreateOrderData): Promise<Order> => {
-    const token = localStorage.getItem('token');
     const res = await axios.post(`${API_URL}/orders`, data,
       {
         headers: {
@@ -94,6 +95,20 @@ export const orderApi = {
     return response.data;
   }
 };
+
+export const ImageUploadApi = {
+  upload: async (file: File) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    const res = await axios.post(`${API_URL}/products/upload-image`, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+        Authorization: `Bearer ${token}`
+      }
+    });
+    return res;
+  }
+}
 
 export const paymentApi = {
   create: async (data: { order_id: string; name: string; redirect_url: string; phone: string }) => {
@@ -198,10 +213,10 @@ export const userApi = {
     password: string;
     role?: "Vendor" | "Buyer";
   }) => {
-    const response = await axios.post(`${API_URL}/api/users/login`, data,{
-  });
+    const response = await axios.post(`${API_URL}/api/users/login`, data, {
+    });
     return response.data;
   },
   // ...other user API methods
-}; 
+};
 

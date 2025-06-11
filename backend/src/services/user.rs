@@ -16,8 +16,6 @@ use crate::{
 use super::errors::ServiceError;
 pub struct UserService {
     db: Arc<DatabaseConnection>,
-    jwt_secret: String,
-    jwt_expires_in: i64,
 }
 
 #[derive(Deserialize, Debug)]
@@ -51,12 +49,8 @@ pub struct UpdateUser {
 }
 
 impl UserService {
-    pub fn new(db: Arc<DatabaseConnection>, jwt_secret: String, jwt_expires_in: i64) -> Self {
-        Self {
-            db,
-            jwt_secret,
-            jwt_expires_in,
-        }
+    pub fn new(db: Arc<DatabaseConnection>) -> Self {
+        Self { db }
     }
 
     pub async fn create_user(&self, user_data: CreateUser) -> Result<Model, ServiceError> {
@@ -180,7 +174,7 @@ mod tests {
             }]])
             .into_connection();
 
-        let service = UserService::new(db.into(), "test_secret".to_string(), 24);
+        let service = UserService::new(db.into());
 
         let user_data = CreateUser {
             full_name: "Test User".to_string(),
@@ -217,7 +211,7 @@ mod tests {
             }]])
             .into_connection();
 
-        let service = UserService::new(db.into(), "test_secret".to_string(), 24);
+        let service = UserService::new(db.into());
 
         let config = Config {
             jwt_secret: "test_secret".to_string(),
@@ -246,7 +240,7 @@ mod tests {
             }]])
             .into_connection();
 
-        let service = UserService::new(db.into(), "test_secret".to_string(), 24);
+        let service = UserService::new(db.into());
 
         let config = Config {
             jwt_secret: "test_secret".to_string(),
@@ -276,7 +270,7 @@ mod tests {
             }]])
             .into_connection();
 
-        let service = UserService::new(db.into(), "test_secret".to_string(), 24);
+        let service = UserService::new(db.into());
 
         let result = service.get_user_by_id(user_id).await;
         assert!(result.is_ok());
@@ -318,7 +312,7 @@ mod tests {
             ])
             .into_connection();
 
-        let service = UserService::new(db.into(), "test_secret".to_string(), 24);
+        let service = UserService::new(db.into());
 
         let update_data = UpdateUser {
             full_name: Some("Updated User".to_string()),
@@ -365,7 +359,7 @@ mod tests {
             ]])
             .into_connection();
 
-        let service = UserService::new(db.into(), "test_secret".to_string(), 24);
+        let service = UserService::new(db.into());
 
         let result = service.list_users().await;
         assert!(result.is_ok());
