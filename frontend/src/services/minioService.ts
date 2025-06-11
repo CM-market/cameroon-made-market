@@ -11,7 +11,7 @@ interface MinioConfig {
 }
 
 const config: MinioConfig = {
-  endpoint: import.meta.env.VITE_MINIO_ENDPOINT || 'https://transac.site/minio',
+  endpoint: import.meta.env.VITE_MINIO_ENDPOINT || 'http://13.62.14.141',
   port: parseInt(import.meta.env.VITE_MINIO_PORT || '9000'),
   useSSL: import.meta.env.VITE_MINIO_USE_SSL === 'false',
   accessKey: import.meta.env.VITE_MINIO_ACCESS_KEY || '',
