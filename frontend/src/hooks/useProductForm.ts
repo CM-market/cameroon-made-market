@@ -3,6 +3,7 @@ import { useToast } from "./use-toast";
 import { uploadImage } from "@/services/minioService";
 import { useNavigate } from "react-router-dom";
 import { productApi } from "@/lib/api";
+import { analyzeImage } from "@/services/imageService";
 
 export interface ProductFormData {
   name: string;
@@ -70,15 +71,47 @@ export const useProductForm = (onProductCreated?: () => void) => {
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files) return;
+  // analyse image before uploading
+    // Analyze images before uploading
+    const newFiles = Array.from(files);
 
+    for (let i = 0; i < newFiles.length; i++) {
+      const file = newFiles[i];
+      try {
+        // analyzeImage expects a string (path), but we have a File object.
+        // To analyze, we need to read the file as a data URL or upload it first and get a URL.
+        // For now, let's read the file as a data URL and pass that to analyzeImage.
+        const fileDataUrl = await new Promise<string>((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(reader.result as string);
+          reader.onerror = reject;
+          reader.readAsDataURL(file);
+        });
+        await analyzeImage(fileDataUrl);
+      } catch (error) {
+        toast({
+          title: "Image analysis failed",
+          description: error instanceof Error ? error.message : "One of your images could not be analyzed. Please try a different image.",
+          variant: "destructive",
+        });
+        return; // Stop further processing if analysis fails
+      }
+    }
+  
+    
     setIsUploading(true);
     let newPreviewUrls: string[] = [];
     
     try {
       const newFiles = Array.from(files);
+      // If you want to analyze the first image file, you need to provide its path or handle accordingly.
+      // For now, skip analyzeImage or implement logic to upload the file and get its path before analyzing.
+      // Example: let imgalyser = await analyzeImage(filePathString);
+      // newFiles.map(file => analyzeImage(file))
+
       newPreviewUrls = newFiles.map((file) => URL.createObjectURL(file)); 
       const uploadedUrls: string[] = [];
-
+      
       for (let i = 0; i < newFiles.length; i++) {
         const file = newFiles[i];
         try {
