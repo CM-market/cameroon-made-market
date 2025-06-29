@@ -3,7 +3,6 @@ import { useToast } from "./use-toast";
 import { uploadImage } from "@/services/minioService";
 import { useNavigate } from "react-router-dom";
 import { productApi } from "@/lib/api";
-import { analyzeImage } from "@/services/imageService";
 
 export interface ProductFormData {
   name: string;
@@ -87,7 +86,7 @@ export const useProductForm = (onProductCreated?: () => void) => {
           reader.onerror = reject;
           reader.readAsDataURL(file);
         });
-        await analyzeImage(fileDataUrl);
+
       } catch (error) {
         toast({
           title: "Image analysis failed",
