@@ -72,7 +72,7 @@ export const useProductForm = (onProductCreated?: () => void) => {
     const files = e.target.files;
     if (!files) return;
   // analyse image before uploading
-    // Analyze images before uploading
+    // Analyse images before uploading
     const newFiles = Array.from(files);
 
     for (let i = 0; i < newFiles.length; i++) {
@@ -87,8 +87,10 @@ export const useProductForm = (onProductCreated?: () => void) => {
           reader.onerror = reject;
           reader.readAsDataURL(file);
         });
-        await analyzeImage(fileDataUrl);
+        let a = await analyzeImage(fileDataUrl);
+        console.log(a)
       } catch (error) {
+        console.error(error);
         toast({
           title: "Image analysis failed",
           description: error instanceof Error ? error.message : "One of your images could not be analyzed. Please try a different image.",

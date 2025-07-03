@@ -1,58 +1,107 @@
-import * as tf from '@tensorflow/tfjs-node';
-import * as cocoSsd from '@tensorflow-models/coco-ssd';
-import fs from 'fs';
+import axios from 'axios';
 
-const marketplace_objects = []
-export async function analyzeImage(imagePath: string): Promise<{
+// List of objects that are prohibited in the marketplace
+const prohibited_items: string[] = [
+    "gun", "rifle", "pistol", "firearm", "weapon", 
+    "drugs", "cocaine", "heroin", "marijuana", "cannabis", 
+    "illegal substances", "counterfeit", "fake currency", 
+    "explosives", "bomb", "human organs", "endangered species",
+    "stolen goods", "pornography", "alcohol", "tobacco"
+];
+
+// OpenAI API configuration
+const OPENAI_API_KEY = import.meta.env.VITE_OPENAI_API_KEY;
+const OPENAI_API_URL = 'https://api.openai.com/v1/chat/completions';
+
+interface OpenAIResponse {
+    choices: {
+        message: {
+            content: string;
+        };
+    }[];
+}
+
+interface AnalysisResult {
     approved: boolean;
     message: string;
     detectedObjects: string[];
-}> {
+}
+
+/**
+ * Analyzes an image using OpenAI's GPT-4o Vision API
+ * @param imageDataUrl - The data URL of the image to analyze
+ * @returns Analysis result with approval status, message, and detected objects
+ */
+export async function analyzeImage(imageDataUrl: string): Promise<AnalysisResult> {
     try {
-        // Load the Coco SSD model
-        const model = await cocoSsd.load();
-
-        // Read and decode the image
-        const imageBuffer = fs.readFileSync(imagePath);
-        let imageTensor = tf.node.decodeImage(imageBuffer) as tf.Tensor3D;
-
-        // Ensure the tensor has 3 channels (RGB)
-        if (imageTensor.shape[2] === 4) {
-            // Remove the alpha channel (slice to keep only RGB)
-            imageTensor = tf.slice(imageTensor, [0, 0, 0], [-1, -1, 3]) as tf.Tensor3D;
-        } else if (imageTensor.shape[2] !== 3) {
-            throw new Error(`Unexpected number of channels: ${imageTensor.shape[2]}. Expected 3 (RGB).`);
+        if (!OPENAI_API_KEY) {
+            throw new Error('OpenAI API key is not configured. Please set VITE_OPENAI_API_KEY in your environment variables.');
         }
 
-        // Perform object detection
-        const predictions = await model.detect(imageTensor);
-
-        // Clean up tensor
-        tf.dispose(imageTensor);
-
-        // Check if the specified object is detected with confidence >= 0.5
-        const matchedPrediction = predictions.find(
-            p => marketplace_objects.map(obj => obj.toLowerCase()).includes(p.class.toLowerCase()) && p.score >= 0.5
+        // Prepare the request to OpenAI API
+        const response = await axios.post<OpenAIResponse>(
+            OPENAI_API_URL,
+            {
+                model: 'gpt-4o-mini',
+                messages: [
+                    {
+                        role: 'user',
+                        content: [
+                            {
+                                type: 'text',
+                                text: 'Analyze this image and identify all objects in it, paying special attention to potentially prohibited items like weapons, drugs, illegal substances, counterfeit goods, explosives, etc. Return the result as a JSON object with the following structure: {"detectedObjects": ["object1", "object2", ...], "description": "brief description of the image"}. Only include the JSON in your response, no other text.'
+                            },
+                            {
+                                type: 'image_url',
+                                image_url: {
+                                    url: imageDataUrl
+                                }
+                            }
+                        ]
+                    }
+                ],
+                max_tokens: 300
+            },
+            {
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${OPENAI_API_KEY}`
+                }
+            }
         );
-        const isApproved = Boolean(matchedPrediction);
-        const objectName = matchedPrediction ? matchedPrediction.class : 'specified object';
-        const detectedObjects = predictions.map(p => `${p.class} (${(p.score * 100).toFixed(2)}%)`);
 
-        // Delete the uploaded image file
-        fs.unlinkSync(imagePath);
+        // Parse the response
+        const content = response.data.choices[0]?.message?.content;
+        if (!content) {
+            throw new Error('No content in the API response');
+        }
+
+        // Extract the JSON from the response
+        const jsonMatch = content.match(/\{.*\}/s);
+        if (!jsonMatch) {
+            throw new Error('Could not extract JSON from the API response');
+        }
+
+        const result = JSON.parse(jsonMatch[0]);
+        const detectedObjects = result.detectedObjects || [];
+
+        // Check if any of the detected objects are in the prohibited_items list
+        const matchedProhibitedItem = detectedObjects.find(
+            (obj: string) => prohibited_items.map(item => item.toLowerCase()).includes(obj.toLowerCase())
+        );
+
+        const isApproved = !matchedProhibitedItem;
+        const objectName = matchedProhibitedItem || 'prohibited item';
 
         return {
             approved: isApproved,
             message: isApproved
-                ? `Image approved: contains ${objectName}`
-                : `Image rejected: does not contain ${objectName}`,
-            detectedObjects
+                ? `Image approved: no prohibited items detected`
+                : `Image rejected: contains prohibited item "${objectName}"`,
+            detectedObjects: detectedObjects.map((obj: string) => `${obj} (detected)`)
         };
     } catch (error) {
-        // Delete the image file even on error to avoid accumulation
-        if (fs.existsSync(imagePath)) {
-            fs.unlinkSync(imagePath);
-        }
+        console.error('Error in image analysis:', error);
         if (error instanceof Error) {
             throw new Error(`Error analyzing image: ${error.message}`);
         } else {

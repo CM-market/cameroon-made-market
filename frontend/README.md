@@ -59,6 +59,27 @@ This project is built with:
 - React
 - shadcn-ui
 - Tailwind CSS
+- OpenAI API (for image analysis)
+
+## Environment Variables
+
+This project requires the following environment variables:
+
+### OpenAI API Key
+
+The application uses OpenAI's GPT-4 Vision API for image analysis. You need to set up an OpenAI API key to use this feature.
+
+1. Create an account at [OpenAI](https://platform.openai.com/) if you don't have one
+2. Generate an API key in your OpenAI dashboard
+3. Create a `.env.local` file in the frontend directory with the following content:
+
+```
+VITE_OPENAI_API_KEY=your_openai_api_key_here
+```
+
+Replace `your_openai_api_key_here` with your actual OpenAI API key.
+
+**Note**: The `.env.local` file is included in `.gitignore` to prevent accidentally committing your API key to the repository.
 
 ## How can I deploy this project?
 

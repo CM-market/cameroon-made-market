@@ -20,7 +20,7 @@ pub struct Config {
 impl Config {
     pub fn from_env() -> Self {
         let access_key = env::var("MINIO_ROOT_USER").unwrap();
-        let secret_key = env::var("MINIO_ROOT_PASSWORD").unwrap();
+        let secret_key = env::var("MINIO_SECRET_KEY").unwrap();
         let bucket = env::var("MINIO_BUCKET_NAME").unwrap_or_else(|_| "product-images".to_string());
         let fapshi_api_user = env::var("FAPSHI_API_USER").expect("FAPSHI_API_USER must be set");
         let fapshi_api_key = env::var("FAPSHI_API_KEY").expect("FAPSHI_API_KEY must be set");
