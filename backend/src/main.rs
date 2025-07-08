@@ -6,11 +6,12 @@ use cameroon_made_market::models::user::UserRole;
 use cameroon_made_market::routes;
 use cameroon_made_market::routes::admin::admin_routes;
 
-use cameroon_made_market::routes::product::list_products;
+use cameroon_made_market::routes::product::{create_product, list_products};
 use cameroon_made_market::state::setup;
 use tokio::net::TcpListener;
 use tower_http::cors::{Any, CorsLayer};
 use tower_http::trace::TraceLayer;
+use cameroon_made_market::services::image::handle_image_upload;
 
 #[tokio::main]
 async fn main() {
@@ -23,7 +24,7 @@ async fn main() {
     let app_state = setup().await;
     let token = generate_token(
         "ed9bac6c-1714-4002-939d-0e328af7a2b8",
-        UserRole::Buyer,
+        UserRole::Vendor,
         &app_state.config,
     )
     .unwrap();
@@ -57,6 +58,8 @@ async fn main() {
         .route("/api/users/login", post(login))
         .route("/products", get(list_products))
         .route("/api", get(welcome))
+        .route("/api/products", post(create_product))
+        .route("/api/products/upload-image", post(handle_image_upload))
         // .merge(routes::category::config())
         // .merge(routes::address::config())
         // .merge(routes::notification::config())

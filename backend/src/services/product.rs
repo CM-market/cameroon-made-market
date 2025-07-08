@@ -26,6 +26,7 @@ pub struct CreateProduct {
     pub price: f64,
     pub category: Option<String>,
     pub image_urls: Vec<String>,
+    pub tags: Option<Vec<String>>,
     pub return_policy: Option<String>,
 }
 
@@ -36,6 +37,7 @@ pub struct UpdateProduct {
     pub price: Option<f64>,
     pub category: Option<String>,
     pub image_urls: Option<Vec<String>>,
+    pub tags: Option<Vec<String>>,
     pub return_policy: Option<String>,
 }
 
@@ -62,6 +64,7 @@ impl ProductService {
             price: Set(product_data.price),
             category: Set(product_data.category),
             image_urls: Set(product_data.image_urls),
+            tags: Set(product_data.tags),
             quantity: Set(product_data.quantity),
             return_policy: Set(product_data.return_policy),
             is_approved: Set(false),
@@ -121,6 +124,9 @@ impl ProductService {
             }
             if let Some(image_urls) = product_data.image_urls {
                 active_model.image_urls = Set(image_urls);
+            }
+            if let Some(tags) = product_data.tags {
+                active_model.tags = Set(Some(tags));
             }
             if let Some(quantity) = product_data.quantity {
                 active_model.quantity = Set(quantity);
@@ -302,6 +308,7 @@ mod tests {
                 category: Some("Test Category".to_string()),
                 is_rejected: false,
                 image_urls: vec!["test.jpg".to_string()],
+                tags: Some(vec!["test".to_string()]),
                 quantity: 1,
                 return_policy: Some("Test Refund Policy".to_string()),
                 is_approved: false,
@@ -319,6 +326,7 @@ mod tests {
             price: 100.0,
             category: Some("Test Category".to_string()),
             image_urls: vec!["test.jpg".to_string()],
+            tags: Some(vec!["test".to_string()]),
             return_policy: Some("Test Refund Policy".to_string()),
             quantity: 1,
         };
@@ -343,6 +351,7 @@ mod tests {
                 title: "Test Product".to_string(),
                 description: Some("Test Description".to_string()),
                 price: 100.0,
+                tags: Some(vec!["test".to_string()]),
                 quantity: 1,
                 is_rejected: false,
                 category: Some("Test Category".to_string()),
@@ -379,7 +388,9 @@ mod tests {
                     price: 1000.0,
                     quantity: 1,
                     category: Some("Test Category".to_string()),
-                    is_rejected: false,                    image_urls: vec!["test.jpg".to_string()],
+                    is_rejected: false,
+                    image_urls: vec!["test.jpg".to_string()],
+                    tags: Some(vec!["test".to_string()]),
                     return_policy: Some("Test Refund Policy".to_string()),
                     is_approved: false,
                     created_at: chrono::Utc::now(),
@@ -394,6 +405,7 @@ mod tests {
                     quantity: 1,
                     category: Some("Updated Category".to_string()),
                     image_urls: vec!["updated.jpg".to_string()],
+                    tags: Some(vec!["updated".to_string()]),
                     return_policy: Some("Updated Refund Policy".to_string()),
                     is_rejected: false,
                     is_approved: false,
@@ -411,6 +423,7 @@ mod tests {
             price: Some(100.0),
             category: Some("Updated Category".to_string()),
             image_urls: Some(vec!["updated.jpg".to_string()]),
+            tags: Some(vec!["updated".to_string()]),
             return_policy: Some("Updated Refund Policy".to_string()),
             quantity: Some(1),
         };
@@ -437,6 +450,7 @@ mod tests {
                     quantity: 1,
                     category: Some("Category A".to_string()),
                     image_urls: vec!["1.jpg".to_string()],
+                    tags: Some(vec!["category-a".to_string()]),
                     is_rejected: false,
                     return_policy: Some("Refund Policy 1".to_string()),
                     is_approved: false,
@@ -452,6 +466,7 @@ mod tests {
                     quantity: 1,
                     category: Some("Category B".to_string()),
                     image_urls: vec!["2.jpg".to_string()],
+                    tags: Some(vec!["category-b".to_string()]),
                     return_policy: Some("Refund Policy 2".to_string()),
                     is_rejected: false,
                     is_approved: false,

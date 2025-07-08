@@ -23,8 +23,7 @@ pub fn config() -> Router<AppState> {
         .nest(
             "/api/products",
             Router::new()
-                .route("/", post(create_product))
-                .route("/upload-image", post(handle_image_upload))
+
                 .route("/:id", get(get_product_by))
                 .route("/:id", put(update_product))
                 .route("/:id", delete(delete_product)),
@@ -115,7 +114,7 @@ async fn get_product_by(
     }
 }
 
-async fn create_product(
+pub async fn create_product(
     State(state): State<AppState>,
     Extension(auth_user): Extension<AuthUser>,
     Json(product_data): Json<CreateProductRequest>,
@@ -140,6 +139,7 @@ async fn create_product(
         price: product_data.price,
         category: Some(product_data.category),
         image_urls: product_data.image_urls,
+        tags: product_data.tags,
         quantity: product_data.quantity,
         return_policy: Some(product_data.return_policy),
     };
@@ -189,6 +189,7 @@ async fn update_product(
                 price: product_data.price,
                 category: product_data.category,
                 image_urls: product_data.image_urls,
+                tags: product_data.tags,
                 quantity: product_data.quantity,
                 return_policy: product_data.return_policy,
             };
@@ -340,6 +341,7 @@ pub struct CreateProductRequest {
     price: f64,
     category: String,
     image_urls: Vec<String>,
+    tags: Option<Vec<String>>,
     quantity: i32,
     return_policy: String,
 }
@@ -352,5 +354,6 @@ pub struct UpdateProductRequest {
     price: Option<f64>,
     category: Option<String>,
     image_urls: Option<Vec<String>>,
+    tags: Option<Vec<String>>,
     return_policy: Option<String>,
 }

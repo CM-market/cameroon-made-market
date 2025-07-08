@@ -29,6 +29,7 @@ impl ImageService {
                 "Version": "2012-10-17",
                 "Statement": [
                     {
+                        "Principal": "*",
                         "Action": ["s3:GetObject", "s3:ListBucket", "s3:putObject"],
                         "Effect": "Allow",
                         "Resource": ["arn:aws:s3:::{{bucket_name}}/*"]
