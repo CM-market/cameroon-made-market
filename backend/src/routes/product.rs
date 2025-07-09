@@ -23,7 +23,8 @@ pub fn config() -> Router<AppState> {
         .nest(
             "/api/products",
             Router::new()
-
+                .route("/", post(create_product))
+                .route("/upload-image", post(handle_image_upload))
                 .route("/:id", get(get_product_by))
                 .route("/:id", put(update_product))
                 .route("/:id", delete(delete_product)),
@@ -170,7 +171,7 @@ async fn update_product(
     Path(product_id): Path<Uuid>,
     Json(product_data): Json<UpdateProductRequest>,
 ) -> impl IntoResponse {
-    // First check if the product exists and belongs to the vendor
+    // First, check if the product exists and belongs to the vendor
     match state.product_service.get_product_by_id(product_id).await {
         Ok(Some(product)) => {
             if product.product.seller_id != Uuid::parse_str(&auth_user.id).unwrap() {
@@ -229,7 +230,7 @@ async fn delete_product(
     Extension(auth_user): Extension<AuthUser>,
     Path(product_id): Path<Uuid>,
 ) -> impl IntoResponse {
-    // First check if the product exists and belongs to the vendor
+    // First, check if the product exists and belongs to the vendor
     match state.product_service.get_product_by_id(product_id).await {
         Ok(Some(product)) => {
             if product.product.seller_id != Uuid::parse_str(&auth_user.id).unwrap() {
@@ -280,7 +281,7 @@ async fn approve_product(
     Path(product_id): Path<Uuid>,
     Extension(auth_user): Extension<AuthUser>,
 ) -> impl IntoResponse {
-    // Check if user is admin
+    // Check if the user is admin
     if auth_user.role != UserRole::Admin {
         return (
             StatusCode::FORBIDDEN,
@@ -306,7 +307,7 @@ async fn list_pending_products(
     State(state): State<AppState>,
     Extension(auth_user): Extension<AuthUser>,
 ) -> impl IntoResponse {
-    // Check if user is admin
+    // Check if the user is admin
     if auth_user.role != UserRole::Admin {
         return (
             StatusCode::FORBIDDEN,

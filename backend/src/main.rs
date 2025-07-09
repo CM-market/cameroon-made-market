@@ -58,8 +58,6 @@ async fn main() {
         .route("/api/users/login", post(login))
         .route("/products", get(list_products))
         .route("/api", get(welcome))
-        .route("/api/products", post(create_product))
-        .route("/api/products/upload-image", post(handle_image_upload))
         // .merge(routes::category::config())
         // .merge(routes::address::config())
         // .merge(routes::notification::config())
