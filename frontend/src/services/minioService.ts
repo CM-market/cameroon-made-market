@@ -1,6 +1,4 @@
-import { API_URL, ImageUploadApi } from '@/lib/api';
-import { v4 as uuidv4 } from 'uuid';
-
+import { ImageUploadApi } from '@/lib/api';
 interface MinioConfig {
   endpoint: string;
   port: number;

@@ -42,7 +42,7 @@ export const useProductForm = (onProductCreated?: () => void) => {
     materials: "",
     returnPolicy: "",
   });
-  
+
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSavingDraft, setIsSavingDraft] = useState(false); 
   const [isPreviewing, setIsPreviewing] = useState(false);
@@ -71,24 +71,38 @@ export const useProductForm = (onProductCreated?: () => void) => {
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files) return;
-  // analyse image before uploading
-    // Analyze images before uploading
+
+    // Analyse images before uploading
     const newFiles = Array.from(files);
+    let analysisResults: any[] = [];
 
     for (let i = 0; i < newFiles.length; i++) {
       const file = newFiles[i];
       try {
-        // analyzeImage expects a string (path), but we have a File object.
-        // To analyze, we need to read the file as a data URL or upload it first and get a URL.
-        // For now, let's read the file as a data URL and pass that to analyzeImage.
+        // Read the file as a data URL for analysis
         const fileDataUrl = await new Promise<string>((resolve, reject) => {
           const reader = new FileReader();
           reader.onload = () => resolve(reader.result as string);
           reader.onerror = reject;
           reader.readAsDataURL(file);
         });
-        await analyzeImage(fileDataUrl);
+
+        const analysisResult = await analyzeImage(fileDataUrl);
+        console.log('Image analysis result:', analysisResult);
+
+        // Check if the image is rejected due to prohibited items
+        if (!analysisResult.approved) {
+          toast({
+            title: "Product Rejected",
+            description: analysisResult.message,
+            variant: "destructive",
+          });
+          return; // Stop further processing if any image is rejected
+        }
+
+        analysisResults.push(analysisResult);
       } catch (error) {
+        console.error(error);
         toast({
           title: "Image analysis failed",
           description: error instanceof Error ? error.message : "One of your images could not be analyzed. Please try a different image.",
@@ -97,11 +111,35 @@ export const useProductForm = (onProductCreated?: () => void) => {
         return; // Stop further processing if analysis fails
       }
     }
-  
-    
+
+    // If we have analysis results with category, description, and tags, auto-populate the form
+    const firstAnalysis = analysisResults[0];
+    if (firstAnalysis && firstAnalysis.category && firstAnalysis.description) {
+      setFormData((prev) => ({
+        ...prev,
+        category: prev.category || firstAnalysis.category,
+        description: prev.description || firstAnalysis.description,
+        // Add tags to selectedTags if available
+        selectedTags: firstAnalysis.tags && firstAnalysis.tags.length > 0 
+          ? [...prev.selectedTags, ...firstAnalysis.tags.filter(tag => !prev.selectedTags.includes(tag))]
+          : prev.selectedTags,
+      }));
+
+      const generatedItems = [];
+      if (firstAnalysis.category) generatedItems.push("category");
+      if (firstAnalysis.description) generatedItems.push("description");
+      if (firstAnalysis.tags && firstAnalysis.tags.length > 0) generatedItems.push("tags");
+
+      toast({
+        title: "Product Information Generated",
+        description: `${generatedItems.join(", ")} have been automatically generated from your image.`,
+      });
+    }
+
+
     setIsUploading(true);
     let newPreviewUrls: string[] = [];
-    
+
     try {
       const newFiles = Array.from(files);
       // If you want to analyze the first image file, you need to provide its path or handle accordingly.
@@ -111,7 +149,7 @@ export const useProductForm = (onProductCreated?: () => void) => {
 
       newPreviewUrls = newFiles.map((file) => URL.createObjectURL(file)); 
       const uploadedUrls: string[] = [];
-      
+
       for (let i = 0; i < newFiles.length; i++) {
         const file = newFiles[i];
         try {
@@ -154,12 +192,12 @@ export const useProductForm = (onProductCreated?: () => void) => {
       const newImages = [...prev.images];
       const newPreviewUrls = [...prev.imagePreviewUrls];
       const newUploadedUrls = [...prev.uploadedImageUrls];
-      
+
       URL.revokeObjectURL(newPreviewUrls[index]);
       newImages.splice(index, 1);
       newPreviewUrls.splice(index, 1);
       newUploadedUrls.splice(index, 1);
-      
+
       return { 
         ...prev, 
         images: newImages, 
@@ -224,6 +262,7 @@ export const useProductForm = (onProductCreated?: () => void) => {
         price: parseFloat(formData.price),
         category: formData.category,
         image_urls: formData.uploadedImageUrls,
+        tags: formData.selectedTags.length > 0 ? formData.selectedTags : undefined,
         quantity: Number(formData.quantity),
         return_policy: formData.returnPolicy,
         // Add other fields as needed

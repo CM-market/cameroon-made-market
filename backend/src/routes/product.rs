@@ -115,7 +115,7 @@ async fn get_product_by(
     }
 }
 
-async fn create_product(
+pub async fn create_product(
     State(state): State<AppState>,
     Extension(auth_user): Extension<AuthUser>,
     Json(product_data): Json<CreateProductRequest>,
@@ -140,6 +140,7 @@ async fn create_product(
         price: product_data.price,
         category: Some(product_data.category),
         image_urls: product_data.image_urls,
+        tags: product_data.tags,
         quantity: product_data.quantity,
         return_policy: Some(product_data.return_policy),
     };
@@ -170,7 +171,7 @@ async fn update_product(
     Path(product_id): Path<Uuid>,
     Json(product_data): Json<UpdateProductRequest>,
 ) -> impl IntoResponse {
-    // First check if the product exists and belongs to the vendor
+    // First, check if the product exists and belongs to the vendor
     match state.product_service.get_product_by_id(product_id).await {
         Ok(Some(product)) => {
             if product.product.seller_id != Uuid::parse_str(&auth_user.id).unwrap() {
@@ -189,6 +190,7 @@ async fn update_product(
                 price: product_data.price,
                 category: product_data.category,
                 image_urls: product_data.image_urls,
+                tags: product_data.tags,
                 quantity: product_data.quantity,
                 return_policy: product_data.return_policy,
             };
@@ -228,7 +230,7 @@ async fn delete_product(
     Extension(auth_user): Extension<AuthUser>,
     Path(product_id): Path<Uuid>,
 ) -> impl IntoResponse {
-    // First check if the product exists and belongs to the vendor
+    // First, check if the product exists and belongs to the vendor
     match state.product_service.get_product_by_id(product_id).await {
         Ok(Some(product)) => {
             if product.product.seller_id != Uuid::parse_str(&auth_user.id).unwrap() {
@@ -279,7 +281,7 @@ async fn approve_product(
     Path(product_id): Path<Uuid>,
     Extension(auth_user): Extension<AuthUser>,
 ) -> impl IntoResponse {
-    // Check if user is admin
+    // Check if the user is admin
     if auth_user.role != UserRole::Admin {
         return (
             StatusCode::FORBIDDEN,
@@ -305,7 +307,7 @@ async fn list_pending_products(
     State(state): State<AppState>,
     Extension(auth_user): Extension<AuthUser>,
 ) -> impl IntoResponse {
-    // Check if user is admin
+    // Check if the user is admin
     if auth_user.role != UserRole::Admin {
         return (
             StatusCode::FORBIDDEN,
@@ -340,6 +342,7 @@ pub struct CreateProductRequest {
     price: f64,
     category: String,
     image_urls: Vec<String>,
+    tags: Option<Vec<String>>,
     quantity: i32,
     return_policy: String,
 }
@@ -352,5 +355,6 @@ pub struct UpdateProductRequest {
     price: Option<f64>,
     category: Option<String>,
     image_urls: Option<Vec<String>>,
+    tags: Option<Vec<String>>,
     return_policy: Option<String>,
 }

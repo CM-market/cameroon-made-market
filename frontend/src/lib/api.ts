@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const token = localStorage.getItem('token');
-export const API_URL = import.meta.env.VITE_API_URL + '/api'; ;
+export const API_URL = import.meta.env.VITE_API_URL + '/api' ;
 
 
 export interface Product {
@@ -13,6 +13,7 @@ export interface Product {
   price: number;
   category?: string;
   image_urls: string[];
+  tags?: string[];
   created_at: string;
   updated_at: string;
   returnPolicy?: string;
@@ -26,6 +27,7 @@ export interface CreateProductData {
   price: number;
   category?: string;
   image_urls: string[];
+  tags?: string[];
   quantity: number;
   returnPolicy?: string;
 }
@@ -37,6 +39,7 @@ export interface UpdateProductData {
   quantity: number;
   category?: string;
   image_urls?: string[];
+  tags?: string[];
 }
 export interface CreateOrderData {
   customer_name: string;
@@ -192,4 +195,3 @@ export const userApi = {
   },
   // ...other user API methods
 };
-

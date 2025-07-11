@@ -46,14 +46,13 @@ impl AppState {
 }
 
 pub async fn setup() -> AppState {
-    let url = std::env::var("DATABASE_URL").expect("DATABASE_URL env not set");
-    let db: DatabaseConnection = Database::connect(&url)
+    let config = config::Config::from_env();
+    let db: DatabaseConnection = Database::connect(&config.database_url)
         .await
         .expect("Failed to connect to database");
 
     Migrator::up(&db, None)
         .await
         .expect("Failed to apply migrations");
-    let config = config::Config::from_env();
     AppState::new(db, config)
 }
