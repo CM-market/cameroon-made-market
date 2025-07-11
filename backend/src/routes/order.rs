@@ -12,7 +12,7 @@ use axum::{
     Extension, Json, Router,
 };
 use serde::Deserialize;
-use tracing::{error, info};
+use tracing::{error, info}; 
 use uuid::Uuid;
 
 use super::error::ErrorResponse;
@@ -25,6 +25,7 @@ pub fn config() -> Router<AppState> {
         .route("/orders/:id/status", put(update_order_status))
         .route("/orders/:id/items", get(get_order_items))
         .route("/orders/:id", delete(delete_order))
+        .route("/vendor/orders/:id", get(list_vendor_orders))
 }
 
 #[derive(Deserialize)]
@@ -206,5 +207,33 @@ async fn delete_order(
             Json(ApiResponse::<()>::error(&e.to_string())),
         )
             .into_response(),
+    }
+}
+
+#[axum::debug_handler]
+async fn list_vendor_orders(
+    State(state): State<AppState>,
+    Path(vendor_id): Path<Uuid>,
+    Extension(auth): Extension<AuthUser>, // Ensure authenticated
+) -> impl IntoResponse {
+    // Ensure the authenticated user is the vendor whose orders are being requested
+    if auth.id != vendor_id.to_string() {
+        return (StatusCode::FORBIDDEN, Json(ApiResponse::<()>::error("Forbidden"))).into_response();
+    }
+
+    match state.order_service.list_orders(Some(vendor_id), None).await {
+        Ok(orders) => Json(ApiResponse::success(
+            orders,
+            "Vendor orders retrieved successfully",
+        ))
+        .into_response(),
+        Err(e) => {
+            error!("Error retrieving vendor orders: {}", e);
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ApiResponse::<()>::error("Could not retrieve vendor orders")),
+            )
+                .into_response()
+        }
     }
 }

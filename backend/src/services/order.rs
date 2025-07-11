@@ -1,16 +1,41 @@
 use std::sync::Arc;
 
+use chrono::{DateTime, Utc};
 use sea_orm::{
     ActiveModelTrait, ColumnTrait, DatabaseConnection, EntityTrait, QueryFilter, QueryOrder, Set,
+    RelationTrait,
 };
+use serde::Serialize;
 use uuid::Uuid;
 
 use crate::models::{
     order::{self, Model, NewOrder, Status},
     order_item,
+    product::{self, Entity as ProductEntity, Column as ProductColumn},
 };
 
 use super::errors::ServiceError;
+
+#[derive(Serialize)]
+pub struct OrderItemResponse {
+    pub product_id: Uuid,
+    pub product_name: String,
+    pub quantity: i32,
+    pub price: f64,
+}
+
+#[derive(Serialize)]
+pub struct OrderResponse {
+    pub id: Uuid,
+    pub total: f64,
+    pub status: String,
+    pub created_at: DateTime<Utc>,
+    #[serde(rename = "orderDate")]
+    pub order_date: String,
+    #[serde(rename = "totalAmount")]
+    pub total_amount: f64,
+    pub items: Vec<OrderItemResponse>,
+}
 
 pub struct OrderService {
     db: Arc<DatabaseConnection>,
@@ -89,24 +114,66 @@ impl OrderService {
     /// List orders with optional filters by session ID or status
     pub async fn list_orders(
         &self,
-        session_id: Option<Uuid>,
+        user_id: Option<Uuid>,
         status: Option<Status>,
-    ) -> Result<Vec<Model>, ServiceError> {
-        let mut query = order::Entity::find();
+    ) -> Result<Vec<OrderResponse>, ServiceError> {
+        let mut query = order::Entity::find().find_with_related(order_item::Entity);
 
-        if let Some(session_id) = session_id {
-            query = query.filter(order::Column::UserId.eq(session_id));
+        if let Some(user_id) = user_id {
+            query = query.filter(order::Column::UserId.eq(user_id));
         }
         if let Some(status) = status {
             query = query.filter(order::Column::Status.eq::<String>(status.into()));
         }
 
-        let orders = query
+        let orders_with_items = query
             .order_by_desc(order::Column::CreatedAt)
             .all(&*self.db)
             .await?;
 
-        Ok(orders)
+        let mut order_responses: Vec<OrderResponse> = Vec::new();
+
+        // Collect all product_ids from all order items to fetch product names in one go
+        let product_ids: Vec<Uuid> = orders_with_items.iter()
+            .flat_map(|(_, items)| {
+                items.iter().map(|item| item.product_id)
+            })
+            .collect();
+
+        // Fetch all necessary product names at once
+        let products = ProductEntity::find()
+            .filter(ProductColumn::Id.is_in(product_ids))
+            .all(&*self.db)
+            .await?;
+
+        let product_name_map: std::collections::HashMap<Uuid, String> = products.into_iter()
+            .map(|p| (p.id, p.title))
+            .collect();
+
+        for (order, items) in orders_with_items {
+            let mut order_item_responses: Vec<OrderItemResponse> = Vec::new();
+            for item in items {
+                let product_name = product_name_map.get(&item.product_id).cloned().unwrap_or_else(|| "Unknown Product".to_string());
+                order_item_responses.push(OrderItemResponse {
+                    product_id: item.product_id,
+                    product_name,
+                    quantity: item.quantity,
+                    price: item.price,
+                });
+            }
+
+            order_responses.push(OrderResponse {
+                id: order.id,
+                total: order.total,
+                status: order.status.clone(),
+                created_at: order.created_at,
+                order_date: order.created_at.to_rfc3339(), // Formatted for frontend
+                total_amount: order.total,
+                items: order_item_responses,
+            });
+        }
+
+        Ok(order_responses)
     }
 
     pub async fn get_order_items(
