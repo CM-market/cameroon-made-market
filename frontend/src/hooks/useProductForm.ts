@@ -74,9 +74,14 @@ export const useProductForm = (onProductCreated?: () => void) => {
     setIsUploading(true);
     let newPreviewUrls: string[] = [];
     
+    console.log("handleImageUpload triggered.");
+    console.log("Files selected:", files);
+
     try {
       const newFiles = Array.from(files);
       newPreviewUrls = newFiles.map((file) => URL.createObjectURL(file)); 
+      console.log("Generated newPreviewUrls:", newPreviewUrls);
+
       const uploadedUrls: string[] = [];
 
       for (let i = 0; i < newFiles.length; i++) {
@@ -91,12 +96,18 @@ export const useProductForm = (onProductCreated?: () => void) => {
         }
       }
 
-      setFormData((prev) => ({
-        ...prev,
-        images: [...prev.images, ...newFiles],
-        imagePreviewUrls: [...prev.imagePreviewUrls, ...newPreviewUrls],
-        uploadedImageUrls: [...prev.uploadedImageUrls, ...uploadedUrls],
-      }));
+      setFormData((prev) => {
+        const updatedFormData = {
+          ...prev,
+          images: [...prev.images, ...newFiles],
+          imagePreviewUrls: [...prev.imagePreviewUrls, ...newPreviewUrls],
+          uploadedImageUrls: [...prev.uploadedImageUrls, ...uploadedUrls],
+        };
+        console.log("FormData after image upload (previews & uploaded):");
+        console.log("  imagePreviewUrls:", updatedFormData.imagePreviewUrls);
+        console.log("  uploadedImageUrls:", updatedFormData.uploadedImageUrls);
+        return updatedFormData;
+      });
 
       toast({
         title: "Images uploaded",
@@ -113,6 +124,7 @@ export const useProductForm = (onProductCreated?: () => void) => {
       });
     } finally {
       setIsUploading(false);
+      console.log("Image upload process finished. isUploading set to false.");
     }
   };
 
@@ -198,19 +210,22 @@ export const useProductForm = (onProductCreated?: () => void) => {
 
       // Submit product to backend
       const product = await productApi.create(productData);
-
+      console.log("Product created successfully:", product);
       toast({
-        title: "Product submitted",
-        description: "Your product has been submitted successfully.",
+        title: "Product Submitted",
+        description: "Your product has been successfully submitted!",
       });
-
-      // Reset form
+      // Pass the product ID to the callback if needed
+      if (onProductCreated) {
+        onProductCreated();
+      }
+      // Clear form data and navigate to dashboard
       setFormData({
         name: "",
         description: "",
         price: "",
-        category: "",
         quantity: "",
+        category: "",
         selectedTags: [],
         images: [],
         imagePreviewUrls: [],
@@ -221,10 +236,7 @@ export const useProductForm = (onProductCreated?: () => void) => {
         materials: "",
         returnPolicy: "",
       });
-      setActiveTab("details");
-
-      // Navigate to product page or dashboard
-      navigate(`/products/${product.id}`);
+      navigate('/vendor/dashboard');
     } catch (error) {
       toast({
         title: "Error submitting product",
@@ -233,7 +245,6 @@ export const useProductForm = (onProductCreated?: () => void) => {
       });
     } finally {
       setIsSubmitting(false);
-      setIsPreviewing(false);
     }
   };
 
@@ -244,8 +255,8 @@ export const useProductForm = (onProductCreated?: () => void) => {
     isSubmitting,
     isSavingDraft,
     isPreviewing,
-    isUploading,
     setIsPreviewing,
+    isUploading,
     handleInputChange,
     handleSelectChange,
     handleTagToggle,

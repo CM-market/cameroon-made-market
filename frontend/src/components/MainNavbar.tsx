@@ -8,11 +8,18 @@ import {
   navigationMenuTriggerStyle
 } from "@/components/ui/navigation-menu";
 import { Button } from "@/components/ui/button";
-import { Search, ShoppingCart, User, Download, ChevronDown, Settings, UserCircle, LogOut } from "lucide-react";
+import { Search, ShoppingCart, User, Download, ChevronDown, Settings, UserCircle, LogOut, Menu, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useTranslation } from 'react-i18next';
 import i18n from '@/i18n';
 import { Separator } from "@/components/ui/separator";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Badge } from "@/components/ui/badge";
+import { getImageUrl } from "@/services/minioService";
 
 // Define the BeforeInstallPromptEvent interface
 interface BeforeInstallPromptEvent extends Event {
@@ -36,7 +43,9 @@ const MainNavbar: React.FC = () => {
   
   // For demo purposes, we'll use localStorage to simulate persistence
   const [cartCount, setCartCount] = useState(0);
-  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [cartItems, setCartItems] = useState<any[]>([]);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [userDropdownOpen, setUserDropdownOpen] = useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const [langDropdownOpen, setLangDropdownOpen] = useState(false);
   const [selectedLang, setSelectedLang] = useState(() => localStorage.getItem('lang') || 'en');
@@ -57,15 +66,13 @@ const MainNavbar: React.FC = () => {
             ? cartItems.reduce((sum, item) => sum + item.quantity, 0) 
             : 0;
           setCartCount(itemCount);
+          setCartItems(cartItems);
         } catch (e) {
           console.error('Error parsing cart data', e);
-          // If parsing fails, it's safer to assume no items or keep previous state
-          // For now, we'll just log the error and not change the count
-          // If you want to reset the count on error, uncomment the line below:
-          // setCartCount(0);
         }
       } else {
         setCartCount(0);
+        setCartItems([]);
       }
     };
 
@@ -77,6 +84,7 @@ const MainNavbar: React.FC = () => {
           ? cartItems.reduce((sum, item) => sum + item.quantity, 0) 
           : 0;
         setCartCount(itemCount);
+        setCartItems(cartItems);
       } catch (e) {
         console.error('Error parsing cart data', e);
       }
@@ -135,7 +143,7 @@ const MainNavbar: React.FC = () => {
     localStorage.removeItem('userRole');
     localStorage.removeItem('userName');
     setShowLogoutConfirm(false);
-    setDropdownOpen(false);
+    setUserDropdownOpen(false);
     navigate('/');
     window.location.reload(); // To force navbar update
   };
@@ -148,14 +156,14 @@ const MainNavbar: React.FC = () => {
   useEffect(() => {
     const handleClick = (e: MouseEvent) => {
       if (!(e.target as HTMLElement).closest('.buyer-dropdown')) {
-        setDropdownOpen(false);
+        setUserDropdownOpen(false);
       }
     };
-    if (dropdownOpen) {
+    if (userDropdownOpen) {
       window.addEventListener('mousedown', handleClick);
     }
     return () => window.removeEventListener('mousedown', handleClick);
-  }, [dropdownOpen]);
+  }, [userDropdownOpen]);
 
   const handleLangSelect = (code: string) => {
     setSelectedLang(code);
@@ -181,6 +189,8 @@ const MainNavbar: React.FC = () => {
     return () => window.removeEventListener('mousedown', handleClick);
   }, [langDropdownOpen]);
 
+  const totalPrice = cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+
   return (
     <header className="border-b bg-background sticky top-0 z-50 w-full">
       <div className="container mx-auto flex items-center h-16 px-4">
@@ -202,23 +212,67 @@ const MainNavbar: React.FC = () => {
                 <Search className="h-4 w-4" />
               </Button>
             </Link>
-            <Link to="/cart">
-              <Button variant="ghost" size="icon" className="h-8 w-8 relative">
-                <ShoppingCart className="h-4 w-4" />
-                {cartCount > 0 && (
-                  <span className="absolute -top-1 -right-1 bg-cm-green text-white rounded-full text-xs w-4 h-4 flex items-center justify-center">
-                    {cartCount}
-                  </span>
-                )}
-              </Button>
-            </Link>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon" className="h-8 w-8 relative">
+                  <ShoppingCart className="h-4 w-4" />
+                  {cartCount > 0 && (
+                    <Badge className="absolute -top-2 -right-2 h-5 w-5 flex items-center justify-center p-0">
+                      {cartCount}
+                    </Badge>
+                  )}
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-80 p-4">
+                <div className="space-y-4">
+                  <h3 className="font-semibold">Your Cart</h3>
+                  {cartItems.length === 0 ? (
+                    <p className="text-sm text-gray-500">Your cart is empty</p>
+                  ) : (
+                    <>
+                      <div className="max-h-60 overflow-y-auto space-y-2">
+                        {cartItems.map((item) => (
+                          <div key={item.id} className="flex items-center space-x-2">
+                            <img
+                              src={getImageUrl(item.image)}
+                              alt={item.name}
+                              className="w-12 h-12 object-cover rounded"
+                              onError={(e) => {
+                                (e.target as HTMLImageElement).src = '/placeholder.svg';
+                              }}
+                            />
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-medium truncate">{item.name}</p>
+                              <p className="text-xs text-gray-500">
+                                {item.quantity} × {item.price.toLocaleString()} FCFA
+                              </p>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                      <Separator />
+                      <div className="flex justify-between items-center">
+                        <span className="font-semibold">Total:</span>
+                        <span className="font-semibold">{totalPrice.toLocaleString()} FCFA</span>
+                      </div>
+                      <Button 
+                        className="w-full bg-cm-green hover:bg-cm-forest"
+                        onClick={() => navigate('/cart')}
+                      >
+                        View Cart
+                      </Button>
+                    </>
+                  )}
+                </div>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
 
         {/* Mobile Menu Button */}
         <Button 
           className="md:hidden p-2 rounded-lg hover:bg-accent shrink-0"
-          onClick={() => setDropdownOpen(!dropdownOpen)}
+          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
           aria-label="Toggle menu"
         >
           <svg
@@ -230,7 +284,7 @@ const MainNavbar: React.FC = () => {
             viewBox="0 0 24 24"
             stroke="currentColor"
           >
-            {dropdownOpen ? (
+            {mobileMenuOpen ? (
               <path d="M6 18L18 6M6 6l12 12" />
             ) : (
               <path d="M4 6h16M4 12h16M4 18h16" />
@@ -289,39 +343,84 @@ const MainNavbar: React.FC = () => {
               <Search className="h-5 w-5" />
             </Button>
           </Link>
-          <Link to="/cart">
-            <Button variant="ghost" size="icon" className="relative h-10 w-10 sm:h-12 sm:w-12">
-              <ShoppingCart className="h-5 w-5" />
-              {cartCount > 0 && (
-                <span className="absolute -top-1 -right-1 bg-cm-green text-white rounded-full text-xs w-5 h-5 flex items-center justify-center">
-                  {cartCount}
-                </span>
-              )}
-            </Button>
-          </Link>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon" className="relative h-10 w-10 sm:h-12 sm:w-12">
+                <ShoppingCart className="h-5 w-5" />
+                {cartCount > 0 && (
+                  <Badge className="absolute -top-2 -right-2 h-5 w-5 flex items-center justify-center p-0">
+                    {cartCount}
+                  </Badge>
+                )}
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-80 p-4">
+              <div className="space-y-4">
+                <h3 className="font-semibold">Your Cart</h3>
+                {cartItems.length === 0 ? (
+                  <p className="text-sm text-gray-500">Your cart is empty</p>
+                ) : (
+                  <>
+                    <div className="max-h-60 overflow-y-auto space-y-2">
+                      {cartItems.map((item) => (
+                        <div key={item.id} className="flex items-center space-x-2">
+                          <img
+                            src={getImageUrl(item.image)}
+                            alt={item.name}
+                            className="w-12 h-12 object-cover rounded"
+                            onError={(e) => {
+                              (e.target as HTMLImageElement).src = '/placeholder.svg';
+                            }}
+                          />
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium truncate">{item.name}</p>
+                            <p className="text-xs text-gray-500">
+                              {item.quantity} × {item.price.toLocaleString()} FCFA
+                            </p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                    <Separator />
+                    <div className="flex justify-between items-center">
+                      <span className="font-semibold">Total:</span>
+                      <span className="font-semibold">{totalPrice.toLocaleString()} FCFA</span>
+                    </div>
+                    <Button 
+                      className="w-full bg-cm-green hover:bg-cm-forest"
+                      onClick={() => navigate('/cart')}
+                    >
+                      View Cart
+                    </Button>
+                  </>
+                )}
+              </div>
+            </DropdownMenuContent>
+          </DropdownMenu>
           <Button variant="ghost" size="icon" onClick={handleInstallPWA} className="md:flex hidden">
             <Download className="h-5 w-5" />
           </Button>
           {/* Language Selector */}
           <div className="relative lang-dropdown shrink-0">
-            <Button
+            <Button variant="ghost"
               ref={langButtonRef}
-              className="flex items-center gap-1 px-2 py-1 border rounded bg-white hover:bg-gray-100 focus:outline-none"
+              className="flex items-center gap-1 px-2 py-1 border rounded focus:outline-none hover:bg-accent/50"
               onClick={() => setLangDropdownOpen((open) => !open)}
             >
               <span className="text-xl">
                 {languageOptions.find(l => l.code === selectedLang)?.flag || '🌐'}
               </span>
-              <span className="font-semibold uppercase">{selectedLang}</span>
-              <ChevronDown className="w-4 h-4" />
+              <span className="font-semibold uppercase text-gray-900">{selectedLang}</span>
+              <ChevronDown className="w-4 h-4 text-gray-900" />
             </Button>
             {langDropdownOpen && (
               <div className="absolute right-0 mt-2 w-48 bg-white border rounded shadow-lg z-[100]">
                 <div className="px-4 py-2 text-xs text-gray-500">{t('changeLanguage')}</div>
                 {languageOptions.map(opt => (
                   <Button
+                   variant="ghost"
                     key={opt.code}
-                    className={`w-full text-left px-4 py-2 flex items-center gap-2 hover:bg-cm-green/10 ${selectedLang === opt.code ? 'text-cm-green font-bold' : ''}`}
+                    className={`w-full text-left px-4 py-2 flex items-center gap-2 hover:bg-accent/50 ${selectedLang === opt.code ? 'text-gray-900 font-bold' : 'text-gray-700'}`}
                     onClick={() => handleLangSelect(opt.code)}
                   >
                     <span className="text-lg">{opt.flag}</span>
@@ -333,41 +432,45 @@ const MainNavbar: React.FC = () => {
           </div>
           {isBuyerLoggedIn ? (
             <div className="relative buyer-dropdown shrink-0">
-              <Button
-                className="ml-4 font-semibold text-cm-green flex items-center gap-1 focus:outline-none hover:bg-accent/50 px-3 py-2 rounded-md"
-                onClick={() => setDropdownOpen((open) => !open)}
+              <Button variant="ghost"
+                className="ml-4 font-semibold flex items-center gap-1 focus:outline-none hover:bg-accent/50 px-3 py-2 rounded-md"
+                onClick={() => setUserDropdownOpen((open) => !open)}
               >
-                <User className="h-4 w-4" />
-                <span>{userName}</span>
-                <ChevronDown className={`w-4 h-4 transition-transform ${dropdownOpen ? 'rotate-180' : ''}`} />
+                <User className="h-4 w-4 text-gray-900" />
+                <span className="text-gray-900">{userName}</span>
+                <ChevronDown className={`w-4 h-4 transition-transform ${userDropdownOpen ? 'rotate-180' : ''} text-gray-900`} />
               </Button>
-              {dropdownOpen && (
+              {userDropdownOpen && (
                 <div className="absolute right-0 mt-2 w-48 bg-white border rounded-lg shadow-lg z-[100] overflow-hidden">
                   <div className="py-1">
                     <Button
-                      className="w-full text-left px-4 py-3 hover:bg-gray-100 flex items-center gap-2 text-gray-700"
-                      onClick={() => { setDropdownOpen(false); navigate('/buyer/account-info'); }}
+                      variant="ghost"
+                      className="w-full text-left px-4 py-3 flex items-center gap-2 text-gray-700"
+                      onClick={() => { setUserDropdownOpen(false); navigate('/buyer/account-info'); }}
                     >
                       <User className="h-4 w-4" />
                       {t('accountInfo')}
                     </Button>
                     <Button
-                      className="w-full text-left px-4 py-3 hover:bg-gray-100 flex items-center gap-2 text-gray-700"
-                      onClick={() => { setDropdownOpen(false); navigate('/buyer/settings'); }}
+                      variant="ghost"
+                      className="w-full text-left px-4 py-3 flex items-center gap-2 text-gray-700"
+                      onClick={() => { setUserDropdownOpen(false); navigate('/buyer/settings'); }}
                     >
                       <Settings className="h-4 w-4" />
                       {t('settings')}
                     </Button>
                     <Button
-                      className="w-full text-left px-4 py-3 hover:bg-gray-100 flex items-center gap-2 text-gray-700"
-                      onClick={() => { setDropdownOpen(false); navigate('/buyer/account'); }}
+                      variant="ghost"
+                      className="w-full text-left px-4 py-3 flex items-center gap-2 text-gray-700"
+                      onClick={() => { setUserDropdownOpen(false); navigate('/buyer/account'); }}
                     >
                       <UserCircle className="h-4 w-4" />
                       {t('account')}
                     </Button>
                     <Separator className="my-1" />
                     <Button
-                      className="w-full text-left px-4 py-3 text-red-600 hover:bg-red-50 flex items-center gap-2"
+                      variant="ghost"
+                      className="w-full text-left px-4 py-3 text-red-600 flex items-center gap-2"
                       onClick={handleLogout}
                     >
                       <LogOut className="h-4 w-4" />
@@ -397,7 +500,7 @@ const MainNavbar: React.FC = () => {
                 </Button>
               </Link>
               <Link to="/buyer/register">
-                <Button variant="default" size="sm" className="bg-cm-green text-white hover:bg-cm-forest">
+                <Button variant="default" size="sm" className=" text-white hover:bg-cm-forest">
                   {t('signUp')}
                 </Button>
               </Link>
@@ -407,20 +510,18 @@ const MainNavbar: React.FC = () => {
       </div>
 
       {/* Mobile Navigation Menu */}
-      {dropdownOpen && (
+      {mobileMenuOpen && (
         <div className="md:hidden border-t bg-background w-full">
           <nav className="container mx-auto px-4 py-2">
-
             <ul className="space-y-2">
-              
               {/* Login and Signup buttons in toggle menu */}
               {!isBuyerLoggedIn && (
                 <>
                   <li className="mt-4">
                     <Link
                       to="/login"
-                      className="block px-4 py-3 rounded-lg text-lg font-medium border border-gray-200 text-center"
-                      onClick={() => setDropdownOpen(false)}
+                      className="block px-4 py-3 rounded-lg text-lg font-medium border border-black text-center"
+                      onClick={() => setMobileMenuOpen(false)}
                     >
                       <User className="h-4 w-4 inline mr-2" />
                       {t('login')}
@@ -429,8 +530,8 @@ const MainNavbar: React.FC = () => {
                   <li>
                     <Link
                       to="/buyer/register"
-                      className="block px-4 py-3 rounded-lg text-lg font-medium bg-cm-green text-white text-center mt-2"
-                      onClick={() => setDropdownOpen(false)}
+                      className="block px-4 py-3 rounded-lg text-lg font-medium border-2 bg-cm-green text-white text-center mt-2"
+                      onClick={() => setMobileMenuOpen(false)}
                     >
                       {t('signUp')}
                     </Link>
@@ -460,24 +561,57 @@ const MainNavbar: React.FC = () => {
             {isBuyerLoggedIn && (
               <div className="mt-4 pt-4 border-t space-y-2">
                 <div className="font-semibold text-cm-green mb-2">{userName}</div>
-                <Link to="/buyer/account-info" className="block px-4 py-2 rounded-lg hover:bg-accent/50">
+                <Link 
+                  to="/buyer/account-info" 
+                  className="px-4 py-2 rounded-lg hover:bg-accent/50 flex items-center gap-2"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  <User className="h-4 w-4" />
                   {t('accountInfo')}
                 </Link>
-                <Link to="/buyer/settings" className="block px-4 py-2 rounded-lg hover:bg-accent/50">
+                <Link 
+                  to="/buyer/settings" 
+                  className="px-4 py-2 rounded-lg hover:bg-accent/50 flex items-center gap-2"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  <Settings className="h-4 w-4" />
                   {t('settings')}
                 </Link>
-                <Link to="/buyer/account" className="block px-4 py-2 rounded-lg hover:bg-accent/50">
+                <Link 
+                  to="/buyer/account" 
+                  className="px-4 py-2 rounded-lg hover:bg-accent/50 flex items-center gap-2"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  <UserCircle className="h-4 w-4" />
                   {t('account')}
                 </Link>
                 <Button
-                  className="w-full text-left px-4 py-2 rounded-lg text-red-600 hover:bg-red-50"
-                  onClick={handleLogout}
+                  variant="ghost"
+                  className="w-full text-left px-4 py-3 text-red-600 flex items-center gap-2"
+                  onClick={() => {
+                    setMobileMenuOpen(false);
+                    handleLogout();
+                  }}
                 >
+                  <LogOut className="h-4 w-4 inline mr-2" />
                   {t('logout')}
                 </Button>
               </div>
             )}
           </nav>
+        </div>
+      )}
+
+      {/* Logout Confirmation Modal - Shared between mobile and desktop */}
+      {showLogoutConfirm && (
+        <div className="fixed inset-0 flex items-center justify-center z-[200] bg-black/30">
+          <div className="bg-white rounded-lg shadow-lg p-6 w-80">
+            <p className="mb-4">{t('Are you sure!')}</p>
+            <div className="flex justify-end gap-2">
+              <Button variant="outline" onClick={cancelLogout}>{t('cancel')}</Button>
+              <Button variant="destructive" onClick={confirmLogout}>{t('Yes logout')}</Button>
+            </div>
+          </div>
         </div>
       )}
     </header>

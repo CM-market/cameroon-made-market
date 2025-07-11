@@ -2,6 +2,12 @@ import axios from 'axios';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080';
 
+export interface ApiResponse<T> {
+  success: boolean;
+  message: string;
+  data: T;
+}
+
 export interface Product {
   id: string;
   seller_id: string;
@@ -49,9 +55,10 @@ export interface CreateOrderData {
 
 export interface Order {
   id: string;
-  total: number;
   status: string;
-  created_at: string;
+  orderDate: string;
+  totalAmount: number;
+  items: { productId: string; productName: string; quantity: number; price: number }[];
 }
 
 export const orderApi = {
@@ -64,6 +71,14 @@ export const orderApi = {
         }
       }
     );
+    return res.data;
+  },
+  listVendorOrders: async (vendorId: string, token: string): Promise<ApiResponse<Order[]>> => {
+    const res = await axios.get(`${API_URL}/vendor/orders/${vendorId}`, {
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    });
     return res.data;
   }
 };
@@ -97,7 +112,7 @@ export const productApi = {
     if (seller_id) params.append('seller_id', seller_id);
 
     const token = localStorage.getItem('token');
-    const response = await axios.get<{ success: boolean; message: string; data: Product[] }>(
+    const response = await axios.get<ApiResponse<Product[]>>(
       `${API_URL}/products`,
       {
         headers: {
@@ -111,7 +126,7 @@ export const productApi = {
 
   get: async (id: string) => {
     const token = localStorage.getItem('token');
-    const response = await axios.get<{ success: boolean; message: string; data: Product }>(
+    const response = await axios.get<ApiResponse<Product>>(
       `${API_URL}/products/${id}`,
       {
         headers: {
@@ -124,7 +139,7 @@ export const productApi = {
 
   create: async (data: CreateProductData) => {
     const token = localStorage.getItem('token');
-    const response = await axios.post<Product>(`${API_URL}/products`, data,
+    const response = await axios.post<ApiResponse<Product>>(`${API_URL}/products`, data,
       {
         headers: {
           Authorization: `Bearer ${token}`
@@ -136,7 +151,7 @@ export const productApi = {
 
   update: async (id: string, data: UpdateProductData) => {
     const token = localStorage.getItem('token');
-    const response = await axios.put<Product>(`${API_URL}/products/${id}`, data, {
+    const response = await axios.put<ApiResponse<Product>>(`${API_URL}/products/${id}`, data, {
       headers: {
         Authorization: `Bearer ${token}`
       }
@@ -146,7 +161,7 @@ export const productApi = {
 
   delete: async (id: string) => {
     const token = localStorage.getItem('token');
-    await axios.delete(`${API_URL}/products/${id}`, {
+    await axios.delete<ApiResponse<any>>(`${API_URL}/products/${id}`, {
       headers: {
         Authorization: `Bearer ${token}`
       }
@@ -162,7 +177,7 @@ export const userApi = {
     password: string;
     role?: string;
   }) => {
-    const response = await axios.post(`${API_URL}/api/users`, data);
+    const response = await axios.post<ApiResponse<any>>(`${API_URL}/api/users`, data);
     return response.data;
   },
 
@@ -171,7 +186,7 @@ export const userApi = {
     password: string;
     role?: "Vendor" | "Buyer";
   }) => {
-    const response = await axios.post(`${API_URL}/api/users/login`, data,{
+    const response = await axios.post<ApiResponse<any>>(`${API_URL}/api/users/login`, data,{
   });
     return response.data;
   },

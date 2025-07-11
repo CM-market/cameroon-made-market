@@ -8,6 +8,7 @@ import { useNavigate } from "react-router-dom";
 import Footer from "@/components/Footer";
 import { toast } from "@/hooks/use-toast";
 import { userApi } from "@/lib/api";
+import { cn } from "@/lib/utils";
 
 const Login: React.FC = () => {
   const navigate = useNavigate();
@@ -15,7 +16,7 @@ const Login: React.FC = () => {
     phone: "",
     password: "",
   });
-  const [role, setRole] = useState<"Vendor" | "Buyer">("Vendor");
+  const [role, setRole] = useState<"Vendor" | "Buyer">("Buyer"); // Default to Buyer as Customer
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -25,8 +26,8 @@ const Login: React.FC = () => {
     }));
   };
 
-  const handleRoleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    setRole(e.target.value as "Vendor" | "Buyer");
+  const handleRoleChange = (selectedRole: "Vendor" | "Buyer") => {
+    setRole(selectedRole);
   };
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -72,31 +73,37 @@ const Login: React.FC = () => {
         <Card className="w-full max-w-md">
           <CardHeader className="text-center">
             <CardTitle className="text-2xl">
-              {role === "Vendor" ? "Vendor Login" : "Buyer Login"}
+              Login to Transac
             </CardTitle>
             <CardDescription>
-              {role === "Vendor"
-                ? "Sign in to manage your products and orders"
-                : "Sign in to shop and manage your orders"}
+              Sign in to your account to continue
             </CardDescription>
+            <div className="flex w-full bg-muted p-1 rounded-md mt-4">
+              <Button
+                variant="ghost"
+                className={cn(
+                  "flex-1 py-2 text-sm font-medium rounded-sm",
+                  role === "Buyer" && "bg-background shadow-sm"
+                )}
+                onClick={() => handleRoleChange("Buyer")}
+              >
+                Buyer
+              </Button>
+              <Button
+                variant="ghost"
+                className={cn(
+                  "flex-1 py-2 text-sm font-medium rounded-sm",
+                  role === "Vendor" && "bg-background shadow-sm"
+                )}
+                onClick={() => handleRoleChange("Vendor")}
+              >
+                Vendor
+              </Button>
+            </div>
           </CardHeader>
           
           <form onSubmit={handleLogin}>
             <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="role">Login as</Label>
-                <select
-                  id="role"
-                  name="role"
-                  aria-label="Login as"
-                  value={role}
-                  onChange={handleRoleChange}
-                  className="w-full border rounded px-2 py-1"
-                >
-                  <option value="Vendor">Vendor</option>
-                  <option value="Buyer">Buyer</option>
-                </select>
-              </div>
               <div className="space-y-2">
                 <Label htmlFor="phone">Phone Number</Label>
                 <Input 
@@ -126,13 +133,24 @@ const Login: React.FC = () => {
                 type="submit" 
                 className="w-full bg-cm-green hover:bg-cm-forest"
               >
-                Login
+                Login as {role}
               </Button>
               <div className="mt-4 text-center text-sm text-muted-foreground">
-                Want to sell your products?{" "}
-                <a href="/vendor/register" className="text-primary underline">
-                  Register as Producer
-                </a>
+                {role === "Vendor" ? (
+                  <>
+                    Want to sell your products?{" "}
+                    <a href="/vendor/register" className="text-primary underline">
+                      Register as Producer
+                    </a>
+                  </>
+                ) : (
+                  <>
+                    Don't have an account?{" "}
+                    <a href="/buyer/register" className="text-primary underline">
+                      Register
+                    </a>
+                  </>
+                )}
               </div>
             </CardFooter>
           </form>

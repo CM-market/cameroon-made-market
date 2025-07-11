@@ -5,7 +5,7 @@ import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { ArrowLeft, Check, ShoppingCart, Star, Plus, Minus, ChevronLeft, ChevronRight } from "lucide-react";
+import { ArrowLeft, Check, ShoppingCart, Star, Plus, Minus, ChevronLeft, ChevronRight, MessageCircle, Phone } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { toast } from "@/hooks/use-toast";
 import { productApi, Product } from "@/lib/api";
@@ -84,19 +84,55 @@ const ProductDetails: React.FC = () => {
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [quantity, setQuantity] = useState(1);
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
-  
+
   useEffect(() => {
     const fetchProduct = async () => {
       if (!id) return;
-      
+
       try {
         setLoading(true);
         console.log('Fetching product with ID:', id);
         console.log('API URL:', import.meta.env.VITE_API_URL);
-        const response = await productApi.get(id);
-        console.log('Product response:', response);
-        setProduct(response);
-        setError(null);
+
+        // First try to fetch from API
+        try {
+          const response = await productApi.get(id);
+          console.log('Product response:', response);
+          setProduct(response);
+          setError(null);
+          return;
+        } catch (apiErr) {
+          console.log('API fetch failed, checking localStorage...');
+
+          // If API fails, check localStorage for products created through sell flow
+          const localProducts = JSON.parse(localStorage.getItem('products') || '[]');
+          const localProduct = localProducts.find((p: any) => p.id === id);
+
+          if (localProduct) {
+            // Convert localStorage product to match Product interface
+            const formattedProduct: Product = {
+              id: localProduct.id,
+              seller_id: 'local',
+              title: localProduct.description,
+              description: localProduct.description,
+              quantity: 1, // Default quantity for local products
+              price: localProduct.price,
+              category: 'Local Products',
+              image_urls: [localProduct.image],
+              created_at: localProduct.createdAt,
+              updated_at: localProduct.createdAt,
+              returnPolicy: 'Standard return policy'
+            };
+
+            console.log('Found product in localStorage:', formattedProduct);
+            setProduct(formattedProduct);
+            setError(null);
+            return;
+          }
+
+          // If not found in localStorage either, throw the original API error
+          throw apiErr;
+        }
       } catch (err) {
         console.error('Detailed error:', err);
         if (axios.isAxiosError(err)) {
@@ -124,7 +160,7 @@ const ProductDetails: React.FC = () => {
         const parsedCart = JSON.parse(storedCart);
         if (Array.isArray(parsedCart)) {
           setCartItems(parsedCart);
-          
+
           // Check if this product is already in cart and set quantity
           const existingItem = parsedCart.find(item => item.id === id);
           if (existingItem) {
@@ -136,15 +172,15 @@ const ProductDetails: React.FC = () => {
       }
     }
   }, [id]);
-  
+
   useEffect(() => {
     localStorage.setItem('cartItems', JSON.stringify(cartItems));
   }, [cartItems]);
-  
+
   const handleQuantityChange = (delta: number) => {
     setQuantity(prev => Math.max(1, prev + delta));
   };
-  
+
   const handleAddToCart = () => {
     if (!product) return;
 
@@ -154,15 +190,17 @@ const ProductDetails: React.FC = () => {
     const existingItem = cartItems.find((item: any) => item.id === product.id);
 
     if (existingItem) {
+      // Replace the existing item with the new quantity
       cartItems = cartItems.map((item: any) =>
-        item.id === product.id ? { ...item, quantity: item.quantity + 1 } : item
+        item.id === product.id ? { ...item, quantity: quantity } : item
       );
     } else {
+      // Add new item with selected quantity
       cartItems.push({
         id: product.id,
         name: product.title,
         price: Number(product.price),
-        quantity: 1,
+        quantity: quantity,
         category: product.category || 'Uncategorized',
         image: product.image_urls[0] || '/placeholder.svg',
         returnPolicy: product.returnPolicy || 'No return policy specified'
@@ -172,13 +210,69 @@ const ProductDetails: React.FC = () => {
     localStorage.setItem('cartItems', JSON.stringify(cartItems));
     toast({
       title: "Added to Cart",
-      description: `${product.title} has been added to your cart.`
+      description: `${quantity} ${product.title}${quantity > 1 ? 's' : ''} added to your cart.`
     });
   };
-  
+
   const handleBuyNow = () => {
     handleAddToCart();
     navigate('/cart');
+  };
+
+  const getSellerPhoneNumber = () => {
+    // For products created through the sell flow, check localStorage
+    const localProducts = JSON.parse(localStorage.getItem('products') || '[]');
+    const localProduct = localProducts.find((p: any) => p.id === product?.id);
+
+    if (localProduct && localProduct.storeId) {
+      // Get store information from localStorage
+      const stores = JSON.parse(localStorage.getItem('userStores') || '[]');
+      const store = stores.find((s: any) => s.id === localProduct.storeId);
+      if (store) {
+        return store.phoneNumber;
+      }
+    }
+
+    // Fallback: check if there's a single store in localStorage
+    const userStore = localStorage.getItem('userStore');
+    if (userStore) {
+      const store = JSON.parse(userStore);
+      return store.phoneNumber;
+    }
+
+    // For API products, we would need to fetch seller information
+    // This could be implemented later with a seller API endpoint
+    return null;
+  };
+
+  const handleWhatsAppContact = () => {
+    const phoneNumber = getSellerPhoneNumber();
+    if (!phoneNumber) {
+      toast({
+        title: "Contact Information Unavailable",
+        description: "Seller contact information is not available for this product.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const message = `Hi! I'm interested in your product: ${product?.title}. Price: ${Number(product?.price).toLocaleString()} FCFA. Is it still available?`;
+    const whatsappUrl = `https://wa.me/${phoneNumber.replace('+', '')}?text=${encodeURIComponent(message)}`;
+    window.open(whatsappUrl, '_blank');
+  };
+
+  const handleCallSeller = () => {
+    const phoneNumber = getSellerPhoneNumber();
+    if (!phoneNumber) {
+      toast({
+        title: "Contact Information Unavailable",
+        description: "Seller contact information is not available for this product.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    window.open(`tel:${phoneNumber}`, '_self');
   };
 
   const nextImage = () => {
@@ -233,7 +327,7 @@ const ProductDetails: React.FC = () => {
   return (
     <div className="min-h-screen flex flex-col">
       <MainNavbar />
-      
+
       <div className="container mx-auto px-4 py-8 flex-grow">
         <Button
           variant="outline"
@@ -242,7 +336,7 @@ const ProductDetails: React.FC = () => {
         >
           <ArrowLeft size={16} className="mr-2" /> Back
         </Button>
-        
+
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           {/* Image Gallery */}
           <div className="space-y-4">
@@ -298,13 +392,13 @@ const ProductDetails: React.FC = () => {
               </div>
             )}
           </div>
-          
+
           {/* Product Details */}
           <div>
             <div className="mb-2">
               <Badge className="bg-cm-sand text-black">{product.category}</Badge>
             </div>
-            
+
             <div>
               <h1 className="text-3xl font-bold mb-2">{product.title}</h1>
               <p className="text-2xl font-bold text-cm-green">
@@ -313,16 +407,16 @@ const ProductDetails: React.FC = () => {
             </div>
 
             <Separator />
-            
+
             <p className="mb-6 text-gray-700">{product.description}</p>
-            
+
             <div className="mb-6 flex items-center">
               <div className="flex items-center gap-2 text-cm-green">
                 <Check size={18} className="text-cm-green" />
                 <span className="font-medium">In Stock: {product.quantity} available</span>
               </div>
             </div>
-            
+
             {/* Quantity selector */}
             <div className="mb-6">
               <label className="block mb-2 font-medium">Quantity</label>
@@ -346,8 +440,8 @@ const ProductDetails: React.FC = () => {
                 </Button>
               </div>
             </div>
-            
-            <div className="flex gap-4 mb-8">
+
+            <div className="flex gap-4 mb-4">
               <Button 
                 size="lg" 
                 onClick={handleAddToCart} 
@@ -364,9 +458,30 @@ const ProductDetails: React.FC = () => {
                 Buy Now
               </Button>
             </div>
-            
+
+            {/* Contact Seller Buttons */}
+            <div className="flex gap-4 mb-8">
+              <Button 
+                size="lg" 
+                onClick={handleWhatsAppContact}
+                className="bg-green-600 hover:bg-green-700 text-white"
+              >
+                <MessageCircle className="mr-2" size={18} />
+                Buy on WhatsApp
+              </Button>
+              <Button 
+                size="lg" 
+                variant="outline"
+                onClick={handleCallSeller}
+                className="border-blue-600 text-blue-600 hover:bg-blue-50"
+              >
+                <Phone className="mr-2" size={18} />
+                Call Seller
+              </Button>
+            </div>
+
             <Separator className="my-6" />
-            
+
             <div>
               <h2 className="text-xl font-semibold mb-2">Details</h2>
               <div className="space-y-2">
@@ -385,7 +500,7 @@ const ProductDetails: React.FC = () => {
             </div>
           </div>
         </div>
-        
+
         {/* Reviews Section (placeholder) */}
         <Card className="mt-12 p-6">
           <h2 className="text-xl font-bold mb-6">Customer Reviews</h2>
@@ -393,7 +508,7 @@ const ProductDetails: React.FC = () => {
             <p>Product reviews will appear here</p>
           </div>
         </Card>
-        
+
         {/* Related Products (placeholder) */}
         <div className="mt-12">
           <h2 className="text-xl font-bold mb-6">Related Products</h2>
@@ -416,7 +531,7 @@ const ProductDetails: React.FC = () => {
           </div>
         </div>
       </div>
-      
+
       <Footer />
     </div>
   );

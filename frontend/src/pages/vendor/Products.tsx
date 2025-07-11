@@ -13,8 +13,11 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogFooter,
 } from "@/components/ui/dialog";
 import ProductForm from '@/components/ProductForm';
+import { getImageUrl } from '@/services/minioService';
+import { useNavigate } from 'react-router-dom';
 
 const VendorProducts: React.FC = () => {
   const [products, setProducts] = useState<Product[]>([]);
@@ -31,6 +34,7 @@ const VendorProducts: React.FC = () => {
     image_urls: [],
     quantity: 0,
   });
+  const navigate = useNavigate();
 
   useEffect(() => {
     fetchProducts();
@@ -68,6 +72,7 @@ const VendorProducts: React.FC = () => {
         quantity: 0,
       });
       fetchProducts();
+      navigate('/vendor/dashboard');
     } catch (err) {
       toast({
         title: "Error",
@@ -142,7 +147,7 @@ const VendorProducts: React.FC = () => {
 
   if (loading) {
     return (
-      <div>
+      <div className="min-h-screen bg-background">
         <VendorNavbar />
         <div className="container mx-auto px-4 py-8">
           <div className="text-center">
@@ -156,7 +161,7 @@ const VendorProducts: React.FC = () => {
 
   if (error) {
     return (
-      <div>
+      <div className="min-h-screen bg-background">
         <VendorNavbar />
         <div className="container mx-auto px-4 py-8">
           <div className="text-center">
@@ -174,14 +179,26 @@ const VendorProducts: React.FC = () => {
   }
 
   return (
-    <div>
+    <div className="min-h-screen bg-background">
       <VendorNavbar />
       <div className="container mx-auto px-4 py-8">
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-3xl font-bold">My Products</h1>
-        </div>
-        <div className="mb-8">
-          <ProductForm onProductCreated={fetchProducts} />
+          <div className="flex space-x-2">
+            <Button
+              onClick={() => navigate('/vendor/dashboard')}
+              variant="outline"
+            >
+              Back to Dashboard
+            </Button>
+            <Button
+              onClick={() => setIsCreateDialogOpen(true)}
+              className="bg-cm-green hover:bg-cm-forest"
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              Add New Product
+            </Button>
+          </div>
         </div>
 
         {products.length === 0 ? (
@@ -191,37 +208,50 @@ const VendorProducts: React.FC = () => {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {products.map((product) => (
-              <Card key={product.id}>
-                <CardContent className="p-6">
-                  <div className="aspect-square mb-4">
-                    <img
-                      src={product.image_urls[0] || '/placeholder.svg'}
-                      alt={product.title}
-                      className="w-full h-full object-cover rounded"
-                    />
-                  </div>
-                  <h3 className="text-lg font-semibold mb-2">{product.title}</h3>
-                  <p className="text-gray-500 mb-4 line-clamp-2">{product.description}</p>
+              <Card key={product.id} className="overflow-hidden hover:shadow-lg transition-shadow duration-200">
+                <div className="relative aspect-square w-full bg-gray-100">
+                  <img
+                    src={getImageUrl(product.image_urls[0])}
+                    alt={product.title}
+                    className="w-full h-full object-contain p-2"
+                    onError={(e) => {
+                      console.log('Image load failed:', product.image_urls[0]);
+                      (e.target as HTMLImageElement).src = '/placeholder.svg';
+                    }}
+                  />
+                </div>
+                <CardContent className="p-4">
+                  <h3 className="font-semibold text-lg line-clamp-2 mb-2">{product.title}</h3>
+                  <p className="text-gray-600 text-sm line-clamp-2 mb-4">{product.description}</p>
                   <div className="flex justify-between items-center mb-4">
-                    <span className="text-lg font-bold">{Number(product.price).toLocaleString()} FCFA</span>
-                    <span className="text-lg font-bold">{Number(product.quantity).toLocaleString()} </span>
+                    <span className="font-bold text-lg">FCFA {Number(product.price).toLocaleString()}</span>
                     <span className="text-sm text-gray-500">{product.category}</span>
                   </div>
-                  <div className="flex justify-end space-x-2">
+                  <div className="flex flex-col gap-2">
                     <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleEditClick(product)}
+                      className="w-full bg-cm-green hover:bg-cm-forest"
+                      onClick={() => navigate(`/vendor/products/${product.id}`)}
                     >
-                      <Pencil className="h-4 w-4" />
+                      View Details
                     </Button>
-                    <Button
-                      variant="destructive"
-                      size="sm"
-                      onClick={() => handleDeleteProduct(product.id)}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
+                    <div className="flex gap-2">
+                      <Button
+                        variant="outline"
+                        className="flex-1"
+                        onClick={() => handleEditClick(product)}
+                      >
+                        <Pencil className="h-4 w-4 mr-2" />
+                        Edit
+                      </Button>
+                      <Button
+                        variant="destructive"
+                        className="flex-1"
+                        onClick={() => handleDeleteProduct(product.id)}
+                      >
+                        <Trash2 className="h-4 w-4 mr-2" />
+                        Delete
+                      </Button>
+                    </div>
                   </div>
                 </CardContent>
               </Card>
@@ -250,15 +280,26 @@ const VendorProducts: React.FC = () => {
                   id="edit-description"
                   value={formData.description}
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                  required
                 />
               </div>
               <div>
-                <Label htmlFor="edit-price">Price (FCFA)</Label>
+                <Label htmlFor="edit-price">Price</Label>
                 <Input
                   id="edit-price"
                   type="number"
                   value={formData.price}
-                  onChange={(e) => setFormData({ ...formData, price: Number(e.target.value) })}
+                  onChange={(e) => setFormData({ ...formData, price: parseFloat(e.target.value) })}
+                  required
+                />
+              </div>
+              <div>
+                <Label htmlFor="edit-quantity">Quantity</Label>
+                <Input
+                  id="edit-quantity"
+                  type="number"
+                  value={formData.quantity}
+                  onChange={(e) => setFormData({ ...formData, quantity: parseInt(e.target.value) })}
                   required
                 />
               </div>
@@ -268,34 +309,26 @@ const VendorProducts: React.FC = () => {
                   id="edit-category"
                   value={formData.category}
                   onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                  required
                 />
               </div>
-              <div>
-                <Label htmlFor="edit-image_urls">Image URLs (one per line)</Label>
-                <Textarea
-                  id="edit-image_urls"
-                  value={formData.image_urls.join('\n')}
-                  onChange={(e) => setFormData({
-                    ...formData,
-                    image_urls: e.target.value.split('\n').filter(url => url.trim() !== '')
-                  })}
-                />
-              </div>
-              <div className="flex justify-end space-x-2">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => setIsEditDialogOpen(false)}
-                >
-                  Cancel
-                </Button>
-                <Button type="submit" className="bg-cm-green hover:bg-cm-forest">
-                  Update Product
-                </Button>
-              </div>
+              <DialogFooter>
+                <Button type="submit" className="bg-cm-green hover:bg-cm-forest">Save Changes</Button>
+                <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>Cancel</Button>
+              </DialogFooter>
             </form>
           </DialogContent>
         </Dialog>
+
+        <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Add New Product</DialogTitle>
+            </DialogHeader>
+            <ProductForm onProductCreated={() => { setIsCreateDialogOpen(false); fetchProducts(); }} />
+          </DialogContent>
+        </Dialog>
+
       </div>
     </div>
   );

@@ -37,11 +37,14 @@ export const uploadImage = async (file: File): Promise<string> => {
     const formData = new FormData();
     formData.append('file', file);
     
+    // Retrieve the token just before making the request
+    const currentToken = localStorage.getItem('token');
+
     const response = await fetch(`${API_URL}/products/upload-image`, {
       method: 'POST',
       body: formData,
       headers: {
-        'Authorization': `Bearer ${token}`
+        'Authorization': `Bearer ${currentToken}`
       }
     });
 

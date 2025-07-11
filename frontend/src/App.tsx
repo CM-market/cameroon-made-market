@@ -13,6 +13,7 @@ import VendorProducts from "./pages/vendor/Products";
 import VendorOrders from "./pages/vendor/Orders";
 import VendorAccount from "./pages/vendor/Account";
 import VendorRegister from "./pages/vendor/Register";
+import VendorProductDetails from "./pages/vendor/ProductDetails";
 import Login from "./pages/Login";
 import AdminLogin from "./pages/admin/Login";
 import ProductList from "./pages/ProductList";
@@ -27,6 +28,7 @@ import BuyerRegister from "./pages/buyer/Register";
 import BuyerAccountInfo from "./pages/buyer/AccountInfo";
 import BuyerSettings from "./pages/buyer/Settings";
 import BuyerAccount from "./pages/buyer/Account";
+import SellUpload from "./pages/SellUpload";
 import { AdminLayout } from './components/admin/AdminLayout';
 import { UserManagement } from './components/admin/UserManagement';
 import { ProductManagement } from './components/admin/ProductManagement';
@@ -53,22 +55,26 @@ const App = () => (
           <Route path="/checkout" element={<Checkout />} />
           <Route path="/payment" element={<Payment />} />
           <Route path="/orders" element={<Orders />} />
-          
+
           {/* Buyer registration and account routes */}
           <Route path="/buyer/register" element={<BuyerRegister />} />
           <Route path="/buyer/account-info" element={<BuyerAccountInfo />} />
           <Route path="/buyer/settings" element={<BuyerSettings />} />
           <Route path="/buyer/account" element={<BuyerAccount />} />
-          
+
           {/* Producer routes */}
           <Route path="/login" element={<Login />} />
           <Route path="/vendor/products/new" element={<Index />} />
           <Route path="/vendor/register" element={<VendorRegister />} />
           <Route path="/vendor/dashboard" element={<VendorDashboard />} />
           <Route path="/vendor/products" element={<VendorProducts />} />
+          <Route path="/vendor/products/:id" element={<VendorProductDetails />} />
           <Route path="/vendor/orders" element={<VendorOrders />} />
           <Route path="/vendor/account" element={<VendorAccount />} />
-          
+
+          {/* Sell routes */}
+          <Route path="/sell/upload" element={<SellUpload />} />
+
           {/* Admin routes */}
           <Route path="/admin/login" element={<AdminLogin />} />
           <Route
@@ -111,7 +117,7 @@ const App = () => (
               </ProtectedRoute>
             }
           />
-          
+
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

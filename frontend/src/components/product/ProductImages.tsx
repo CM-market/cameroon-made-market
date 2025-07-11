@@ -27,9 +27,13 @@ export const ProductImages = ({
             className="relative aspect-square bg-muted rounded-md overflow-hidden group"
           >
             <img 
-              src={formData.uploadedImageUrls[index] || url} 
+              src={getImageUrl(formData.uploadedImageUrls[index]) || url} 
               alt={`Product ${index + 1}`} 
-              className="w-full h-full object-cover"
+              className="w-full h-full object-contain"
+              onError={(e) => {
+                console.log('Image load failed:', formData.uploadedImageUrls[index] || url);
+                (e.target as HTMLImageElement).src = '/placeholder.svg';
+              }}
             />
             <button
               type="button"

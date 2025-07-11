@@ -1,234 +1,191 @@
-
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import MainNavbar from "@/components/MainNavbar";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { Input } from "@/components/ui/input";
-import { Trash2, Plus, Minus } from "lucide-react";
+import { Minus, Plus, Trash2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { getImageUrl } from "@/services/minioService";
 import { toast } from "@/hooks/use-toast";
 
-// Sample cart data - in a real app this would come from a cart state/context
-const initialCartItems = [
-  {
-    id: "1",
-    name: "Hand-woven Bamboo Basket",
-    price: 15000,
-    quantity: 2,
-    image: "/placeholder.svg",
-  },
-  {
-    id: "2",
-    name: "Cameroonian Coffee Beans - 500g",
-    price: 8500,
-    quantity: 1,
-    image: "/placeholder.svg",
-  },
-  {
-    id: "3",
-    name: "Traditional Handmade Jewelry",
-    price: 24000,
-    quantity: 1,
-    image: "/placeholder.svg",
-  }
-];
+interface CartItem {
+  id: string;
+  name: string;
+  price: number;
+  quantity: number;
+  category: string;
+  image: string;
+  returnPolicy: string;
+}
 
 const Cart: React.FC = () => {
-  const [cartItems, setCartItems] = useState(initialCartItems);
+  const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const navigate = useNavigate();
-  
-  const subtotal = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
-  const shipping = cartItems.length > 0 ? 2500 : 0;
-  const total = subtotal + shipping;
 
-  const updateQuantity = (id: string, newQuantity: number) => {
-    if (newQuantity < 1) return;
-    
-    setCartItems(items => 
-      items.map(item => 
-        item.id === id ? { ...item, quantity: newQuantity } : item
-      )
+  useEffect(() => {
+    const storedCart = localStorage.getItem('cartItems');
+    if (storedCart) {
+      try {
+        const items = JSON.parse(storedCart);
+        setCartItems(items);
+      } catch (e) {
+        console.error('Error parsing cart data', e);
+      }
+    }
+  }, []);
+
+  const handleUpdateQuantity = (productId: string, newQuantity: number) => {
+    if (newQuantity <= 0) {
+      handleRemoveFromCart(productId);
+      return;
+    }
+
+    const updatedItems = cartItems.map(item =>
+      item.id === productId ? { ...item, quantity: newQuantity } : item
     );
-    
-    toast({
-      title: "Cart Updated",
-      description: "Item quantity has been updated."
-    });
+    setCartItems(updatedItems);
+    localStorage.setItem('cartItems', JSON.stringify(updatedItems));
   };
 
-  const removeItem = (id: string) => {
-    setCartItems(items => items.filter(item => item.id !== id));
-    
-    toast({
-      title: "Item Removed",
-      description: "The item has been removed from your cart."
-    });
+  const handleRemoveFromCart = (productId: string) => {
+    const updatedItems = cartItems.filter(item => item.id !== productId);
+    setCartItems(updatedItems);
+    localStorage.setItem('cartItems', JSON.stringify(updatedItems));
   };
 
-  const clearCart = () => {
-    setCartItems([]);
-    
-    toast({
-      title: "Cart Cleared",
-      description: "All items have been removed from your cart."
-    });
+  const handleProceedToCheckout = () => {
+    const token = localStorage.getItem('token');
+    const userRole = localStorage.getItem('userRole');
+
+    if (!token || userRole !== 'Buyer') {
+      toast({
+        title: "Are you logged in?",
+        description: "Please log in to proceed with checkout.",
+        variant: "destructive"
+      });
+      navigate('/login');
+      return;
+    }
+
+    navigate('/checkout');
   };
+
+  const totalItems = cartItems.reduce((sum, item) => sum + item.quantity, 0);
+  const totalPrice = cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
       <MainNavbar />
       
       <div className="container mx-auto px-4 py-8 flex-grow">
-        <div className="flex justify-between items-center mb-6">
-          <h1 className="text-3xl font-bold">Your Shopping Cart</h1>
-          {cartItems.length > 0 && (
-            <Button variant="outline" className="text-red-500" onClick={clearCart}>
-              Clear Cart
+        <h1 className="text-2xl font-bold mb-8">Your Shopping Cart</h1>
+
+        {cartItems.length === 0 ? (
+          <div className="text-center py-12">
+            <p className="text-lg text-gray-500 mb-4">Your cart is empty</p>
+            <Button 
+              className="bg-cm-green hover:bg-cm-forest"
+              onClick={() => navigate('/products')}
+            >
+              Continue Shopping
             </Button>
-          )}
-        </div>
-        
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          <div className="lg:col-span-2">
-            {cartItems.length > 0 ? (
-              <div className="space-y-4">
-                {cartItems.map((item) => (
-                  <Card key={item.id}>
-                    <CardContent className="p-4">
-                      <div className="flex flex-col sm:flex-row gap-4">
-                        <div className="w-full sm:w-24 h-24 bg-gray-100 rounded-md overflow-hidden">
-                          <img 
-                            src={item.image} 
-                            alt={item.name} 
-                            className="w-full h-full object-cover cursor-pointer"
-                            onClick={() => navigate(`/product/${item.id}`)}
-                          />
-                        </div>
-                        
-                        <div className="flex-1">
-                          <div className="flex justify-between">
-                            <h3 
-                              className="font-semibold cursor-pointer hover:text-cm-green"
-                              onClick={() => navigate(`/product/${item.id}`)}
-                            >
-                              {item.name}
-                            </h3>
-                            <p className="font-bold text-cm-green">{item.price} FCFA</p>
-                          </div>
-                          
-                          <div className="mt-4 flex justify-between items-center">
-                            <div className="flex items-center border rounded-md">
-                              <Button 
-                                variant="ghost" 
-                                size="icon" 
-                                className="h-8 w-8 p-0"
-                                onClick={() => updateQuantity(item.id, item.quantity - 1)}
-                              >
-                                <Minus className="h-3 w-3" />
-                              </Button>
-                              <Input 
-                                className="w-12 h-8 text-center border-0 p-0" 
-                                value={item.quantity}
-                                onChange={(e) => {
-                                  const value = parseInt(e.target.value);
-                                  if (!isNaN(value) && value > 0) {
-                                    updateQuantity(item.id, value);
-                                  }
-                                }}
-                              />
-                              <Button 
-                                variant="ghost" 
-                                size="icon" 
-                                className="h-8 w-8 p-0"
-                                onClick={() => updateQuantity(item.id, item.quantity + 1)}
-                              >
-                                <Plus className="h-3 w-3" />
-                              </Button>
-                            </div>
-                            
-                            <Button 
-                              variant="ghost" 
-                              size="sm" 
-                              className="text-red-500"
-                              onClick={() => removeItem(item.id)}
-                            >
-                              <Trash2 className="h-4 w-4 mr-1" />
-                              Remove
-                            </Button>
-                          </div>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            ) : (
-              <Card>
-                <CardContent className="p-8 text-center">
-                  <p className="text-muted-foreground mb-4">Your cart is empty</p>
-                  <Button onClick={() => navigate("/products")}>
-                    Continue Shopping
-                  </Button>
-                </CardContent>
-              </Card>
-            )}
           </div>
-          
-          <div>
-            <Card>
-              <CardHeader>
-                <CardTitle>Order Summary</CardTitle>
-              </CardHeader>
-              
-              <CardContent>
+        ) : (
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            {/* Cart Items */}
+            <div className="lg:col-span-2 space-y-4">
+              {cartItems.map((item) => (
+                <Card key={item.id} className="p-4">
+                  <div className="flex gap-4">
+                    <div className="w-24 h-24 relative">
+                      <img
+                        src={getImageUrl(item.image)}
+                        alt={item.name}
+                        className="w-full h-full object-cover rounded"
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).src = '/placeholder.svg';
+                        }}
+                      />
+                    </div>
+                    <div className="flex-1">
+                      <h3 className="font-semibold mb-1">{item.name}</h3>
+                      <p className="text-sm text-gray-500 mb-2">{item.category}</p>
+                      <p className="font-semibold mb-2">{item.price.toLocaleString()} FCFA</p>
+                      <div className="flex items-center gap-4">
+                        <div className="flex items-center border rounded">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8"
+                            onClick={() => handleUpdateQuantity(item.id, item.quantity - 1)}
+                          >
+                            <Minus className="h-4 w-4" />
+                          </Button>
+                          <span className="w-8 text-center">{item.quantity}</span>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8"
+                            onClick={() => handleUpdateQuantity(item.id, item.quantity + 1)}
+                          >
+                            <Plus className="h-4 w-4" />
+                          </Button>
+                        </div>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 text-red-500 hover:text-red-600"
+                          onClick={() => handleRemoveFromCart(item.id)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <p className="font-semibold">
+                        {(item.price * item.quantity).toLocaleString()} FCFA
+                      </p>
+                    </div>
+                  </div>
+                </Card>
+              ))}
+            </div>
+
+            {/* Order Summary */}
+            <div className="lg:col-span-1">
+              <Card className="p-6">
+                <h2 className="text-lg font-semibold mb-4">Order Summary</h2>
                 <div className="space-y-4">
                   <div className="flex justify-between">
-                    <span>Subtotal</span>
-                    <span>{subtotal.toLocaleString()} FCFA</span>
+                    <span>Items ({totalItems})</span>
+                    <span>{totalPrice.toLocaleString()} FCFA</span>
                   </div>
-                  
-                  <div className="flex justify-between">
-                    <span>Shipping</span>
-                    <span>{shipping.toLocaleString()} FCFA</span>
-                  </div>
-                  
                   <Separator />
-                  
-                  <div className="flex justify-between font-bold">
+                  <div className="flex justify-between font-semibold">
                     <span>Total</span>
-                    <span>{total.toLocaleString()} FCFA</span>
+                    <span>{totalPrice.toLocaleString()} FCFA</span>
                   </div>
+                  <Button 
+                    className="w-full bg-cm-green hover:bg-cm-forest"
+                    onClick={handleProceedToCheckout}
+                  >
+                    Proceed to Checkout
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    className="w-full"
+                    onClick={() => navigate('/products')}
+                  >
+                    Continue Shopping
+                  </Button>
                 </div>
-              </CardContent>
-              
-              <CardFooter>
-                <Button 
-                  className="w-full bg-cm-green hover:bg-cm-forest"
-                  onClick={() => navigate("/checkout")}
-                  disabled={cartItems.length === 0}
-                >
-                  Proceed to Checkout
-                </Button>
-              </CardFooter>
-            </Card>
-            
-            <Card className="mt-4">
-              <CardContent className="p-4">
-                <div className="flex items-center">
-                  <Input 
-                    placeholder="Enter promo code" 
-                    className="rounded-r-none" 
-                  />
-                  <Button className="rounded-l-none">Apply</Button>
-                </div>
-              </CardContent>
-            </Card>
+              </Card>
+            </div>
           </div>
-        </div>
+        )}
       </div>
-      
+
       <Footer />
     </div>
   );

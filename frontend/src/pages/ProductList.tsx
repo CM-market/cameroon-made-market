@@ -32,7 +32,7 @@ interface CartItem {
 
 const ProductList: React.FC = () => {
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
-  const [priceRange, setPriceRange] = useState<number[]>([5000, 25000]);
+  const [priceRange, setPriceRange] = useState<number[]>([500, 2500000]);
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [showCart, setShowCart] = useState(false);
   const [products, setProducts] = useState<Product[]>([]);
@@ -66,10 +66,47 @@ const ProductList: React.FC = () => {
     const fetchProducts = async () => {
       try {
         setLoading(true);
-        const data = await productApi.list(selectedCategory || undefined);
-        console.log(data)
-        console.log('Fetched products:', data.data); // Debug log
-        setProducts(data.data);
+
+        // Fetch products from API
+        let apiProducts: Product[] = [];
+        try {
+          const data = await productApi.list(selectedCategory || undefined);
+          console.log(data)
+          console.log('Fetched products:', data.data); // Debug log
+          apiProducts = data.data;
+        } catch (apiErr) {
+          console.error('Error fetching API products:', apiErr);
+          // Continue with localStorage products even if API fails
+        }
+
+        // Load products from localStorage (added through sell flow)
+        const localProducts = JSON.parse(localStorage.getItem('products') || '[]');
+        console.log('Local products:', localProducts); // Debug log
+
+        // Convert localStorage products to match Product interface
+        const formattedLocalProducts: Product[] = localProducts.map((product: any) => ({
+          id: product.id,
+          title: product.description,
+          description: product.description,
+          price: product.price.toString(),
+          category: 'Local Products',
+          image_urls: [product.image],
+          created_at: product.createdAt,
+          updated_at: product.createdAt,
+          vendor_id: 'local',
+          status: 'active',
+          returnPolicy: 'Standard return policy'
+        }));
+
+        // Merge API products with local products, with local products first
+        const allProducts = [...formattedLocalProducts, ...apiProducts];
+
+        // Filter by category if selected
+        const filteredProducts = selectedCategory 
+          ? allProducts.filter(product => product.category === selectedCategory)
+          : allProducts;
+
+        setProducts(filteredProducts);
         setError(null);
       } catch (err) {
         setError('Failed to fetch products');
@@ -98,7 +135,7 @@ const ProductList: React.FC = () => {
           id: product.id,
           name: product.title,
           price: Number(product.price),
-          quantity: Number(product.quantity),
+          quantity: 1,
           category: product.category || 'Uncategorized',
           image: product.image_urls[0] || '/placeholder.svg',
           returnPolicy: product.returnPolicy || 'No return policy specified'

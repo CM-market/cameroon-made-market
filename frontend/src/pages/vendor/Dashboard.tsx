@@ -6,6 +6,7 @@ import { useNavigate } from 'react-router-dom';
 import { ArrowUpRight, Package, DollarSign, ShoppingCart, TrendingUp } from 'lucide-react';
 import { productApi, Product } from '@/lib/api';
 import { toast } from '@/hooks/use-toast';
+import { getImageUrl } from '@/services/minioService';
 
 interface VendorStats {
   totalProducts: number;
@@ -154,7 +155,7 @@ const VendorDashboard: React.FC = () => {
           </Card>
         </div>
 
-        {/* Products Table */}
+        {/* Products Grid */}
         <Card>
           <CardHeader>
             <CardTitle>Your Products</CardTitle>
@@ -163,37 +164,43 @@ const VendorDashboard: React.FC = () => {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="rounded-md border">
-              <table className="w-full">
-                <thead>
-                  <tr className="border-b bg-muted/50">
-                    <th className="h-12 px-4 text-left align-middle font-medium">Product</th>
-                    <th className="h-12 px-4 text-left align-middle font-medium">Price</th>
-                    <th className="h-12 px-4 text-left align-middle font-medium">Category</th>
-                    <th className="h-12 px-4 text-left align-middle font-medium">Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {products.map((product) => (
-                    <tr key={product.id} className="border-b">
-                      <td className="p-4 align-middle">{product.title}</td>
-                      <td className="p-4 align-middle">FCFA {Number(product.price).toLocaleString()}</td>
-                      <td className="p-4 align-middle">{product.category}</td>
-                      <td className="p-4 align-middle">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => navigate(`/vendor/products/${product.id}`)}
-                        >
-                          <ArrowUpRight className="h-4 w-4 mr-2" />
-                          View Details
-                        </Button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+            {products.length === 0 ? (
+              <div className="text-center py-12">
+                <p className="text-lg text-gray-500">You haven't added any products yet.</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {products.map((product) => (
+                  <Card key={product.id} className="overflow-hidden hover:shadow-lg transition-shadow duration-200">
+                    <div className="relative aspect-square w-full bg-gray-100">
+                      <img
+                        src={getImageUrl(product.image_urls[0])}
+                        alt={product.title}
+                        className="w-full h-full object-contain p-2"
+                        onError={(e) => {
+                          console.log('Image load failed:', product.image_urls[0]);
+                          (e.target as HTMLImageElement).src = '/placeholder.svg';
+                        }}
+                      />
+                    </div>
+                    <CardContent className="p-4">
+                      <h3 className="font-semibold text-lg line-clamp-2 mb-2">{product.title}</h3>
+                      <p className="text-gray-600 text-sm line-clamp-2 mb-4">{product.description}</p>
+                      <div className="flex justify-between items-center mb-4">
+                        <span className="font-bold text-lg">FCFA {Number(product.price).toLocaleString()}</span>
+                        <span className="text-sm text-gray-500">{product.category}</span>
+                      </div>
+                      <Button
+                        className="w-full bg-cm-green hover:bg-cm-forest"
+                        onClick={() => navigate(`/vendor/products/${product.id}`)}
+                      >
+                        View Details
+                      </Button>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>
