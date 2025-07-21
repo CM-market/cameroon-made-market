@@ -6,6 +6,8 @@ import { useNavigate } from 'react-router-dom';
 import { ArrowUpRight, Package, DollarSign, ShoppingCart, TrendingUp } from 'lucide-react';
 import { productApi, Product } from '@/lib/api';
 import { toast } from '@/hooks/use-toast';
+import { getImageUrl } from '@/services/minioService';
+import { orderApi } from '@/lib/api';
 
 interface VendorStats {
   totalProducts: number;
@@ -25,6 +27,7 @@ const VendorDashboard: React.FC = () => {
     averageOrderValue: 0
   });
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     fetchVendorData();
@@ -33,33 +36,57 @@ const VendorDashboard: React.FC = () => {
   const fetchVendorData = async () => {
     try {
       setLoading(true);
-      // Fetch vendor's products
-      const productsResponse = await productApi.list(undefined, localStorage.getItem('userId'));
-      setProducts(productsResponse.data);
       
-      // Fetch vendor's name from localStorage (set during login)
-      const storedVendorName = localStorage.getItem('userName');
-      if (storedVendorName) {
-        setVendorName(storedVendorName);
+      const userId = localStorage.getItem('userId');
+      if (!userId) {
+        setError("Vendor ID not found. Please log in.");
+        setLoading(false);
+        return;
       }
 
-      // Calculate statistics
-      const totalProducts = productsResponse.data.length;
-      const totalSales = productsResponse.data.reduce((sum, product) => sum + (product.sales || 0), 0);
-      const totalRevenue = productsResponse.data.reduce((sum, product) => sum + (product.revenue || 0), 0);
-      const averageOrderValue = totalSales > 0 ? totalRevenue / totalSales : 0;
+      // Fetch vendor's products (still needed for the product list)
+      const productsResponse = await productApi.list(undefined, userId);
+      setProducts(productsResponse.data);
+      
+      // Fetch vendor's orders
+      const ordersResponse = await orderApi.list(userId);
+      const vendorOrders = ordersResponse.data; // Assuming response.data is the array of orders
 
-      setStats({
-        totalProducts,
-        totalSales,
-        totalRevenue,
-        averageOrderValue
+      // Calculate statistics based on orders
+      const totalOrders = vendorOrders.length; // Total Sales = Number of Orders
+
+      let totalRevenueBeforeCut = 0;
+      vendorOrders.forEach(order => {
+        // Note: To accurately calculate revenue per vendor product within an order,
+        // the order items need to include product details or at least seller_id.
+        // Assuming for now that order.total reflects the sum of items for this vendor's products
+        // or that order items will be enhanced in the backend to filter/aggregate per vendor.
+        // For a more accurate calculation, we would need to iterate through order.items
+        // and check if each item's product belongs to the current vendor.
+        totalRevenueBeforeCut += order.total;
       });
+
+      const platformCutRate = 0.10; // 10%
+      const totalRevenueAfterCut = totalRevenueBeforeCut * (1 - platformCutRate);
+
+      // Calculate Total Sales (number of orders), Total Revenue (after cut)
+      setStats({
+        totalProducts: productsResponse.data.length,
+        totalSales: totalOrders, // Use total number of orders as Total Sales
+        totalRevenue: totalRevenueAfterCut, // Use revenue after platform cut
+        // Recalculate or remove averageOrderValue if not relevant anymore
+        averageOrderValue: totalOrders > 0 ? totalRevenueAfterCut / totalOrders : 0
+      });
+      
+      setVendorName(localStorage.getItem('userName') || ''); // Fetch vendor name
+
+      setError(null);
     } catch (error) {
       console.error('Error fetching vendor data:', error);
+      setError('Failed to load vendor data');
       toast({
         title: "Error",
-        description: "Failed to load vendor data",
+        description: "Failed to load vendor dashboard data.",
         variant: "destructive",
       });
     } finally {
@@ -163,23 +190,32 @@ const VendorDashboard: React.FC = () => {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="rounded-md border">
-              <table className="w-full">
-                <thead>
-                  <tr className="border-b bg-muted/50">
-                    <th className="h-12 px-4 text-left align-middle font-medium">Product</th>
-                    <th className="h-12 px-4 text-left align-middle font-medium">Price</th>
-                    <th className="h-12 px-4 text-left align-middle font-medium">Category</th>
-                    <th className="h-12 px-4 text-left align-middle font-medium">Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {products.map((product) => (
-                    <tr key={product.id} className="border-b">
-                      <td className="p-4 align-middle">{product.title}</td>
-                      <td className="p-4 align-middle">FCFA {Number(product.price).toLocaleString()}</td>
-                      <td className="p-4 align-middle">{product.category}</td>
-                      <td className="p-4 align-middle">
+            {products.length === 0 ? (
+              <div className="text-center py-12">
+                <p className="text-lg text-gray-500">You haven't added any products yet.</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {products.map((product) => (
+                  <Card key={product.id}>
+                    <CardContent className="p-6">
+                      <div className="aspect-square mb-4">
+                        <img
+                          src={getImageUrl(product.image_urls[0])}
+                          alt={product.title}
+                          className="w-full h-full object-contain rounded bg-gray-50"
+                        />
+                      </div>
+                      <h3 className="text-lg font-semibold mb-2">{product.title}</h3>
+                      <p className="text-gray-500 mb-4 line-clamp-2">{product.description}</p>
+                      <div className="flex justify-between items-center mb-4">
+                        <span className="text-lg font-bold">{Number(product.price).toLocaleString()} FCFA</span>
+                        <span className="text-sm text-gray-500">{product.category}</span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm text-gray-500">
+                          {product.is_approved ? 'Approved' : 'Pending Approval'}
+                        </span>
                         <Button
                           variant="ghost"
                           size="sm"
@@ -188,12 +224,12 @@ const VendorDashboard: React.FC = () => {
                           <ArrowUpRight className="h-4 w-4 mr-2" />
                           View Details
                         </Button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>

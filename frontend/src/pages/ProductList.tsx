@@ -32,7 +32,7 @@ interface CartItem {
 
 const ProductList: React.FC = () => {
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
-  const [priceRange, setPriceRange] = useState<number[]>([5000, 25000]);
+  const [priceRange, setPriceRange] = useState<number[]>([100, 2500000]);
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [showCart, setShowCart] = useState(false);
   const [products, setProducts] = useState<Product[]>([]);
